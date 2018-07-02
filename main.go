@@ -16,6 +16,8 @@ func Decompile(bytes []byte) string {
 		switch bytes[0] {
 		case 0x01:
 			return ";"
+		case 0x16:
+			return fmt.Sprintf("#%08x", binary.LittleEndian.Uint32(bytes[1:]))
 		case 0x17:
 			return fmt.Sprint(int32(binary.LittleEndian.Uint32(bytes[1:])))
 		}
