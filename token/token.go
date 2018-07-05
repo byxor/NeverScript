@@ -14,18 +14,28 @@ func GetTokens(tokens chan Token, bytes []byte) {
 	if len(bytes) == 0 {
 		tokens <- Invalid
 	} else {
-		if isEndOfFile(bytes) {
-			tokens <- EndOfFile
-		} else if isEndOfLine(bytes) {
-			tokens <- EndOfLine
-		} else if isName(bytes) {
-			tokens <- Name
-		} else if isInteger(bytes) {
-			tokens <- Integer
-		} else {
-			tokens <- Invalid
+		for _, c := range constructors {
+			if c.function(bytes) {
+				tokens <- c.token
+				return
+			}
 		}
+		tokens <- Invalid
 	}
+}
+
+// -----------------------------
+
+type constructor struct {
+	function func([]byte) bool
+	token    Token
+}
+
+var constructors = []constructor{
+	{isEndOfFile, EndOfFile},
+	{isEndOfLine, EndOfLine},
+	{isName, Name},
+	{isInteger, Integer},
 }
 
 func isEndOfFile(bytes []byte) bool {
