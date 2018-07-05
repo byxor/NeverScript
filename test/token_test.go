@@ -4,6 +4,7 @@ import (
 	"github.com/byxor/qbd/token"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestGettingTokens(t *testing.T) {
@@ -22,15 +23,31 @@ func TestGettingTokens(t *testing.T) {
 		{[]byte{0x16, 0x00, 0x00, 0x00, 0x00}, token.Name},
 		{[]byte{0x16, 0xBB, 0xEE, 0xEE, 0xFF}, token.Name},
 
+		// Invalid names, not enough bytes
 		{[]byte{0x16, 0x00, 0x00, 0x00}, token.Invalid},
 		{[]byte{0x16, 0x11, 0x22}, token.Invalid},
 		{[]byte{0x16, 0x33}, token.Invalid},
 		{[]byte{0x16}, token.Invalid},
+
+		{[]byte{0x17, 0x00, 0x00, 0x00, 0x00}, token.Integer},
+		{[]byte{0x17, 0xBA, 0x5E, 0xBA, 0x11}, token.Integer},
+
+		// Invalid integers, not enough bytes
+		{[]byte{0x17, 0x00, 0x00, 0x00}, token.Invalid},
+		{[]byte{0x17, 0x11, 0x22}, token.Invalid},
+		{[]byte{0x17, 0x33}, token.Invalid},
+		{[]byte{0x17}, token.Invalid},
 	}
 
 	for _, entry := range entries {
 		tokens := make(chan token.Token)
 		go token.GetTokens(tokens, entry.input)
-		assert.Equal(t, entry.output, <-tokens)
+
+		select {
+		case token := <-tokens:
+			assert.Equal(t, entry.output, token)
+		case <-time.After(1 * time.Second):
+			assert.Equal(t, "timeout", "!!!")
+		}
 	}
 }
