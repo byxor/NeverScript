@@ -39,6 +39,8 @@ const (
 
 	Name
 
+	ChecksumTableEntry
+
 	Invalid
 	None
 )
@@ -72,6 +74,7 @@ var constructors = []constructor{
 	{isStartOfFunction, StartOfFunction},
 	{isEndOfFunction, EndOfFunction},
 	{isReturn, Return},
+	{isCheckSumTableEntry, ChecksumTableEntry},
 }
 
 func GetTokens(tokens chan Token, bytes []byte) {
@@ -131,6 +134,12 @@ func isInteger(bytes []byte) bool {
 
 func isFloat(bytes []byte) bool {
 	return singleByte(0x1A)(bytes) && len(bytes) == 5
+}
+
+func isCheckSumTableEntry(bytes []byte) bool {
+	isLongEnough := len(bytes) > 6
+	isNullTerminated := bytes[len(bytes)-1] == 0
+	return singleByte(0x2B)(bytes) && isLongEnough && isNullTerminated
 }
 
 func singleByte(n byte) func([]byte) bool {
