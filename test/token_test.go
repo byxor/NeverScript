@@ -46,6 +46,7 @@ func TestExtractingTokens(t *testing.T) {
 
 		{[]byte{0x25}, token.StartOfIf},
 		{[]byte{0x26}, token.Else},
+		{[]byte{0x27}, token.ElseIf},
 		{[]byte{0x28}, token.EndOfIf},
 	}
 

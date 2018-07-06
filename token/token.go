@@ -17,6 +17,7 @@ const (
 
 	StartOfIf
 	Else
+	ElseIf
 	EndOfIf
 
 	Name
@@ -37,6 +38,7 @@ var constructors = []constructor{
 	{isEndOfArray, EndOfArray},
 	{isStartOfIf, StartOfIf},
 	{isElse, Else},
+	{isElseIf, ElseIf},
 	{isEndOfIf, EndOfIf},
 	{isName, Name},
 	{isInteger, Integer},
@@ -103,6 +105,10 @@ func isStartOfIf(bytes []byte) bool {
 
 func isElse(bytes []byte) bool {
 	return bytes[0] == 0x26
+}
+
+func isElseIf(bytes []byte) bool {
+	return bytes[0] == 0x27
 }
 
 func isEndOfIf(bytes []byte) bool {
