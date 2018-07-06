@@ -9,11 +9,8 @@ import (
 
 func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
 	tokens := make(chan token.Token)
-
 	go token.GetTokens(tokens, []byte{})
-
 	_, more := read(tokens)
-
 	assert.Equal(t, false, more)
 }
 
@@ -32,7 +29,7 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 
 func TestExtractingTokens(t *testing.T) {
 	entries := []struct {
-		input    []byte
+		bytes    []byte
 		expected token.Token
 	}{
 		{[]byte{0x00}, token.EndOfFile},
@@ -111,8 +108,7 @@ func TestExtractingTokens(t *testing.T) {
 
 	for _, entry := range entries {
 		tokens := make(chan token.Token)
-		go token.GetTokens(tokens, entry.input)
-
+		go token.GetTokens(tokens, entry.bytes)
 		token, _ := read(tokens)
 		assert.Equal(t, entry.expected, token)
 	}
@@ -123,36 +119,24 @@ func TestExtractingMultipleTokens(t *testing.T) {
 		input  []byte
 		output []token.Token
 	}{
-		{
-			[]byte{0x01, 0x01},
-			[]token.Token{token.EndOfLine, token.EndOfLine},
-		},
-		{
-			[]byte{0x01, 0x00},
-			[]token.Token{token.EndOfLine, token.EndOfFile},
-		},
-		{
-			[]byte{
-				0x17, 0x00, 0x00, 0x00, 0x00,
-				0x17, 0x01, 0x00, 0x00, 0x00,
-			},
-			[]token.Token{token.Integer, token.Integer},
-		},
-		{
-			[]byte{
-				0x16, 0xFF, 0x00, 0x00, 0xDD,
-				0x2B, 0x11, 0x11, 0x11, 0x11, 0x68, 0x69, 0x00,
-			},
-			[]token.Token{token.Name, token.ChecksumTableEntry},
-		},
-		{
-			[]byte{
-				0x01,
-				0x23,
-				0x16, 0x93, 0x4D, 0xCD, 0xA1,
-			},
-			[]token.Token{token.EndOfLine, token.StartOfFunction, token.Name},
-		},
+		{[]byte{0x01, 0x01}, []token.Token{token.EndOfLine, token.EndOfLine}},
+		{[]byte{0x01, 0x00}, []token.Token{token.EndOfLine, token.EndOfFile}},
+
+		{[]byte{
+			0x17, 0x00, 0x00, 0x00, 0x00,
+			0x17, 0x01, 0x00, 0x00, 0x00,
+		}, []token.Token{token.Integer, token.Integer}},
+
+		{[]byte{
+			0x16, 0xFF, 0x00, 0x00, 0xDD,
+			0x2B, 0x11, 0x11, 0x11, 0x11, 0x68, 0x69, 0x00,
+		}, []token.Token{token.Name, token.ChecksumTableEntry}},
+
+		{[]byte{
+			0x01,
+			0x23,
+			0x16, 0x93, 0x4D, 0xCD, 0xA1,
+		}, []token.Token{token.EndOfLine, token.StartOfFunction, token.Name}},
 	}
 
 	for _, entry := range entries {
