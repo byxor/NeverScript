@@ -44,7 +44,6 @@ const (
 	ChecksumTableEntry
 
 	Invalid
-	None
 )
 
 /* The constructor functions are checked in order.
@@ -82,14 +81,20 @@ var constructors = []constructor{
 
 func GetTokens(tokens chan Token, bytes []byte) {
 	if len(bytes) == 0 {
-		tokens <- None
+		close(tokens)
 		return
 	}
+	
+	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
 
-	for _, c := range constructors {
-		if c.function(bytes) {
-			tokens <- c.token
-			return
+		chunk := bytes[:chunkSize]
+
+		for _, c := range constructors {
+			if c.function(chunk) {
+				tokens <- c.token
+				GetTokens(tokens, bytes[chunkSize:])
+				return
+			}
 		}
 	}
 

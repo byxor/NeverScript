@@ -7,13 +7,18 @@ import (
 	"time"
 )
 
+func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
+	tokens := make(chan token.Token)
+	go token.GetTokens(tokens, []byte{})
+	_, more := read(tokens)
+	assert.Equal(t, false, more)
+}
+
 func TestExtractingTokens(t *testing.T) {
 	entries := []struct {
 		input []byte
-		token token.Token
+		expected token.Token
 	}{
-		{[]byte{}, token.None},
-
 		{[]byte{0x00}, token.EndOfFile},
 		{[]byte{0x01}, token.EndOfLine},
 		{[]byte{0x03}, token.StartOfStruct},
@@ -92,15 +97,44 @@ func TestExtractingTokens(t *testing.T) {
 		tokens := make(chan token.Token)
 		go token.GetTokens(tokens, entry.input)
 
-		select {
-		case token := <-tokens:
-			assert.Equal(t, entry.token, token)
-		case <-time.After(1 * time.Second):
-			assert.Equal(t, "timeout", "!!!")
-		}
+		token, more := read(tokens)
+		assert.True(t, more)
+		assert.Equal(t, entry.expected, token)
 	}
 }
 
 func TestExtractingMultipleTokens(t *testing.T) {
-	
+	entries := []struct{
+		input []byte
+		output []token.Token
+	}{
+		{
+			[]byte{0x01, 0x01},
+			[]token.Token{token.EndOfLine, token.EndOfLine},
+		},
+		{
+			[]byte{0x01, 0x00},
+			[]token.Token{token.EndOfLine, token.EndOfFile},
+		},
+	}
+
+	for _, entry := range entries {
+		tokens := make(chan token.Token)
+		go token.GetTokens(tokens, entry.input)
+
+		for _, expected := range entry.output {
+			token, more := read(tokens)
+			assert.True(t, more)
+			assert.Equal(t, expected, token)
+		}
+	}
+}
+
+func read(tokens chan token.Token) (token token.Token, more bool) {
+	select {
+	case token, more = <-tokens:
+		return
+	case <-time.After(3 * time.Second):
+		panic("Timed out while reading token...")
+	}
 }
