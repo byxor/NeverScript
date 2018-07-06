@@ -7,6 +7,7 @@ const (
 	EndOfLine
 
 	Assignment
+	Subtraction
 
 	StartOfStruct
 	EndOfStruct
@@ -38,6 +39,7 @@ var constructors = []constructor{
 	{isEndOfFile, EndOfFile},
 	{isEndOfLine, EndOfLine},
 	{isAssignment, Assignment},
+	{isSubtraction, Subtraction},
 	{isStartOfStruct, StartOfStruct},
 	{isEndOfStruct, EndOfStruct},
 	{isStartOfArray, StartOfArray},
@@ -91,6 +93,7 @@ var isElse = singleByte(0x26)
 var isElseIf = singleByte(0x27)
 var isEndOfIf = singleByte(0x28)
 var isReturn = singleByte(0x29)
+var isSubtraction = singleByte(0x0A)
 
 func isName(bytes []byte) bool {
 	return singleByte(0x16)(bytes) && len(bytes) == 5
