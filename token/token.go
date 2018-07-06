@@ -67,53 +67,18 @@ type constructor struct {
 	token    Token
 }
 
-func isEndOfFile(bytes []byte) bool {
-	return bytes[0] == 0x00
-}
-
-func isEndOfLine(bytes []byte) bool {
-	return bytes[0] == 0x01
-}
-
-func isStartOfStruct(bytes []byte) bool {
-	return bytes[0] == 0x03
-}
-
-func isEndOfStruct(bytes []byte) bool {
-	return bytes[0] == 0x04
-}
-
-func isStartOfArray(bytes []byte) bool {
-	return bytes[0] == 0x05
-}
-
-func isEndOfArray(bytes []byte) bool {
-	return bytes[0] == 0x06
-}
-
-func isStartOfFunction(bytes []byte) bool {
-	return bytes[0] == 0x23
-}
-
-func isEndOfFunction(bytes []byte) bool {
-	return bytes[0] == 0x24
-}
-
-func isStartOfIf(bytes []byte) bool {
-	return bytes[0] == 0x25
-}
-
-func isElse(bytes []byte) bool {
-	return bytes[0] == 0x26
-}
-
-func isElseIf(bytes []byte) bool {
-	return bytes[0] == 0x27
-}
-
-func isEndOfIf(bytes []byte) bool {
-	return bytes[0] == 0x28
-}
+var isEndOfFile = singleByte(0x00)
+var isEndOfLine = singleByte(0x01)
+var isStartOfStruct = singleByte(0x03)
+var isEndOfStruct = singleByte(0x04)
+var isStartOfArray = singleByte(0x05)
+var isEndOfArray = singleByte(0x06)
+var isStartOfFunction = singleByte(0x23)
+var isEndOfFunction = singleByte(0x24)
+var isStartOfIf = singleByte(0x25)
+var isElse = singleByte(0x26)
+var isElseIf = singleByte(0x27)
+var isEndOfIf = singleByte(0x28)
 
 func isName(bytes []byte) bool {
 	hasPrefix := bytes[0] == 0x16
@@ -125,4 +90,10 @@ func isInteger(bytes []byte) bool {
 	hasPrefix := bytes[0] == 0x17
 	longEnough := len(bytes) == 5
 	return hasPrefix && longEnough
+}
+
+func singleByte(n byte) func([]byte) bool {
+	return func(bytes []byte) bool {
+		return bytes[0] == n
+	}
 }
