@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestGettingTokens(t *testing.T) {
+func TestExtractingTokens(t *testing.T) {
 	type Entry struct {
 		input  []byte
 		output token.Token
@@ -17,8 +17,11 @@ func TestGettingTokens(t *testing.T) {
 		{[]byte{}, token.Invalid},
 
 		{[]byte{0x00}, token.EndOfFile},
-
 		{[]byte{0x01}, token.EndOfLine},
+		{[]byte{0x03}, token.StartOfStruct},
+		{[]byte{0x04}, token.EndOfStruct},
+		{[]byte{0x05}, token.StartOfArray},
+		{[]byte{0x06}, token.EndOfArray},
 
 		{[]byte{0x16, 0x00, 0x00, 0x00, 0x00}, token.Name},
 		{[]byte{0x16, 0xBB, 0xEE, 0xEE, 0xFF}, token.Name},

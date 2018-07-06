@@ -5,10 +5,25 @@ type Token int
 const (
 	EndOfFile Token = iota
 	EndOfLine
+	StartOfStruct
+	EndOfStruct
+	StartOfArray
+	EndOfArray
 	Name
 	Integer
 	Invalid
 )
+
+var constructors = []constructor{
+	{isEndOfFile, EndOfFile},
+	{isEndOfLine, EndOfLine},
+	{isStartOfStruct, StartOfStruct},
+	{isEndOfStruct, EndOfStruct},
+	{isStartOfArray, StartOfArray},
+	{isEndOfArray, EndOfArray},
+	{isName, Name},
+	{isInteger, Integer},
+}
 
 func GetTokens(tokens chan Token, bytes []byte) {
 	if len(bytes) == 0 {
@@ -31,19 +46,28 @@ type constructor struct {
 	token    Token
 }
 
-var constructors = []constructor{
-	{isEndOfFile, EndOfFile},
-	{isEndOfLine, EndOfLine},
-	{isName, Name},
-	{isInteger, Integer},
-}
-
 func isEndOfFile(bytes []byte) bool {
 	return bytes[0] == 0x00
 }
 
 func isEndOfLine(bytes []byte) bool {
 	return bytes[0] == 0x01
+}
+
+func isStartOfStruct(bytes []byte) bool {
+	return bytes[0] == 0x03
+}
+
+func isEndOfStruct(bytes []byte) bool {
+	return bytes[0] == 0x04
+}
+
+func isStartOfArray(bytes []byte) bool {
+	return bytes[0] == 0x05
+}
+
+func isEndOfArray(bytes []byte) bool {
+	return bytes[0] == 0x06
 }
 
 func isName(bytes []byte) bool {
