@@ -40,15 +40,15 @@ var constructors = []constructor{
 func GetTokens(tokens chan Token, bytes []byte) {
 	if len(bytes) == 0 {
 		tokens <- None
-	} else {
-		for _, c := range constructors {
-			if c.function(bytes) {
-				tokens <- c.token
-				break
-			}
-		}
-		tokens <- Invalid
+		return
 	}
+	for _, c := range constructors {
+		if c.function(bytes) {
+			tokens <- c.token
+			return
+		}
+	}
+	tokens <- Invalid
 }
 
 // -----------------------------
