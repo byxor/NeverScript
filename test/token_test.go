@@ -7,11 +7,35 @@ import (
 	"time"
 )
 
-func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
-	tokens := make(chan token.Token)
-	go token.GetTokens(tokens, []byte{})
-	_, more := read(tokens)
-	assert.Equal(t, false, more)
+func TestChannelIsClosedWhenThereAreNoMoreTokens(t *testing.T) {
+	{   // Example 1, empty input
+		tokens := make(chan token.Token)
+
+		go token.GetTokens(tokens, []byte{})
+
+		_, more := read(tokens)
+
+		assert.Equal(t, false, more)
+	}
+	{   // Example 2, non-empty input
+		tokens := make(chan token.Token)
+		input := []byte{0x00, 0x00, 0x00}
+
+		go token.GetTokens(tokens, input)
+
+		for i := 0; i <= len(input); i++ {
+			_, more := read(tokens)
+
+			var expectingMore bool
+			if i >= len(input) {
+				expectingMore = false
+			} else {
+				expectingMore = true
+			}
+
+			assert.Equal(t, expectingMore, more)
+		}
+	}
 }
 
 func TestExtractingTokens(t *testing.T) {
@@ -97,8 +121,7 @@ func TestExtractingTokens(t *testing.T) {
 		tokens := make(chan token.Token)
 		go token.GetTokens(tokens, entry.input)
 
-		token, more := read(tokens)
-		assert.True(t, more)
+		token, _ := read(tokens)
 		assert.Equal(t, entry.expected, token)
 	}
 }
@@ -145,8 +168,7 @@ func TestExtractingMultipleTokens(t *testing.T) {
 		go token.GetTokens(tokens, entry.input)
 
 		for _, expected := range entry.output {
-			token, more := read(tokens)
-			assert.True(t, more)
+			token, _ := read(tokens)
 			assert.Equal(t, expected, token)
 		}
 	}
