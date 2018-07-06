@@ -41,7 +41,7 @@ func TestExtractingTokens(t *testing.T) {
 
 		{[]byte{0x1A, 0x00, 0x00, 0x00, 0x00}, token.Float},
 		{[]byte{0x1A, 0x12, 0x34, 0x56, 0x78}, token.Float},
-		// Invalid names, not enough bytes
+		// Invalid floats, not enough bytes
 		{[]byte{0x1A, 0x00, 0x00, 0x00}, token.Invalid},
 		{[]byte{0x1A, 0x11, 0x22}, token.Invalid},
 		{[]byte{0x1A, 0x33}, token.Invalid},
