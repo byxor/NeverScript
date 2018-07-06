@@ -14,6 +14,7 @@ const (
 
 	StartOfFunction
 	EndOfFunction
+	Return
 
 	StartOfIf
 	Else
@@ -44,6 +45,7 @@ var constructors = []constructor{
 	{isInteger, Integer},
 	{isStartOfFunction, StartOfFunction},
 	{isEndOfFunction, EndOfFunction},
+	{isReturn, Return},
 }
 
 func GetTokens(tokens chan Token, bytes []byte) {
@@ -81,6 +83,7 @@ var isStartOfIf = singleByte(0x25)
 var isElse = singleByte(0x26)
 var isElseIf = singleByte(0x27)
 var isEndOfIf = singleByte(0x28)
+var isReturn = singleByte(0x29)
 
 func isName(bytes []byte) bool {
 	hasPrefix := bytes[0] == 0x16
