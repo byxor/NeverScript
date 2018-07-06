@@ -130,6 +130,14 @@ func TestExtractingMultipleTokens(t *testing.T) {
 			},
 			[]token.Token{token.Name, token.ChecksumTableEntry},
 		},
+		{
+			[]byte{
+				0x01,
+				0x23,
+				0x16, 0x93, 0x4D, 0xCD, 0xA1,
+			},
+			[]token.Token{token.EndOfLine, token.StartOfFunction, token.Name},
+		},
 	}
 
 	for _, entry := range entries {

@@ -1,50 +1,67 @@
 package token
 
+func GetTokens(tokens chan Token, bytes []byte) {
+	if len(bytes) == 0 {
+		close(tokens)
+		return
+	}
+	
+	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
+
+		chunk := bytes[:chunkSize]
+
+		for _, c := range constructors {
+			if c.function(chunk) {
+				tokens <- c.token
+				GetTokens(tokens, bytes[chunkSize:])
+				return
+			}
+		}
+	}
+
+	tokens <- Invalid
+}
+
 type Token int
 
 const (
 	EndOfFile Token = iota
 	EndOfLine
-
 	Assignment
-
 	Subtraction
 	Addition
 	Division
 	Multiplication
-
 	EqualityCheck
 	LessThanCheck
 	LessThanOrEqualCheck
 	GreaterThanCheck
 	GreaterThanOrEqualCheck
-
 	StartOfStruct
 	EndOfStruct
-
 	StartOfArray
 	EndOfArray
-
 	StartOfFunction
 	EndOfFunction
 	Return
-	
 	Break
-
 	StartOfIf
 	Else
 	ElseIf
 	EndOfIf
-
 	Integer
 	Float
-
 	Name
-
 	ChecksumTableEntry
-
 	Invalid
 )
+
+// -----------------------------
+
+type constructor struct {
+	function func([]byte) bool
+	token    Token
+}
 
 /* The constructor functions are checked in order.
  * The ordering is important! */
@@ -77,35 +94,6 @@ var constructors = []constructor{
 	{isReturn, Return},
 	{isBreak, Break},
 	{isCheckSumTableEntry, ChecksumTableEntry},
-}
-
-func GetTokens(tokens chan Token, bytes []byte) {
-	if len(bytes) == 0 {
-		close(tokens)
-		return
-	}
-	
-	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
-
-		chunk := bytes[:chunkSize]
-
-		for _, c := range constructors {
-			if c.function(chunk) {
-				tokens <- c.token
-				GetTokens(tokens, bytes[chunkSize:])
-				return
-			}
-		}
-	}
-
-	tokens <- Invalid
-}
-
-// -----------------------------
-
-type constructor struct {
-	function func([]byte) bool
-	token    Token
 }
 
 var isEndOfFile = singleByte(0x00)
