@@ -7,37 +7,32 @@ import (
 	"time"
 )
 
-func TestChannelIsClosedWhenThereAreNoMoreTokens(t *testing.T) {
+func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
+	tokens := make(chan token.Token)
 
-	// Example 1, empty input
-	{   
-		tokens := make(chan token.Token)
+	go token.GetTokens(tokens, []byte{})
 
-		go token.GetTokens(tokens, []byte{})
+	_, more := read(tokens)
 
+	assert.Equal(t, false, more)
+}
+
+func TestChannelIsClosedWhenFinished(t *testing.T) {
+	tokens := make(chan token.Token)
+	input := []byte{0x00, 0x00, 0x00}
+
+	go token.GetTokens(tokens, input)
+
+	for i := 0; i <= len(input); i++ {
+		expectingMore := i < len(input)
 		_, more := read(tokens)
-
-		assert.Equal(t, false, more)
-	}
-
-	// Example 2, non-empty input
-	{   
-		tokens := make(chan token.Token)
-		input := []byte{0x00, 0x00, 0x00}
-
-		go token.GetTokens(tokens, input)
-
-		for i := 0; i <= len(input); i++ {
-			expectingMore := i < len(input)
-			_, more := read(tokens)
-			assert.Equal(t, expectingMore, more)
-		}
+		assert.Equal(t, expectingMore, more)
 	}
 }
 
 func TestExtractingTokens(t *testing.T) {
 	entries := []struct {
-		input []byte
+		input    []byte
 		expected token.Token
 	}{
 		{[]byte{0x00}, token.EndOfFile},
@@ -124,8 +119,8 @@ func TestExtractingTokens(t *testing.T) {
 }
 
 func TestExtractingMultipleTokens(t *testing.T) {
-	entries := []struct{
-		input []byte
+	entries := []struct {
+		input  []byte
 		output []token.Token
 	}{
 		{
