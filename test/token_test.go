@@ -8,12 +8,10 @@ import (
 )
 
 func TestExtractingTokens(t *testing.T) {
-	type Entry struct {
+	entries := []struct {
 		input []byte
 		token token.Token
-	}
-
-	entries := []Entry{
+	}{
 		{[]byte{}, token.None},
 
 		{[]byte{0x00}, token.EndOfFile},
@@ -26,6 +24,8 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x23}, token.StartOfFunction},
 		{[]byte{0x24}, token.EndOfFunction},
 		{[]byte{0x29}, token.Return},
+
+		{[]byte{0x22}, token.Break},
 
 		{[]byte{0x25}, token.StartOfIf},
 		{[]byte{0x26}, token.Else},
@@ -99,4 +99,8 @@ func TestExtractingTokens(t *testing.T) {
 			assert.Equal(t, "timeout", "!!!")
 		}
 	}
+}
+
+func TestExtractingMultipleTokens(t *testing.T) {
+	
 }

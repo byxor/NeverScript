@@ -28,6 +28,8 @@ const (
 	StartOfFunction
 	EndOfFunction
 	Return
+	
+	Break
 
 	StartOfIf
 	Else
@@ -74,6 +76,7 @@ var constructors = []constructor{
 	{isStartOfFunction, StartOfFunction},
 	{isEndOfFunction, EndOfFunction},
 	{isReturn, Return},
+	{isBreak, Break},
 	{isCheckSumTableEntry, ChecksumTableEntry},
 }
 
@@ -123,6 +126,7 @@ var isLessThanCheck = singleByte(0x12)
 var isLessThanOrEqualCheck = singleByte(0x13)
 var isGreaterThanCheck = singleByte(0x14)
 var isGreaterThanOrEqualCheck = singleByte(0x15)
+var isBreak = singleByte(0x22)
 
 func isName(bytes []byte) bool {
 	return singleByte(0x16)(bytes) && len(bytes) == 5
