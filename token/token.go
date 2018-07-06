@@ -12,6 +12,8 @@ const (
 	Division
 	Multiplication
 
+	EqualityCheck
+
 	StartOfStruct
 	EndOfStruct
 
@@ -42,6 +44,7 @@ var constructors = []constructor{
 	{isEndOfFile, EndOfFile},
 	{isEndOfLine, EndOfLine},
 	{isAssignment, Assignment},
+	{isEqualityCheck, EqualityCheck},
 	{isSubtraction, Subtraction},
 	{isAddition, Addition},
 	{isDivision, Division},
@@ -103,6 +106,7 @@ var isSubtraction = singleByte(0x0A)
 var isAddition = singleByte(0x0B)
 var isDivision = singleByte(0x0C)
 var isMultiplication = singleByte(0x0D)
+var isEqualityCheck = singleByte(0x11)
 
 func isName(bytes []byte) bool {
 	return singleByte(0x16)(bytes) && len(bytes) == 5

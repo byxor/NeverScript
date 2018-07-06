@@ -24,10 +24,13 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x06}, token.EndOfArray},
 
 		{[]byte{0x07}, token.Assignment},
+
 		{[]byte{0x0A}, token.Subtraction},
 		{[]byte{0x0B}, token.Addition},
 		{[]byte{0x0C}, token.Division},
 		{[]byte{0x0D}, token.Multiplication},
+
+		{[]byte{0x11}, token.EqualityCheck},
 
 		{[]byte{0x16, 0x00, 0x00, 0x00, 0x00}, token.Name},
 		{[]byte{0x16, 0xBB, 0xEE, 0xEE, 0xFF}, token.Name},
