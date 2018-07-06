@@ -41,6 +41,9 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x17, 0x33}, token.Invalid},
 		{[]byte{0x17}, token.Invalid},
 
+		{[]byte{0x1A, 0x00, 0x00, 0x00, 0x00}, token.Float},
+		{[]byte{0x1A, 0x12, 0x34, 0x56, 0x78}, token.Float},
+
 		{[]byte{0x23}, token.StartOfFunction},
 		{[]byte{0x24}, token.EndOfFunction},
 		{[]byte{0x29}, token.Return},

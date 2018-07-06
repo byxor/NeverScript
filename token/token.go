@@ -21,8 +21,10 @@ const (
 	ElseIf
 	EndOfIf
 
-	Name
 	Integer
+	Float
+
+	Name
 
 	Invalid
 	None
@@ -43,6 +45,7 @@ var constructors = []constructor{
 	{isEndOfIf, EndOfIf},
 	{isName, Name},
 	{isInteger, Integer},
+	{isFloat, Float},
 	{isStartOfFunction, StartOfFunction},
 	{isEndOfFunction, EndOfFunction},
 	{isReturn, Return},
@@ -86,13 +89,19 @@ var isEndOfIf = singleByte(0x28)
 var isReturn = singleByte(0x29)
 
 func isName(bytes []byte) bool {
-	hasPrefix := bytes[0] == 0x16
+	hasPrefix := singleByte(0x16)(bytes)
 	longEnough := len(bytes) == 5
 	return hasPrefix && longEnough
 }
 
 func isInteger(bytes []byte) bool {
-	hasPrefix := bytes[0] == 0x17
+	hasPrefix := singleByte(0x17)(bytes)
+	longEnough := len(bytes) == 5
+	return hasPrefix && longEnough
+}
+
+func isFloat(bytes []byte) bool {
+	hasPrefix := singleByte(0x1A)(bytes)
 	longEnough := len(bytes) == 5
 	return hasPrefix && longEnough
 }
