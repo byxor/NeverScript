@@ -89,21 +89,15 @@ var isEndOfIf = singleByte(0x28)
 var isReturn = singleByte(0x29)
 
 func isName(bytes []byte) bool {
-	hasPrefix := singleByte(0x16)(bytes)
-	longEnough := len(bytes) == 5
-	return hasPrefix && longEnough
+	return singleByte(0x16)(bytes) && len(bytes) == 5
 }
 
 func isInteger(bytes []byte) bool {
-	hasPrefix := singleByte(0x17)(bytes)
-	longEnough := len(bytes) == 5
-	return hasPrefix && longEnough
+	return singleByte(0x17)(bytes) && len(bytes) == 5
 }
 
 func isFloat(bytes []byte) bool {
-	hasPrefix := singleByte(0x1A)(bytes)
-	longEnough := len(bytes) == 5
-	return hasPrefix && longEnough
+	return singleByte(0x1A)(bytes) && len(bytes) == 5
 }
 
 func singleByte(n byte) func([]byte) bool {
