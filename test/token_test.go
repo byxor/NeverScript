@@ -10,7 +10,7 @@ import (
 func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
 	tokens := make(chan token.Token)
 	go token.GetTokens(tokens, []byte{})
-	_, more := read(tokens)
+	_, more := readOneFrom(tokens)
 	assert.Equal(t, false, more)
 }
 
@@ -22,7 +22,7 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 
 	for i := 0; i <= len(input); i++ {
 		expectingMore := i < len(input)
-		_, more := read(tokens)
+		_, more := readOneFrom(tokens)
 		assert.Equal(t, expectingMore, more)
 	}
 }
@@ -109,7 +109,7 @@ func TestExtractingTokens(t *testing.T) {
 	for _, entry := range entries {
 		tokens := make(chan token.Token)
 		go token.GetTokens(tokens, entry.bytes)
-		token, _ := read(tokens)
+		token, _ := readOneFrom(tokens)
 		assert.Equal(t, entry.expected, token)
 	}
 }
@@ -146,13 +146,13 @@ func TestExtractingMultipleTokens(t *testing.T) {
 		go token.GetTokens(tokens, entry.input)
 
 		for _, expected := range entry.output {
-			token, _ := read(tokens)
+			token, _ := readOneFrom(tokens)
 			assert.Equal(t, expected, token)
 		}
 	}
 }
 
-func read(tokens chan token.Token) (token token.Token, more bool) {
+func readOneFrom(tokens chan token.Token) (token token.Token, more bool) {
 	select {
 	case token, more = <-tokens:
 		return
