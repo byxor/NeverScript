@@ -4,12 +4,19 @@ type Token int
 
 const (
 	EndOfFile Token = iota
+
 	EndOfLine
+
 	StartOfStruct
 	EndOfStruct
+
 	StartOfArray
 	EndOfArray
+
+	StartOfFunction
+
 	Name
+
 	Integer
 
 	Invalid
@@ -25,6 +32,7 @@ var constructors = []constructor{
 	{isEndOfArray, EndOfArray},
 	{isName, Name},
 	{isInteger, Integer},
+	{isStartOfFunction, StartOfFunction},
 }
 
 func GetTokens(tokens chan Token, bytes []byte) {
@@ -70,6 +78,10 @@ func isStartOfArray(bytes []byte) bool {
 
 func isEndOfArray(bytes []byte) bool {
 	return bytes[0] == 0x06
+}
+
+func isStartOfFunction(bytes []byte) bool {
+	return bytes[0] == 0x23
 }
 
 func isName(bytes []byte) bool {

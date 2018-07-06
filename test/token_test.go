@@ -40,6 +40,8 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x17, 0x11, 0x22}, token.Invalid},
 		{[]byte{0x17, 0x33}, token.Invalid},
 		{[]byte{0x17}, token.Invalid},
+
+		{[]byte{0x23}, token.StartOfFunction},
 	}
 
 	for _, entry := range entries {
