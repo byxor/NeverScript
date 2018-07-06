@@ -16,6 +16,7 @@ const (
 	EndOfFunction
 
 	StartOfIf
+	EndOfIf
 
 	Name
 	Integer
@@ -24,6 +25,8 @@ const (
 	None
 )
 
+/* The constructor functions are checked in order.
+ * The ordering is important! */
 var constructors = []constructor{
 	{isEndOfFile, EndOfFile},
 	{isEndOfLine, EndOfLine},
@@ -32,6 +35,7 @@ var constructors = []constructor{
 	{isStartOfArray, StartOfArray},
 	{isEndOfArray, EndOfArray},
 	{isStartOfIf, StartOfIf},
+	{isEndOfIf, EndOfIf},
 	{isName, Name},
 	{isInteger, Integer},
 	{isStartOfFunction, StartOfFunction},
@@ -93,6 +97,10 @@ func isEndOfFunction(bytes []byte) bool {
 
 func isStartOfIf(bytes []byte) bool {
 	return bytes[0] == 0x25
+}
+
+func isEndOfIf(bytes []byte) bool {
+	return bytes[0] == 0x26
 }
 
 func isName(bytes []byte) bool {
