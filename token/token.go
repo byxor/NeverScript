@@ -100,7 +100,7 @@ func isStartOfIf(bytes []byte) bool {
 }
 
 func isEndOfIf(bytes []byte) bool {
-	return bytes[0] == 0x26
+	return bytes[0] == 0x28
 }
 
 func isName(bytes []byte) bool {
