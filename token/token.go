@@ -6,6 +6,8 @@ const (
 	EndOfFile Token = iota
 	EndOfLine
 
+	Assignment
+
 	StartOfStruct
 	EndOfStruct
 
@@ -35,6 +37,7 @@ const (
 var constructors = []constructor{
 	{isEndOfFile, EndOfFile},
 	{isEndOfLine, EndOfLine},
+	{isAssignment, Assignment},
 	{isStartOfStruct, StartOfStruct},
 	{isEndOfStruct, EndOfStruct},
 	{isStartOfArray, StartOfArray},
@@ -80,6 +83,7 @@ var isStartOfStruct = singleByte(0x03)
 var isEndOfStruct = singleByte(0x04)
 var isStartOfArray = singleByte(0x05)
 var isEndOfArray = singleByte(0x06)
+var isAssignment = singleByte(0x07)
 var isStartOfFunction = singleByte(0x23)
 var isEndOfFunction = singleByte(0x24)
 var isStartOfIf = singleByte(0x25)
