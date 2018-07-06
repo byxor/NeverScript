@@ -4,7 +4,6 @@ type Token int
 
 const (
 	EndOfFile Token = iota
-
 	EndOfLine
 
 	StartOfStruct
@@ -16,8 +15,9 @@ const (
 	StartOfFunction
 	EndOfFunction
 
-	Name
+	StartOfIf
 
+	Name
 	Integer
 
 	Invalid
@@ -31,6 +31,7 @@ var constructors = []constructor{
 	{isEndOfStruct, EndOfStruct},
 	{isStartOfArray, StartOfArray},
 	{isEndOfArray, EndOfArray},
+	{isStartOfIf, StartOfIf},
 	{isName, Name},
 	{isInteger, Integer},
 	{isStartOfFunction, StartOfFunction},
@@ -88,6 +89,10 @@ func isStartOfFunction(bytes []byte) bool {
 
 func isEndOfFunction(bytes []byte) bool {
 	return bytes[0] == 0x24
+}
+
+func isStartOfIf(bytes []byte) bool {
+	return bytes[0] == 0x25
 }
 
 func isName(bytes []byte) bool {

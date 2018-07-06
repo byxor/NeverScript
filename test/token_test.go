@@ -43,6 +43,8 @@ func TestExtractingTokens(t *testing.T) {
 
 		{[]byte{0x23}, token.StartOfFunction},
 		{[]byte{0x24}, token.EndOfFunction},
+
+		{[]byte{0x25}, token.StartOfIf},
 	}
 
 	for _, entry := range entries {
