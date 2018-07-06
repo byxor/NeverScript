@@ -116,6 +116,20 @@ func TestExtractingMultipleTokens(t *testing.T) {
 			[]byte{0x01, 0x00},
 			[]token.Token{token.EndOfLine, token.EndOfFile},
 		},
+		{
+			[]byte{
+				0x17, 0x00, 0x00, 0x00, 0x00,
+				0x17, 0x01, 0x00, 0x00, 0x00,
+			},
+			[]token.Token{token.Integer, token.Integer},
+		},
+		{
+			[]byte{
+				0x16, 0xFF, 0x00, 0x00, 0xDD,
+				0x2B, 0x11, 0x11, 0x11, 0x11, 0x68, 0x69, 0x00,
+			},
+			[]token.Token{token.Name, token.ChecksumTableEntry},
+		},
 	}
 
 	for _, entry := range entries {
