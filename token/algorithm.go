@@ -5,7 +5,7 @@ func GetTokens(tokens chan Token, bytes []byte) {
 		close(tokens)
 		return
 	}
-	
+
 	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
 
 		chunk := bytes[:chunkSize]
@@ -21,42 +21,6 @@ func GetTokens(tokens chan Token, bytes []byte) {
 
 	tokens <- Invalid
 }
-
-type Token int
-
-const (
-	EndOfFile Token = iota
-	EndOfLine
-	Assignment
-	Subtraction
-	Addition
-	Division
-	Multiplication
-	EqualityCheck
-	LessThanCheck
-	LessThanOrEqualCheck
-	GreaterThanCheck
-	GreaterThanOrEqualCheck
-	StartOfStruct
-	EndOfStruct
-	StartOfArray
-	EndOfArray
-	StartOfFunction
-	EndOfFunction
-	Return
-	Break
-	StartOfIf
-	Else
-	ElseIf
-	EndOfIf
-	Integer
-	Float
-	Name
-	ChecksumTableEntry
-	Invalid
-)
-
-// -----------------------------
 
 type constructor struct {
 	token    Token
