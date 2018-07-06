@@ -51,12 +51,14 @@ func GetTokens(tokens chan Token, bytes []byte) {
 		tokens <- None
 		return
 	}
+
 	for _, c := range constructors {
 		if c.function(bytes) {
 			tokens <- c.token
 			return
 		}
 	}
+
 	tokens <- Invalid
 }
 
