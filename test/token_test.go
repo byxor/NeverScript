@@ -8,7 +8,9 @@ import (
 )
 
 func TestChannelIsClosedWhenThereAreNoMoreTokens(t *testing.T) {
-	{   // Example 1, empty input
+
+	// Example 1, empty input
+	{   
 		tokens := make(chan token.Token)
 
 		go token.GetTokens(tokens, []byte{})
@@ -17,22 +19,17 @@ func TestChannelIsClosedWhenThereAreNoMoreTokens(t *testing.T) {
 
 		assert.Equal(t, false, more)
 	}
-	{   // Example 2, non-empty input
+
+	// Example 2, non-empty input
+	{   
 		tokens := make(chan token.Token)
 		input := []byte{0x00, 0x00, 0x00}
 
 		go token.GetTokens(tokens, input)
 
 		for i := 0; i <= len(input); i++ {
+			expectingMore := i < len(input)
 			_, more := read(tokens)
-
-			var expectingMore bool
-			if i >= len(input) {
-				expectingMore = false
-			} else {
-				expectingMore = true
-			}
-
 			assert.Equal(t, expectingMore, more)
 		}
 	}
