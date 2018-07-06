@@ -14,7 +14,7 @@ func TestExtractingTokens(t *testing.T) {
 	}
 
 	entries := []Entry{
-		{[]byte{}, token.Invalid},
+		{[]byte{}, token.None},
 
 		{[]byte{0x00}, token.EndOfFile},
 		{[]byte{0x01}, token.EndOfLine},
