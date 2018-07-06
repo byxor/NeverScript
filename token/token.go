@@ -9,6 +9,7 @@ const (
 	Assignment
 	Subtraction
 	Addition
+	Division
 
 	StartOfStruct
 	EndOfStruct
@@ -42,6 +43,7 @@ var constructors = []constructor{
 	{isAssignment, Assignment},
 	{isSubtraction, Subtraction},
 	{isAddition, Addition},
+	{isDivision, Division},
 	{isStartOfStruct, StartOfStruct},
 	{isEndOfStruct, EndOfStruct},
 	{isStartOfArray, StartOfArray},
@@ -97,6 +99,7 @@ var isEndOfIf = singleByte(0x28)
 var isReturn = singleByte(0x29)
 var isSubtraction = singleByte(0x0A)
 var isAddition = singleByte(0x0B)
+var isDivision = singleByte(0x0C)
 
 func isName(bytes []byte) bool {
 	return singleByte(0x16)(bytes) && len(bytes) == 5
