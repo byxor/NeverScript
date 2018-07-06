@@ -15,6 +15,7 @@ const (
 	EqualityCheck
 	LessThanCheck
 	LessThanOrEqualCheck
+	GreaterThanCheck
 
 	StartOfStruct
 	EndOfStruct
@@ -49,6 +50,7 @@ var constructors = []constructor{
 	{isEqualityCheck, EqualityCheck},
 	{isLessThanCheck, LessThanCheck},
 	{isLessThanOrEqualCheck, LessThanOrEqualCheck},
+	{isGreaterThanCheck, GreaterThanCheck},
 	{isSubtraction, Subtraction},
 	{isAddition, Addition},
 	{isDivision, Division},
@@ -113,6 +115,7 @@ var isMultiplication = singleByte(0x0D)
 var isEqualityCheck = singleByte(0x11)
 var isLessThanCheck = singleByte(0x12)
 var isLessThanOrEqualCheck = singleByte(0x13)
+var isGreaterThanCheck = singleByte(0x14)
 
 func isName(bytes []byte) bool {
 	return singleByte(0x16)(bytes) && len(bytes) == 5
