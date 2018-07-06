@@ -14,6 +14,7 @@ const (
 	EndOfArray
 
 	StartOfFunction
+	EndOfFunction
 
 	Name
 
@@ -33,6 +34,7 @@ var constructors = []constructor{
 	{isName, Name},
 	{isInteger, Integer},
 	{isStartOfFunction, StartOfFunction},
+	{isEndOfFunction, EndOfFunction},
 }
 
 func GetTokens(tokens chan Token, bytes []byte) {
@@ -82,6 +84,10 @@ func isEndOfArray(bytes []byte) bool {
 
 func isStartOfFunction(bytes []byte) bool {
 	return bytes[0] == 0x23
+}
+
+func isEndOfFunction(bytes []byte) bool {
+	return bytes[0] == 0x24
 }
 
 func isName(bytes []byte) bool {
