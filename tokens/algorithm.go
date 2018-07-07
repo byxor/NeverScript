@@ -79,6 +79,7 @@ var constructors = []constructor{
 	{EndOfSwitch, requirePrefix(0x3D)},
 	{SwitchCase, requirePrefix(0x3E)},
 	{NamespaceAccess, requirePrefix(0x42)},
+	{OptimisedIf, requirePrefixAndLength(0x47, 3)},
 	{ShortJump, requirePrefixAndLength(0x49, 3)},
 	{Name, requirePrefixAndLength(0x16, 5)},
 	{Integer, requirePrefixAndLength(0x17, 5)},

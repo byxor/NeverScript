@@ -28,6 +28,7 @@ const (
 	Return
 	Break
 	StartOfIf
+	OptimisedIf
 	Else
 	ElseIf
 	EndOfIf
