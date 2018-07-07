@@ -6,6 +6,7 @@ const (
 	EndOfFile Token = iota
 	EndOfLine
 	Assignment
+	LocalReference
 	Subtraction
 	Addition
 	Division

@@ -50,6 +50,8 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x27}, token.ElseIf},
 		{[]byte{0x28}, token.EndOfIf},
 
+		{[]byte{0x2D}, token.LocalReference},
+
 		{[]byte{0x07}, token.Assignment},
 
 		{[]byte{0x0A}, token.Subtraction},
