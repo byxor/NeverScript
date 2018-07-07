@@ -34,7 +34,6 @@ func TestChannelIsClosedUponReceivingInvalidToken(t *testing.T) {
 	readOneFrom(tokenChannel)
 	_, more := readOneFrom(tokenChannel)
 	assert.False(t, more)
-
 }
 
 func TestExtractingTokens(t *testing.T) {

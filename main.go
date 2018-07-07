@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/byxor/qbd/tokens"
+	"github.com/fatih/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,14 +17,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("DECOMPILING!")
+	fmt.Println("Starting decompilation...")
 
 	tokenChannel := make(chan tokens.Token)
 	go tokens.Extract(tokenChannel, bytes)
 
 	for token := range tokenChannel {
-		fmt.Println(token)
+		color.Green(token.String())
 	}
 
-	fmt.Println("DONE!")
+	fmt.Println("Stopped decompilation.")
 }

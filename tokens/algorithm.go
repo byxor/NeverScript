@@ -2,7 +2,8 @@ package tokens
 
 import (
 	"encoding/hex"
-	"log"
+	"fmt"
+	"github.com/fatih/color"
 )
 
 func Extract(tokenChannel chan Token, bytes []byte) {
@@ -15,6 +16,11 @@ func Extract(tokenChannel chan Token, bytes []byte) {
 
 	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
 		chunk = bytes[:chunkSize]
+
+		if chunkSize >= 50 {
+			break
+		}
+
 		for _, c := range constructors {
 			if c.function(chunk) {
 				tokenChannel <- c.token
@@ -24,7 +30,8 @@ func Extract(tokenChannel chan Token, bytes []byte) {
 		}
 	}
 
-	log.Printf("Invalid chunk:\n%s", hex.Dump(chunk))
+	color.Yellow(fmt.Sprintf("Unrecognised chunk:\n%s", hex.Dump(chunk)))
+
 	tokenChannel <- Invalid
 	close(tokenChannel)
 }
