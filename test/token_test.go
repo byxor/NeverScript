@@ -11,7 +11,7 @@ func TestChannelIsClosedWhenThereAreNoBytes(t *testing.T) {
 	tokens := make(chan token.Token)
 	go token.GetTokens(tokens, []byte{})
 	_, more := readOneFrom(tokens)
-	assert.Equal(t, false, more)
+	assert.False(t, more)
 }
 
 func TestChannelIsClosedWhenFinished(t *testing.T) {
@@ -25,6 +25,16 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 		_, more := readOneFrom(tokens)
 		assert.Equal(t, expectingMore, more)
 	}
+}
+
+func TestChannelIsClosedUponReceivingInvalidToken(t *testing.T) {
+	tokens := make(chan token.Token)
+	input := []byte{0x16, 0x00}
+	go token.GetTokens(tokens, input)
+	readOneFrom(tokens)
+	_, more := readOneFrom(tokens)
+	assert.False(t, more)
+
 }
 
 func TestExtractingTokens(t *testing.T) {

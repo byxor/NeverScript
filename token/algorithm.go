@@ -33,6 +33,7 @@ func GetTokens(tokens chan Token, bytes []byte) {
 
 	log.Println("Invalid chunk!")
 	tokens <- Invalid
+	close(tokens)
 }
 
 type constructor struct {
