@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestChannelIsClosedWhenInputIsEmpty(t *testing.T) {
+func TestChannelIsClosedWhenThereAreNoBytes(t *testing.T) {
 	tokens := make(chan token.Token)
 	go token.GetTokens(tokens, []byte{})
 	_, more := readOneFrom(tokens)
@@ -122,7 +122,8 @@ func TestExtractingMultipleTokens(t *testing.T) {
 		{[]byte{0x01, 0x01}, []token.Token{token.EndOfLine, token.EndOfLine}},
 		{[]byte{0x01, 0x00}, []token.Token{token.EndOfLine, token.EndOfFile}},
 
-		{[]byte{0x01, 0x01, 0x01}, []token.Token{token.EndOfLine, token.EndOfLine, token.EndOfLine}},
+		{[]byte{0x01, 0x01, 0x01},
+			[]token.Token{token.EndOfLine, token.EndOfLine, token.EndOfLine}},
 
 		{[]byte{
 			0x17, 0x00, 0x00, 0x00, 0x00,

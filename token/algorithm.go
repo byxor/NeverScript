@@ -1,5 +1,10 @@
 package token
 
+import (
+	"encoding/hex"
+	"log"
+)
+
 func GetTokens(tokens chan Token, bytes []byte) {
 	if len(bytes) == 0 {
 		close(tokens)
@@ -8,10 +13,17 @@ func GetTokens(tokens chan Token, bytes []byte) {
 
 	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
 
+		if chunkSize > 40 {
+			break
+		}
+
 		chunk := bytes[:chunkSize]
+
+		log.Printf("Checking chunk:\n%s", hex.Dump(chunk))
 
 		for _, c := range constructors {
 			if c.function(chunk) {
+				log.Printf("Got token: %d\n", c.token)
 				tokens <- c.token
 				GetTokens(tokens, bytes[chunkSize:])
 				return
@@ -19,6 +31,7 @@ func GetTokens(tokens chan Token, bytes []byte) {
 		}
 	}
 
+	log.Println("Invalid chunk!")
 	tokens <- Invalid
 }
 
