@@ -31,6 +31,7 @@ const (
 	Integer
 	Float
 	Name
+	WeirdThing
 	ChecksumTableEntry
 	Invalid
 )

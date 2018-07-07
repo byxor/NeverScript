@@ -36,7 +36,7 @@ func Extract(tokenChannel chan Token, bytes []byte) {
 		}
 	}
 
-	color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s", hex.Dump(chunk)))
+	color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(chunk)))
 
 	tokenChannel <- Invalid
 	close(tokenChannel)
@@ -75,6 +75,7 @@ var constructors = []constructor{
 	{ElseIf, requirePrefix(0x27)},
 	{EndOfIf, requirePrefix(0x28)},
 	{Return, requirePrefix(0x29)},
+	{WeirdThing, requirePrefix(0x42)},
 	{Name, requirePrefixAndLength(0x16, 5)},
 	{Integer, requirePrefixAndLength(0x17, 5)},
 	{Float, requirePrefixAndLength(0x1A, 5)},

@@ -86,6 +86,8 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x2B, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00}, tokens.ChecksumTableEntry},
 		{[]byte{0x2B, 0x11, 0x22, 0x33, 0x44, 0x43, 0x6F, 0x63, 0x6B, 0x00}, tokens.ChecksumTableEntry},
 
+		{[]byte{0x42}, tokens.WeirdThing},
+
 		// Invalid names (not enough bytes)
 		{[]byte{0x16, 0x00, 0x00, 0x00}, tokens.Invalid},
 		{[]byte{0x16, 0x11, 0x22}, tokens.Invalid},
@@ -121,7 +123,7 @@ func TestExtractingTokens(t *testing.T) {
 		tokenChannel := make(chan tokens.Token)
 		go tokens.Extract(tokenChannel, entry.bytes)
 		token, _ := readOneFrom(tokenChannel)
-		assert.Equal(t, entry.expected, token)
+		assert.Equal(t, entry.expected.String(), token.String())
 	}
 }
 
@@ -159,7 +161,7 @@ func TestExtractingMultipleTokens(t *testing.T) {
 
 		for _, expected := range entry.output {
 			token, _ := readOneFrom(tokenChannel)
-			assert.Equal(t, expected, token)
+			assert.Equal(t, expected.String(), token.String())
 		}
 	}
 }
