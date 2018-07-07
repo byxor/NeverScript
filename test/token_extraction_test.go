@@ -90,7 +90,7 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x3D}, tokens.EndOfSwitch},
 		{[]byte{0x3E}, tokens.SwitchCase},
 
-		{[]byte{0x42}, tokens.WeirdThing},
+		{[]byte{0x42}, tokens.NamespaceAccess},
 
 		{[]byte{0x49, 0x00, 0x00}, tokens.ShortJump},
 

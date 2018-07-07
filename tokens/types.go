@@ -36,7 +36,7 @@ const (
 	Name
 	ShortJump
 	ChecksumTableEntry
-	WeirdThing
+	NamespaceAccess
 	Invalid
 )
 
