@@ -95,6 +95,9 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x47, 0x00, 0x00}, tokens.OptimisedIf},
 		{[]byte{0x47, 0xDE, 0xAD}, tokens.OptimisedIf},
 
+		{[]byte{0x48, 0x00, 0x00}, tokens.OptimisedElse},
+		{[]byte{0x48, 0xDE, 0xAD}, tokens.OptimisedElse},
+
 		{[]byte{0x49, 0x00, 0x00}, tokens.ShortJump},
 		{[]byte{0x49, 0xBE, 0xEF}, tokens.ShortJump},
 
@@ -135,6 +138,10 @@ func TestExtractingTokens(t *testing.T) {
 		// Invalid optimised if (not enough bytes)
 		{[]byte{0x47, 0x11}, tokens.Invalid},
 		{[]byte{0x47}, tokens.Invalid},
+
+		// Invalid optimised else (not enough bytes)
+		{[]byte{0x48, 0xFE}, tokens.Invalid},
+		{[]byte{0x48}, tokens.Invalid},
 	}
 
 	for _, entry := range entries {

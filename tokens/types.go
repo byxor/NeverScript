@@ -28,10 +28,11 @@ const (
 	Return
 	Break
 	StartOfIf
-	OptimisedIf
 	Else
 	ElseIf
 	EndOfIf
+	OptimisedIf
+	OptimisedElse
 	Integer
 	Float
 	Name
