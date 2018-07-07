@@ -87,6 +87,7 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x2B, 0x11, 0x22, 0x33, 0x44, 0x43, 0x6F, 0x63, 0x6B, 0x00}, tokens.ChecksumTableEntry},
 
 		{[]byte{0x3C}, tokens.StartOfSwitch},
+		{[]byte{0x3D}, tokens.EndOfSwitch},
 
 		{[]byte{0x42}, tokens.WeirdThing},
 

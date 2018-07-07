@@ -21,6 +21,7 @@ const (
 	StartOfArray
 	EndOfArray
 	StartOfSwitch
+	EndOfSwitch
 	StartOfFunction
 	EndOfFunction
 	Return

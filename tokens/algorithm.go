@@ -76,6 +76,7 @@ var constructors = []constructor{
 	{EndOfIf, requirePrefix(0x28)},
 	{Return, requirePrefix(0x29)},
 	{StartOfSwitch, requirePrefix(0x3C)},
+	{EndOfSwitch, requirePrefix(0x3D)},
 	{WeirdThing, requirePrefix(0x42)},
 	{Name, requirePrefixAndLength(0x16, 5)},
 	{Integer, requirePrefixAndLength(0x17, 5)},
