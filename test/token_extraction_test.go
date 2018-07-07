@@ -92,6 +92,8 @@ func TestExtractingTokens(t *testing.T) {
 
 		{[]byte{0x42}, tokens.WeirdThing},
 
+		{[]byte{0x49, 0x00, 0x00}, tokens.ShortJump},
+
 		// Invalid names (not enough bytes)
 		{[]byte{0x16, 0x00, 0x00, 0x00}, tokens.Invalid},
 		{[]byte{0x16, 0x11, 0x22}, tokens.Invalid},
@@ -121,6 +123,10 @@ func TestExtractingTokens(t *testing.T) {
 		// Invalid checksum table entries (not null-terminated)
 		{[]byte{0x2B, 0x11, 0x22, 0x33, 0x44, 0x43, 0x6F, 0x63, 0x6B}, tokens.Invalid},
 		{[]byte{0x2B, 0x00, 0xAA, 0xEE, 0xFF, 0x01, 0x02, 0x03}, tokens.Invalid},
+
+		// Invalid shortjump (not enough bytes)
+		{[]byte{0x49, 0x00}, tokens.Invalid},
+		{[]byte{0x49}, tokens.Invalid},
 	}
 
 	for _, entry := range entries {

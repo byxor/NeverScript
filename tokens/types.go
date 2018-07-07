@@ -34,8 +34,9 @@ const (
 	Integer
 	Float
 	Name
-	WeirdThing
+	ShortJump
 	ChecksumTableEntry
+	WeirdThing
 	Invalid
 )
 
