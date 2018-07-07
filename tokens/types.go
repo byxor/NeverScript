@@ -22,6 +22,7 @@ const (
 	EndOfArray
 	StartOfSwitch
 	EndOfSwitch
+	SwitchCase
 	StartOfFunction
 	EndOfFunction
 	Return
