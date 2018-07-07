@@ -21,8 +21,7 @@ func main() {
 	tokenChannel := make(chan tokens.Token)
 	go tokens.Extract(tokenChannel, bytes)
 
-	for token := range tokenChannel {
-		token = token
+	for range tokenChannel {
 	}
 
 	fmt.Println("Stopped decompilation.")
