@@ -18,11 +18,17 @@ func Extract(tokenChannel chan Token, bytes []byte) {
 		chunk = bytes[:chunkSize]
 
 		if chunkSize >= 50 {
+			color.Yellow("Giving up...")
 			break
 		}
 
 		for _, c := range constructors {
 			if c.function(chunk) {
+
+				color.Green(c.token.String())
+				color.White(hex.Dump(chunk))
+				color.White("")
+
 				tokenChannel <- c.token
 				Extract(tokenChannel, bytes[chunkSize:])
 				return
@@ -30,7 +36,7 @@ func Extract(tokenChannel chan Token, bytes []byte) {
 		}
 	}
 
-	color.Yellow(fmt.Sprintf("Unrecognised chunk:\n%s", hex.Dump(chunk)))
+	color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s", hex.Dump(chunk)))
 
 	tokenChannel <- Invalid
 	close(tokenChannel)
