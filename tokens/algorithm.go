@@ -1,39 +1,32 @@
-package token
+package tokens
 
 import (
 	"encoding/hex"
 	"log"
 )
 
-func GetTokens(tokens chan Token, bytes []byte) {
+func Extract(tokenChannel chan Token, bytes []byte) {
 	if len(bytes) == 0 {
-		close(tokens)
+		close(tokenChannel)
 		return
 	}
 
+	var chunk []byte
+
 	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
-
-		if chunkSize > 40 {
-			break
-		}
-
-		chunk := bytes[:chunkSize]
-
-		log.Printf("Checking chunk:\n%s", hex.Dump(chunk))
-
+		chunk = bytes[:chunkSize]
 		for _, c := range constructors {
 			if c.function(chunk) {
-				log.Printf("Got token: %d\n", c.token)
-				tokens <- c.token
-				GetTokens(tokens, bytes[chunkSize:])
+				tokenChannel <- c.token
+				Extract(tokenChannel, bytes[chunkSize:])
 				return
 			}
 		}
 	}
 
-	log.Println("Invalid chunk!")
-	tokens <- Invalid
-	close(tokens)
+	log.Printf("Invalid chunk:\n%s", hex.Dump(chunk))
+	tokenChannel <- Invalid
+	close(tokenChannel)
 }
 
 type constructor struct {

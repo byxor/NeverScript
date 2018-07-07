@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/byxor/qbd/token"
+	"github.com/byxor/qbd/tokens"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,11 +18,11 @@ func main() {
 
 	fmt.Println("DECOMPILING!")
 
-	tokens := make(chan token.Token)
-	go token.GetTokens(tokens, bytes)
+	tokenChannel := make(chan tokens.Token)
+	go tokens.Extract(tokenChannel, bytes)
 
 	for {
-		token, more := <-tokens
+		token, more := <-tokenChannel
 		fmt.Println(more)
 		if more {
 			fmt.Println(token)
