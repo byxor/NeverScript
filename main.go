@@ -21,14 +21,8 @@ func main() {
 	tokenChannel := make(chan tokens.Token)
 	go tokens.Extract(tokenChannel, bytes)
 
-	for {
-		token, more := <-tokenChannel
-		fmt.Println(more)
-		if more {
-			fmt.Println(token)
-		} else {
-			break
-		}
+	for token := range tokenChannel {
+		fmt.Println(token)
 	}
 
 	fmt.Println("DONE!")

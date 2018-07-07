@@ -16,12 +16,12 @@ func TestChannelIsClosedWhenThereAreNoBytes(t *testing.T) {
 
 func TestChannelIsClosedWhenFinished(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
-	input := []byte{0x00, 0x00, 0x00}
+	bytes := []byte{0x00, 0x00, 0x00}
 
-	go tokens.Extract(tokenChannel, input)
+	go tokens.Extract(tokenChannel, bytes)
 
-	for i := 0; i <= len(input); i++ {
-		expectingMore := i < len(input)
+	for i := 0; i <= len(bytes); i++ {
+		expectingMore := i < len(bytes)
 		_, more := readOneFrom(tokenChannel)
 		assert.Equal(t, expectingMore, more)
 	}
@@ -29,8 +29,8 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 
 func TestChannelIsClosedUponReceivingInvalidToken(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
-	input := []byte{0x16, 0x00}
-	go tokens.Extract(tokenChannel, input)
+	bytes := []byte{0x16, 0x00}
+	go tokens.Extract(tokenChannel, bytes)
 	readOneFrom(tokenChannel)
 	_, more := readOneFrom(tokenChannel)
 	assert.False(t, more)
@@ -128,7 +128,7 @@ func TestExtractingTokens(t *testing.T) {
 
 func TestExtractingMultipleTokens(t *testing.T) {
 	entries := []struct {
-		input  []byte
+		bytes  []byte
 		output []tokens.Token
 	}{
 		{[]byte{0x01, 0x01}, []tokens.Token{tokens.EndOfLine, tokens.EndOfLine}},
@@ -156,7 +156,7 @@ func TestExtractingMultipleTokens(t *testing.T) {
 
 	for _, entry := range entries {
 		tokenChannel := make(chan tokens.Token)
-		go tokens.Extract(tokenChannel, entry.input)
+		go tokens.Extract(tokenChannel, entry.bytes)
 
 		for _, expected := range entry.output {
 			token, _ := readOneFrom(tokenChannel)
