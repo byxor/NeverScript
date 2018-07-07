@@ -20,6 +20,7 @@ const (
 	EndOfStruct
 	StartOfArray
 	EndOfArray
+	StartOfSwitch
 	StartOfFunction
 	EndOfFunction
 	Return

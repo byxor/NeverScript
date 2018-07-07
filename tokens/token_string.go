@@ -4,9 +4,9 @@ package tokens
 
 import "strconv"
 
-const _Token_name = "EndOfFileEndOfLineAssignmentLocalReferenceSubtractionAdditionDivisionMultiplicationEqualityCheckLessThanCheckLessThanOrEqualCheckGreaterThanCheckGreaterThanOrEqualCheckStartOfStructEndOfStructStartOfArrayEndOfArrayStartOfFunctionEndOfFunctionReturnBreakStartOfIfElseElseIfEndOfIfIntegerFloatNameWeirdThingChecksumTableEntryInvalid"
+const _Token_name = "EndOfFileEndOfLineAssignmentLocalReferenceSubtractionAdditionDivisionMultiplicationEqualityCheckLessThanCheckLessThanOrEqualCheckGreaterThanCheckGreaterThanOrEqualCheckStartOfStructEndOfStructStartOfArrayEndOfArrayStartOfSwitchStartOfFunctionEndOfFunctionReturnBreakStartOfIfElseElseIfEndOfIfIntegerFloatNameWeirdThingChecksumTableEntryInvalid"
 
-var _Token_index = [...]uint16{0, 9, 18, 28, 42, 53, 61, 69, 83, 96, 109, 129, 145, 168, 181, 192, 204, 214, 229, 242, 248, 253, 262, 266, 272, 279, 286, 291, 295, 305, 323, 330}
+var _Token_index = [...]uint16{0, 9, 18, 28, 42, 53, 61, 69, 83, 96, 109, 129, 145, 168, 181, 192, 204, 214, 227, 242, 255, 261, 266, 275, 279, 285, 292, 299, 304, 308, 318, 336, 343}
 
 func (i Token) String() string {
 	if i < 0 || i >= Token(len(_Token_index)-1) {
