@@ -11,6 +11,7 @@ const (
 	Addition
 	Division
 	Multiplication
+	Not
 	EqualityCheck
 	LessThanCheck
 	LessThanOrEqualCheck

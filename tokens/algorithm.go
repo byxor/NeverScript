@@ -75,6 +75,7 @@ var constructors = []constructor{
 	{ElseIf, requirePrefix(0x27)},
 	{EndOfIf, requirePrefix(0x28)},
 	{Return, requirePrefix(0x29)},
+	{Not, requirePrefix(0x39)},
 	{StartOfSwitch, requirePrefix(0x3C)},
 	{EndOfSwitch, requirePrefix(0x3D)},
 	{SwitchCase, requirePrefix(0x3E)},
