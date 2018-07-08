@@ -89,6 +89,7 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x3C}, tokens.StartOfSwitch},
 		{[]byte{0x3D}, tokens.EndOfSwitch},
 		{[]byte{0x3E}, tokens.SwitchCase},
+		{[]byte{0x3F}, tokens.DefaultSwitchCase},
 
 		{[]byte{0x42}, tokens.NamespaceAccess},
 

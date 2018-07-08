@@ -23,6 +23,7 @@ const (
 	StartOfSwitch
 	EndOfSwitch
 	SwitchCase
+	DefaultSwitchCase
 	StartOfFunction
 	EndOfFunction
 	Return
