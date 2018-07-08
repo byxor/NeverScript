@@ -121,6 +121,5 @@ func isLocalString(bytes []byte) bool {
 		return false
 	}
 	stringLength := int(binary.LittleEndian.Uint32(bytes[1:headerLength]))
-	fmt.Println(stringLength, "!!!!!!!!!!!!!")
 	return requirePrefixAndLength(0x1C, headerLength+stringLength)(bytes)
 }
