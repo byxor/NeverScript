@@ -90,6 +90,18 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x1A, 0x33}, tokens.Invalid},
 		{[]byte{0x1A}, tokens.Invalid},
 
+		{[]byte{0x1C, 0x00, 0x00, 0x00, 0x00}, tokens.LocalString},
+		{[]byte{0x1C, 0x01, 0x00, 0x00, 0x00, 0xFF}, tokens.LocalString},
+		{[]byte{0x1C, 0x02, 0x00, 0x00, 0x00, 0xF0, 0x0D}, tokens.LocalString},
+		// Invalid local strings (not enough bytes for string length)
+		{[]byte{0x1C, 0x00, 0x00, 0x00}, tokens.Invalid},
+		{[]byte{0x1C, 0x00, 0x00}, tokens.Invalid},
+		{[]byte{0x1C, 0x00}, tokens.Invalid},
+		{[]byte{0x1C}, tokens.Invalid},
+		// Invalid local strings (not enough bytes in string)
+		{[]byte{0x1C, 0x01, 0x00, 0x00, 0x00}, tokens.Invalid},
+		{[]byte{0x1C, 0x05, 0x00, 0x00, 0x00, 0xEE, 0xEE, 0xEE, 0xEE}, tokens.Invalid},
+
 		{[]byte{0x23}, tokens.StartOfFunction},
 		{[]byte{0x24}, tokens.EndOfFunction},
 		{[]byte{0x29}, tokens.Return},
@@ -150,6 +162,7 @@ func TestExtractingTokens(t *testing.T) {
 		go tokens.Extract(tokenChannel, entry.bytes)
 		token, _ := readOneFrom(tokenChannel)
 		assert.Equal(t, entry.expected.String(), token.String())
+		// assert.False(t, more)
 	}
 }
 

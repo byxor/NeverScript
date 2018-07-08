@@ -9,6 +9,7 @@ const (
 	Assignment
 	LocalReference
 	AllLocalReferences
+	LocalString
 	Subtraction
 	Addition
 	Division

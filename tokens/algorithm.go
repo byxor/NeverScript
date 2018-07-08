@@ -1,6 +1,7 @@
 package tokens
 
 import (
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"github.com/fatih/color"
@@ -92,12 +93,7 @@ var constructors = []constructor{
 	{Integer, requirePrefixAndLength(0x17, 5)},
 	{Float, requirePrefixAndLength(0x1A, 5)},
 	{ChecksumTableEntry, isCheckSumTableEntry},
-}
-
-func isCheckSumTableEntry(bytes []byte) bool {
-	isLongEnough := len(bytes) > 6
-	isNullTerminated := bytes[len(bytes)-1] == 0
-	return requirePrefix(0x2B)(bytes) && isLongEnough && isNullTerminated
+	{LocalString, isLocalString},
 }
 
 func requirePrefixAndLength(prefix byte, length int) func([]byte) bool {
@@ -110,4 +106,21 @@ func requirePrefix(n byte) func([]byte) bool {
 	return func(bytes []byte) bool {
 		return bytes[0] == n
 	}
+}
+
+func isCheckSumTableEntry(bytes []byte) bool {
+	isLongEnough := len(bytes) > 6
+	isNullTerminated := bytes[len(bytes)-1] == 0
+	return requirePrefix(0x2B)(bytes) && isLongEnough && isNullTerminated
+}
+
+func isLocalString(bytes []byte) bool {
+	const headerLength = 5
+	length := len(bytes)
+	if length < headerLength {
+		return false
+	}
+	stringLength := int(binary.LittleEndian.Uint32(bytes[1:headerLength]))
+	fmt.Println(stringLength, "!!!!!!!!!!!!!")
+	return requirePrefixAndLength(0x1C, headerLength+stringLength)(bytes)
 }
