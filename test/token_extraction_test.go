@@ -10,8 +10,7 @@ import (
 func TestChannelIsClosedWhenThereAreNoBytes(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
 	go tokens.Extract(tokenChannel, []byte{})
-	_, more := readOneFrom(tokenChannel)
-	assert.False(t, more)
+	assertThereIsNothingLeft(t, tokenChannel)
 }
 
 func TestChannelIsClosedWhenFinished(t *testing.T) {
@@ -162,7 +161,7 @@ func TestExtractingTokens(t *testing.T) {
 		go tokens.Extract(tokenChannel, entry.bytes)
 		token, _ := readOneFrom(tokenChannel)
 		assert.Equal(t, entry.expected.String(), token.String())
-		// assert.False(t, more)
+		assertThereIsNothingLeft(t, tokenChannel)
 	}
 }
 
@@ -212,4 +211,9 @@ func readOneFrom(tokens chan tokens.Token) (token tokens.Token, more bool) {
 	case <-time.After(3 * time.Second):
 		panic("Timed out while reading tokens...")
 	}
+}
+
+func assertThereIsNothingLeft(t *testing.T, tokenChannel chan tokens.Token) {
+	_, more := readOneFrom(tokenChannel)
+	assert.False(t, more)
 }
