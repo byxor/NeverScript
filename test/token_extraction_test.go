@@ -68,6 +68,9 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x0C}, tokens.Division},
 		{[]byte{0x0D}, tokens.Multiplication},
 
+		{[]byte{0x0E}, tokens.StartOfExpression},
+		{[]byte{0x0F}, tokens.EndOfExpression},
+
 		{[]byte{0x11}, tokens.EqualityCheck},
 		{[]byte{0x12}, tokens.LessThanCheck},
 		{[]byte{0x13}, tokens.LessThanOrEqualCheck},

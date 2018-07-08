@@ -17,6 +17,8 @@ const (
 	LessThanOrEqualCheck
 	GreaterThanCheck
 	GreaterThanOrEqualCheck
+	StartOfExpression
+	EndOfExpression
 	StartOfStruct
 	EndOfStruct
 	StartOfArray
