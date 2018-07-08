@@ -7,6 +7,7 @@ const (
 	EndOfLine
 	Assignment
 	LocalReference
+	AllLocalReferences
 	Subtraction
 	Addition
 	Division

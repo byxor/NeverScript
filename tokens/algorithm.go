@@ -75,6 +75,7 @@ var constructors = []constructor{
 	{ElseIf, requirePrefix(0x27)},
 	{EndOfIf, requirePrefix(0x28)},
 	{Return, requirePrefix(0x29)},
+	{AllLocalReferences, requirePrefix(0x2C)},
 	{Not, requirePrefix(0x39)},
 	{StartOfExpression, requirePrefix(0x0E)},
 	{EndOfExpression, requirePrefix(0x0F)},
