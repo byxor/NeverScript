@@ -57,6 +57,7 @@ var constructors = []constructor{
 	{StartOfArray, requirePrefix(0x05)},
 	{EndOfArray, requirePrefix(0x06)},
 	{Assignment, requirePrefix(0x07)},
+	{Comma, requirePrefix(0x09)},
 	{LocalReference, requirePrefix(0x2D)},
 	{EqualityCheck, requirePrefix(0x11)},
 	{LessThanCheck, requirePrefix(0x12)},

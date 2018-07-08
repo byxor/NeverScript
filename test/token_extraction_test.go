@@ -48,20 +48,9 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x05}, tokens.StartOfArray},
 		{[]byte{0x06}, tokens.EndOfArray},
 
-		{[]byte{0x23}, tokens.StartOfFunction},
-		{[]byte{0x24}, tokens.EndOfFunction},
-		{[]byte{0x29}, tokens.Return},
-
-		{[]byte{0x22}, tokens.Break},
-
-		{[]byte{0x25}, tokens.StartOfIf},
-		{[]byte{0x26}, tokens.Else},
-		{[]byte{0x27}, tokens.ElseIf},
-		{[]byte{0x28}, tokens.EndOfIf},
-
-		{[]byte{0x2D}, tokens.LocalReference},
-
 		{[]byte{0x07}, tokens.Assignment},
+
+		{[]byte{0x09}, tokens.Comma},
 
 		{[]byte{0x0A}, tokens.Subtraction},
 		{[]byte{0x0B}, tokens.Addition},
@@ -86,10 +75,22 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x1A, 0x00, 0x00, 0x00, 0x00}, tokens.Float},
 		{[]byte{0x1A, 0x12, 0x34, 0x56, 0x78}, tokens.Float},
 
+		{[]byte{0x23}, tokens.StartOfFunction},
+		{[]byte{0x24}, tokens.EndOfFunction},
+		{[]byte{0x29}, tokens.Return},
+
+		{[]byte{0x22}, tokens.Break},
+
+		{[]byte{0x25}, tokens.StartOfIf},
+		{[]byte{0x26}, tokens.Else},
+		{[]byte{0x27}, tokens.ElseIf},
+		{[]byte{0x28}, tokens.EndOfIf},
+
 		{[]byte{0x2B, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00}, tokens.ChecksumTableEntry},
 		{[]byte{0x2B, 0x11, 0x22, 0x33, 0x44, 0x43, 0x6F, 0x63, 0x6B, 0x00}, tokens.ChecksumTableEntry},
 
 		{[]byte{0x2C}, tokens.AllLocalReferences},
+		{[]byte{0x2D}, tokens.LocalReference},
 
 		{[]byte{0x39}, tokens.Not},
 

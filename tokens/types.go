@@ -5,6 +5,7 @@ type Token int
 const (
 	EndOfFile Token = iota
 	EndOfLine
+	Comma
 	Assignment
 	LocalReference
 	AllLocalReferences
