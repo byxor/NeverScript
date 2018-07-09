@@ -50,6 +50,7 @@ const (
 	Float
 	Name
 	ShortJump
+	LongJump
 	ChecksumTableEntry
 	NamespaceAccess
 	Invalid

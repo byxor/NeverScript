@@ -105,13 +105,14 @@ var constructors = []constructor{
 	{Integer, requirePrefixAndLength(0x17, 5)},
 	{Float, requirePrefixAndLength(0x1A, 5)},
 	{Pair, requirePrefixAndLength(0x1F, 9)},
+	{LongJump, requirePrefixAndLength(0x2E, 5)},
 	{OptimisedIf, requirePrefixAndLength(0x47, 3)},
 	{OptimisedElse, requirePrefixAndLength(0x48, 3)},
 	{ShortJump, requirePrefixAndLength(0x49, 3)},
 	{ChecksumTableEntry, isCheckSumTableEntry},
 	{String, isString},
 	{LocalString, isLocalString},
-	//	{ExecuteRandomBlock, isExecuteRandomBlock},
+	// {ExecuteRandomBlock, isExecuteRandomBlock},
 }
 
 func requirePrefixAndLength(prefix byte, length int) func([]byte) bool {
@@ -150,21 +151,26 @@ func hasStringComponent(bytes []byte) bool {
 	return length == headerLength+stringLength
 }
 
-// func isExecuteRandomBlock(bytes []byte) bool {
+// func isExecuteRandomBlock(chunk []byte) bool {
 // 	prefixLength := 1
 
-// 	numberOfBlocks := int(binary.LittleEndian.Uint32(bytes[prefixLength : prefixLength+4]))
+// 	numberOfBlocks := int(binary.LittleEndian.Uint32(chunk[prefixLength : prefixLength+4]))
 
 // 	weightSectionLength := 2 * numberOfBlocks
 // 	offsetSectionLength := 4 * numberOfBlocks
 // 	headerLength := prefixLength + weightSectionLength + offsetSectionLength
 
-// 	firstOffsetBytes := bytes[headerLength-offsetSectionLength : headerLength-offsetSectionLength+4]
+// 	firstOffsetBytes := chunk[headerLength-offsetSectionLength : headerLength-offsetSectionLength+4]
 // 	firstOffset := binary.LittleEndian.Uint32(firstOffsetBytes)
-// 	firstCodeBlock := bytes[firstOffset:]
+// 	firstCodeBlock := chunk[firstOffset:]
 
-// 	tokenChannel := make(chan Token)
-// 	go ExtractTokens(tokenChannel, firstCodeBlock)
+// 	var nextChunk := chunk
+// 	for {
+// 		token, subChunk, gotOne := searchForToken(nextChunk)
+
+// 		if token == LongJump
+
+// 	}
 
 // 	expectedLength := 1 + weightSectionLength
 

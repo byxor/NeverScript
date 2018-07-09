@@ -4,9 +4,9 @@ package tokens
 
 import "strconv"
 
-const _Token_name = "EndOfFileEndOfLineCommaAssignmentLocalReferenceAllLocalReferencesStringLocalStringPairWhileRepeatBreakAndSubtractionAdditionDivisionMultiplicationNotEqualityCheckLessThanCheckLessThanOrEqualCheckGreaterThanCheckGreaterThanOrEqualCheckStartOfExpressionEndOfExpressionStartOfStructEndOfStructStartOfArrayEndOfArrayStartOfSwitchEndOfSwitchSwitchCaseDefaultSwitchCaseStartOfFunctionEndOfFunctionReturnStartOfIfElseElseIfEndOfIfOptimisedIfOptimisedElseIntegerFloatNameShortJumpChecksumTableEntryNamespaceAccessInvalid"
+const _Token_name = "EndOfFileEndOfLineCommaAssignmentLocalReferenceAllLocalReferencesStringLocalStringPairWhileRepeatBreakAndSubtractionAdditionDivisionMultiplicationNotEqualityCheckLessThanCheckLessThanOrEqualCheckGreaterThanCheckGreaterThanOrEqualCheckExecuteRandomBlockStartOfExpressionEndOfExpressionStartOfStructEndOfStructStartOfArrayEndOfArrayStartOfSwitchEndOfSwitchSwitchCaseDefaultSwitchCaseStartOfFunctionEndOfFunctionReturnStartOfIfElseElseIfEndOfIfOptimisedIfOptimisedElseIntegerFloatNameShortJumpLongJumpChecksumTableEntryNamespaceAccessInvalid"
 
-var _Token_index = [...]uint16{0, 9, 18, 23, 33, 47, 65, 71, 82, 86, 91, 97, 102, 105, 116, 124, 132, 146, 149, 162, 175, 195, 211, 234, 251, 266, 279, 290, 302, 312, 325, 336, 346, 363, 378, 391, 397, 406, 410, 416, 423, 434, 447, 454, 459, 463, 472, 490, 505, 512}
+var _Token_index = [...]uint16{0, 9, 18, 23, 33, 47, 65, 71, 82, 86, 91, 97, 102, 105, 116, 124, 132, 146, 149, 162, 175, 195, 211, 234, 252, 269, 284, 297, 308, 320, 330, 343, 354, 364, 381, 396, 409, 415, 424, 428, 434, 441, 452, 465, 472, 477, 481, 490, 498, 516, 531, 538}
 
 func (i Token) String() string {
 	if i < 0 || i >= Token(len(_Token_index)-1) {

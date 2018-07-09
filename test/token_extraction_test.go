@@ -156,6 +156,14 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x2C}, tokens.AllLocalReferences},
 		{[]byte{0x2D}, tokens.LocalReference},
 
+		{[]byte{0x2E, 0x00, 0x00, 0x00, 0x00}, tokens.LongJump},
+		{[]byte{0x2E, 0xF3, 0x3D, 0xB0, 0x0B}, tokens.LongJump},
+		// Invalid longjump (not enough bytes)
+		{[]byte{0x2E, 0x11, 0x22, 0x33}, tokens.Invalid},
+		{[]byte{0x2E, 0x11, 0x22}, tokens.Invalid},
+		{[]byte{0x2E, 0x11}, tokens.Invalid},
+		{[]byte{0x2E}, tokens.Invalid},
+
 		// // ExecuteRandomBlock (very complicated)
 		// {[]byte{
 		// 	0x2F,
