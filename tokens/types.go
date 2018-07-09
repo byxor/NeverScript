@@ -11,6 +11,7 @@ const (
 	AllLocalReferences
 	String
 	LocalString
+	Pair
 	Subtraction
 	Addition
 	Division

@@ -92,6 +92,7 @@ var constructors = []constructor{
 	{Name, requirePrefixAndLength(0x16, 5)},
 	{Integer, requirePrefixAndLength(0x17, 5)},
 	{Float, requirePrefixAndLength(0x1A, 5)},
+	{Pair, requirePrefixAndLength(0x1F, 9)},
 	{ChecksumTableEntry, isCheckSumTableEntry},
 	{String, isString},
 	{LocalString, isLocalString},
