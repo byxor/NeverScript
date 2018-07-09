@@ -156,6 +156,7 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x2C}, tokens.AllLocalReferences},
 		{[]byte{0x2D}, tokens.LocalReference},
 
+		{[]byte{0x33}, tokens.And},
 		{[]byte{0x39}, tokens.Not},
 
 		{[]byte{0x3C}, tokens.StartOfSwitch},

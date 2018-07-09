@@ -15,6 +15,7 @@ const (
 	While
 	Repeat
 	Break
+	And
 	Subtraction
 	Addition
 	Division
