@@ -13,6 +13,8 @@ const (
 	LocalString
 	Pair
 	While
+	Repeat
+	Break
 	Subtraction
 	Addition
 	Division
@@ -36,7 +38,6 @@ const (
 	StartOfFunction
 	EndOfFunction
 	Return
-	Break
 	StartOfIf
 	Else
 	ElseIf
