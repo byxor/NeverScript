@@ -111,18 +111,11 @@ func isExecuteRandomBlock(chunk []byte) bool {
 
 	chunkLength := len(chunk)
 
-	if chunkLength < 1 {
-		// fmt.Println("doesn't have any bytes")
+	if chunkLength < 5 {
 		return false
 	}
 
 	if chunk[0] != 0x2f {
-		// fmt.Println("doesn't have prefix")
-		return false
-	}
-
-	if chunkLength < 5 {
-		// fmt.Println("doesn't have numOfBlocks")
 		return false
 	}
 
@@ -136,7 +129,6 @@ func isExecuteRandomBlock(chunk []byte) bool {
 	firstOffsetLocation := headerLength - offsetSectionLength
 
 	if chunkLength < firstOffsetLocation+4 {
-		// fmt.Println("doesnt have firstOffset")
 		return false
 	}
 
