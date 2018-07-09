@@ -69,6 +69,7 @@ var constructors = []constructor{
 	{Addition, requirePrefix(0x0B)},
 	{Division, requirePrefix(0x0C)},
 	{Multiplication, requirePrefix(0x0D)},
+	{While, requirePrefix(0x20)},
 	{Break, requirePrefix(0x22)},
 	{StartOfFunction, requirePrefix(0x23)},
 	{EndOfFunction, requirePrefix(0x24)},

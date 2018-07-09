@@ -12,6 +12,7 @@ const (
 	String
 	LocalString
 	Pair
+	While
 	Subtraction
 	Addition
 	Division

@@ -126,6 +126,8 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x1F, 0x12}, tokens.Invalid},
 		{[]byte{0x1F}, tokens.Invalid},
 
+		{[]byte{0x20}, tokens.While},
+
 		{[]byte{0x23}, tokens.StartOfFunction},
 		{[]byte{0x24}, tokens.EndOfFunction},
 		{[]byte{0x29}, tokens.Return},
