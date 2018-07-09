@@ -93,6 +93,7 @@ var constructors = []constructor{
 	{Integer, requirePrefixAndLength(0x17, 5)},
 	{Float, requirePrefixAndLength(0x1A, 5)},
 	{ChecksumTableEntry, isCheckSumTableEntry},
+	{String, isString},
 	{LocalString, isLocalString},
 }
 
@@ -115,11 +116,19 @@ func isCheckSumTableEntry(bytes []byte) bool {
 }
 
 func isLocalString(bytes []byte) bool {
+	return hasStringComponent(bytes) && requirePrefix(0x1C)(bytes)
+}
+
+func isString(bytes []byte) bool {
+	return hasStringComponent(bytes) && requirePrefix(0x1B)(bytes)
+}
+
+func hasStringComponent(bytes []byte) bool {
 	const headerLength = 5
 	length := len(bytes)
 	if length < headerLength {
 		return false
 	}
 	stringLength := int(binary.LittleEndian.Uint32(bytes[1:headerLength]))
-	return requirePrefixAndLength(0x1C, headerLength+stringLength)(bytes)
+	return length == headerLength+stringLength
 }
