@@ -105,78 +105,80 @@ func hasStringComponent(bytes []byte) bool {
 	return length == headerLength+stringLength
 }
 
-// func isExecuteRandomBlock(chunk []byte) bool {
+func isExecuteRandomBlock(chunk []byte) bool {
 
-// 	fmt.Println("\n\n\n\nisExecuteRandomBlock\n", hex.Dump(chunk))
+	prefixLength := 1
 
-// 	prefixLength := 1
+	chunkLength := len(chunk)
 
-// 	chunkLength := len(chunk)
+	if chunkLength < 1 {
+		// fmt.Println("doesn't have any bytes")
+		return false
+	}
 
-// 	if chunkLength < 1 {
-// 		// fmt.Println("doesn't have any bytes")
-// 		return false
-// 	}
+	if chunk[0] != 0x2f {
+		// fmt.Println("doesn't have prefix")
+		return false
+	}
 
-// 	if chunk[0] != 0x2f {
-// 		// fmt.Println("doesn't have prefix")
-// 		return false
-// 	}
+	if chunkLength < 5 {
+		// fmt.Println("doesn't have numOfBlocks")
+		return false
+	}
 
-// 	if chunkLength < 5 {
-// 		// fmt.Println("doesn't have numOfBlocks")
-// 		return false
-// 	}
+	numberOfBlocksLength := 4
+	numberOfBlocks := int(binary.LittleEndian.Uint32(chunk[prefixLength : prefixLength+numberOfBlocksLength]))
 
-// 	numberOfBlocksLength := 4
-// 	numberOfBlocks := int(binary.LittleEndian.Uint32(chunk[prefixLength : prefixLength+numberOfBlocksLength]))
+	weightSectionLength := 2 * numberOfBlocks
+	offsetSectionLength := 4 * numberOfBlocks
+	headerLength := prefixLength + numberOfBlocksLength + weightSectionLength + offsetSectionLength
 
-// 	weightSectionLength := 2 * numberOfBlocks
-// 	offsetSectionLength := 4 * numberOfBlocks
-// 	headerLength := prefixLength + numberOfBlocksLength + weightSectionLength + offsetSectionLength
+	firstOffsetLocation := headerLength - offsetSectionLength
 
-// 	firstOffsetLocation := headerLength - offsetSectionLength
+	if chunkLength < firstOffsetLocation+4 {
+		// fmt.Println("doesnt have firstOffset")
+		return false
+	}
 
-// 	if chunkLength < firstOffsetLocation+4 {
-// 		// fmt.Println("doesnt have firstOffset")
-// 		return false
-// 	}
+	firstOffsetBytes := chunk[firstOffsetLocation : firstOffsetLocation+4]
+	firstOffset := int(binary.LittleEndian.Uint32(firstOffsetBytes))
 
-// 	firstOffsetBytes := chunk[firstOffsetLocation : firstOffsetLocation+4]
-// 	firstOffset := int(binary.LittleEndian.Uint32(firstOffsetBytes))
+	firstCodeBlockOffset := firstOffsetLocation + firstOffset + 4
+	if chunkLength <= firstCodeBlockOffset {
+		// fmt.Println("doesn't have firstCodeBlock", firstCodeBlockOffset)
+		return false
+	}
+	fmt.Println("\n\n\n\nisExecuteRandomBlock\n", hex.Dump(chunk))
 
-// 	firstCodeBlockOffset := firstOffsetLocation + firstOffset + 4
-// 	if chunkLength <= firstCodeBlockOffset {
-// 		// fmt.Println("doesn't have firstCodeBlock", firstCodeBlockOffset)
-// 		return false
-// 	}
-// 	fmt.Println("HAS firstCodeBlock", firstCodeBlockOffset)
+	firstCodeBlock := chunk[firstCodeBlockOffset:]
 
-// 	firstCodeBlock := chunk[firstCodeBlockOffset:]
+	fmt.Println("FIRST CODE BLOCK\n", hex.Dump(firstCodeBlock))
 
-// 	fmt.Println("FIRST CODE BLOCK\n", hex.Dump(firstCodeBlock))
+	nextChunk := firstCodeBlock
+	distanceTravelled := 0
+	longJumpParameter := 0
+	for {
+		fmt.Println("NEXT CHUNK\n", hex.Dump(nextChunk))
+		token, subChunk, gotOne := searchForToken(nextChunk)
+		distanceTravelled += len(subChunk)
+		if gotOne {
+			if token == LongJump {
+				fmt.Println("HOLY SHIT WE FOUND A LONGJUMP")
+				longJumpParameter = int(binary.LittleEndian.Uint32(subChunk[1:]))
+				break
+			}
+			fmt.Println("Took away a", token.String(), "\n", "")
+		} else {
+			return false
+		}
+		nextChunk = firstCodeBlock[distanceTravelled:]
+	}
 
-// 	nextChunk := firstCodeBlock
-// 	distanceTravelled := 0
-// 	firstCodeBlockJumpOffset := 0
-// 	for {
-// 		fmt.Println("NEXT CHUNK\n", hex.Dump(nextChunk))
-// 		token, subChunk, gotOne := searchForToken(nextChunk)
-// 		distanceTravelled += len(subChunk)
-// 		if gotOne {
-// 			if token == LongJump {
-// 				firstCodeBlockJumpOffset = int(binary.LittleEndian.Uint32(subChunk))
-// 			}
-// 		} else {
-// 			return false
-// 		}
-// 		nextChunk = firstCodeBlock[distanceTravelled:]
-// 	}
+	expectedLength := firstCodeBlockOffset + distanceTravelled + longJumpParameter
+	fmt.Println(firstCodeBlockOffset, distanceTravelled, longJumpParameter)
 
-// 	expectedLength := 1 + headerLength + firstOffset + firstCodeBlockJumpOffset
-
-// 	return requirePrefixAndLength(0x2F, expectedLength)(chunk)
-// }
+	return requirePrefixAndLength(0x2F, expectedLength)(chunk)
+}
 
 var singleByteConstructors = []constructor{
 	{EndOfFile, requirePrefix(0x00)},
@@ -234,6 +236,6 @@ func init() {
 		{ChecksumTableEntry, isCheckSumTableEntry},
 		{String, isString},
 		{LocalString, isLocalString},
-		// {ExecuteRandomBlock, isExecuteRandomBlock},
+		{ExecuteRandomBlock, isExecuteRandomBlock},
 	}
 }
