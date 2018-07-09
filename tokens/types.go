@@ -26,6 +26,7 @@ const (
 	LessThanOrEqualCheck
 	GreaterThanCheck
 	GreaterThanOrEqualCheck
+	ExecuteRandomBlock
 	StartOfExpression
 	EndOfExpression
 	StartOfStruct

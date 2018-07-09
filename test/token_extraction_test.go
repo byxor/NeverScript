@@ -156,6 +156,26 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x2C}, tokens.AllLocalReferences},
 		{[]byte{0x2D}, tokens.LocalReference},
 
+		// // ExecuteRandomBlock (very complicated)
+		// {[]byte{
+		// 	0x2F,
+		// 	0x02, 0x00, 0x00, 0x00, // number of code blocks
+		// 	0x01, 0x00, // weight of 1st code block
+		// 	0x01, 0x00, // weight of 2nd code block
+		// 	0x04, 0x00, 0x00, 0x00, // offset to 1st code block
+		// 	0x10, 0x00, 0x00, 0x00, // offset to 2nd code block
+
+		// 	0x16, 0xFF, 0xFF, 0xFF, 0xFF, // 1st code block
+		// 	0x07,                         // ...
+		// 	0x17, 0x01, 0x00, 0x00, 0x00, // ...
+		// 	0x2E, 0x0B, 0x00, 0x00, 0x00, // jump to end
+
+		// 	0x16, 0xFF, 0xFF, 0xFF, 0xFF, // 2nd code block
+		// 	0x07,                         // ...
+		// 	0x17, 0x01, 0x00, 0x00, 0x00, // ...
+		// 	// no jump (already at the end)
+		// }, tokens.ExecuteRandomBlock},
+
 		{[]byte{0x33}, tokens.And},
 		{[]byte{0x39}, tokens.Not},
 

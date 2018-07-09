@@ -7,40 +7,52 @@ import (
 	"github.com/fatih/color"
 )
 
-func Extract(tokenChannel chan Token, bytes []byte) {
-	if len(bytes) == 0 {
+func Extract(tokenChannel chan Token, chunk []byte) {
+	if len(chunk) == 0 {
 		close(tokenChannel)
 		return
 	}
 
-	var chunk []byte
+	token, subChunk, gotOne := searchForToken(chunk)
+	if gotOne {
+		color.Green(token.String())
+		color.White(hex.Dump(subChunk) + "\n")
 
-	for chunkSize := 1; chunkSize <= len(bytes); chunkSize++ {
-		chunk = bytes[:chunkSize]
+		tokenChannel <- token
+		nextChunk := chunk[len(subChunk):]
+		Extract(tokenChannel, nextChunk)
+	} else {
+		color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(subChunk)))
+		tokenChannel <- Invalid
+		close(tokenChannel)
+	}
+}
 
-		if chunkSize >= 50 {
+func searchForToken(chunk []byte) (token Token, subChunk []byte, gotOne bool) {
+	for subChunkSize := 1; subChunkSize <= len(chunk); subChunkSize++ {
+		if subChunkSize >= 100 {
 			color.Yellow("Giving up...")
 			break
 		}
 
-		for _, c := range constructors {
-			if c.function(chunk) {
+		subChunk := chunk[:subChunkSize]
 
-				color.Green(c.token.String())
-				color.White(hex.Dump(chunk))
-				color.White("")
-
-				tokenChannel <- c.token
-				Extract(tokenChannel, bytes[chunkSize:])
-				return
-			}
+		token, gotOne := checkIfChunkRepresentsToken(subChunk)
+		if gotOne {
+			return token, subChunk, gotOne
 		}
 	}
 
-	color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(chunk)))
+	return Invalid, chunk, false
+}
 
-	tokenChannel <- Invalid
-	close(tokenChannel)
+func checkIfChunkRepresentsToken(chunk []byte) (token Token, gotOne bool) {
+	for _, c := range constructors {
+		if c.function(chunk) {
+			return c.token, true
+		}
+	}
+	return Invalid, false
 }
 
 type constructor struct {
@@ -99,6 +111,7 @@ var constructors = []constructor{
 	{ChecksumTableEntry, isCheckSumTableEntry},
 	{String, isString},
 	{LocalString, isLocalString},
+	//	{ExecuteRandomBlock, isExecuteRandomBlock},
 }
 
 func requirePrefixAndLength(prefix byte, length int) func([]byte) bool {
@@ -136,3 +149,24 @@ func hasStringComponent(bytes []byte) bool {
 	stringLength := int(binary.LittleEndian.Uint32(bytes[1:headerLength]))
 	return length == headerLength+stringLength
 }
+
+// func isExecuteRandomBlock(bytes []byte) bool {
+// 	prefixLength := 1
+
+// 	numberOfBlocks := int(binary.LittleEndian.Uint32(bytes[prefixLength : prefixLength+4]))
+
+// 	weightSectionLength := 2 * numberOfBlocks
+// 	offsetSectionLength := 4 * numberOfBlocks
+// 	headerLength := prefixLength + weightSectionLength + offsetSectionLength
+
+// 	firstOffsetBytes := bytes[headerLength-offsetSectionLength : headerLength-offsetSectionLength+4]
+// 	firstOffset := binary.LittleEndian.Uint32(firstOffsetBytes)
+// 	firstCodeBlock := bytes[firstOffset:]
+
+// 	tokenChannel := make(chan Token)
+// 	go ExtractTokens(tokenChannel, firstCodeBlock)
+
+// 	expectedLength := 1 + weightSectionLength
+
+// 	hasPrefix := requirePrefix(0x2F)(bytes)
+// }
