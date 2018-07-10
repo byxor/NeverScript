@@ -107,15 +107,16 @@ func hasStringComponent(bytes []byte) bool {
 
 func isExecuteRandomBlock(chunk []byte) bool {
 
+	prefix := byte(0x2F)
 	prefixLength := 1
+
+	if chunk[0] != prefix {
+		return false
+	}
 
 	chunkLength := len(chunk)
 
 	if chunkLength < 5 {
-		return false
-	}
-
-	if chunk[0] != 0x2f {
 		return false
 	}
 
@@ -128,38 +129,27 @@ func isExecuteRandomBlock(chunk []byte) bool {
 
 	firstOffsetLocation := headerLength - offsetSectionLength
 
-	if chunkLength < firstOffsetLocation+4 {
-		return false
-	}
-
 	firstOffsetBytes := chunk[firstOffsetLocation : firstOffsetLocation+4]
 	firstOffset := int(binary.LittleEndian.Uint32(firstOffsetBytes))
 
 	firstCodeBlockOffset := firstOffsetLocation + firstOffset + 4
 	if chunkLength <= firstCodeBlockOffset {
-		// fmt.Println("doesn't have firstCodeBlock", firstCodeBlockOffset)
 		return false
 	}
-	fmt.Println("\n\n\n\nisExecuteRandomBlock\n", hex.Dump(chunk))
 
 	firstCodeBlock := chunk[firstCodeBlockOffset:]
-
-	fmt.Println("FIRST CODE BLOCK\n", hex.Dump(firstCodeBlock))
 
 	nextChunk := firstCodeBlock
 	distanceTravelled := 0
 	longJumpParameter := 0
 	for {
-		fmt.Println("NEXT CHUNK\n", hex.Dump(nextChunk))
 		token, subChunk, gotOne := searchForToken(nextChunk)
 		distanceTravelled += len(subChunk)
 		if gotOne {
 			if token == LongJump {
-				fmt.Println("HOLY SHIT WE FOUND A LONGJUMP")
 				longJumpParameter = int(binary.LittleEndian.Uint32(subChunk[1:]))
 				break
 			}
-			fmt.Println("Took away a", token.String(), "\n", "")
 		} else {
 			return false
 		}
@@ -169,7 +159,7 @@ func isExecuteRandomBlock(chunk []byte) bool {
 	expectedLength := firstCodeBlockOffset + distanceTravelled + longJumpParameter
 	fmt.Println(firstCodeBlockOffset, distanceTravelled, longJumpParameter)
 
-	return requirePrefixAndLength(0x2F, expectedLength)(chunk)
+	return requirePrefixAndLength(prefix, expectedLength)(chunk)
 }
 
 var singleByteConstructors = []constructor{
