@@ -101,7 +101,7 @@ func hasStringComponent(bytes []byte) bool {
 	if length < headerLength {
 		return false
 	}
-	stringLength := int(binary.LittleEndian.Uint32(bytes[1:headerLength]))
+	stringLength := readInt32(bytes[1:headerLength])
 	return length == headerLength+stringLength
 }
 
@@ -220,4 +220,8 @@ func init() {
 		{LocalString, isLocalString},
 		{ExecuteRandomBlock, isExecuteRandomBlock},
 	}
+}
+
+func readInt32(bytes []byte) int {
+	return int(binary.LittleEndian.Uint32(bytes))
 }
