@@ -2,9 +2,6 @@ package tokens
 
 import (
 	"encoding/binary"
-	"encoding/hex"
-	"fmt"
-	"github.com/fatih/color"
 )
 
 func ExtractAll(tokenChannel chan Token, chunk []byte) {
@@ -13,13 +10,10 @@ func ExtractAll(tokenChannel chan Token, chunk []byte) {
 	} else {
 		token, gotOne := searchForToken(chunk)
 		if gotOne {
-			color.Green(token.Type.String())
-			color.White(hex.Dump(token.Chunk) + "\n")
 			tokenChannel <- token
 			nextChunk := chunk[len(token.Chunk):]
 			ExtractAll(tokenChannel, nextChunk)
 		} else {
-			color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(token.Chunk)))
 			tokenChannel <- Token{Invalid, token.Chunk}
 			close(tokenChannel)
 		}
