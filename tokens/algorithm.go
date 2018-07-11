@@ -7,38 +7,38 @@ import (
 	"github.com/fatih/color"
 )
 
-func Extract(tokenChannel chan Token, chunk []byte) {
+func ExtractAll(tokenChannel chan Token, chunk []byte) {
 	if len(chunk) == 0 {
 		close(tokenChannel)
 	} else {
-		token, subChunk, gotOne := searchForToken(chunk)
+		token, gotOne := searchForToken(chunk)
 		if gotOne {
-			color.Green(token.String())
-			color.White(hex.Dump(subChunk) + "\n")
+			color.Green(token.Type.String())
+			color.White(hex.Dump(token.Chunk) + "\n")
 			tokenChannel <- token
-			nextChunk := chunk[len(subChunk):]
-			Extract(tokenChannel, nextChunk)
+			nextChunk := chunk[len(token.Chunk):]
+			ExtractAll(tokenChannel, nextChunk)
 		} else {
-			color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(subChunk)))
-			tokenChannel <- Invalid
+			color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(token.Chunk)))
+			tokenChannel <- Token{Invalid, token.Chunk}
 			close(tokenChannel)
 		}
 	}
 }
 
-func searchForToken(chunk []byte) (token Token, subChunk []byte, gotOne bool) {
+func searchForToken(chunk []byte) (token Token, gotOne bool) {
 	for subChunkSize := 1; subChunkSize <= len(chunk); subChunkSize++ {
 		subChunk := chunk[:subChunkSize]
 
-		token, gotOne := checkIfChunkRepresentsToken(subChunk)
+		tokenType, gotOne := checkIfChunkRepresentsToken(subChunk)
 		if gotOne {
-			return token, subChunk, gotOne
+			return Token{tokenType, subChunk}, gotOne
 		}
 	}
-	return Invalid, chunk, false
+	return Token{Invalid, chunk}, false
 }
 
-func checkIfChunkRepresentsToken(chunk []byte) (token Token, gotOne bool) {
+func checkIfChunkRepresentsToken(chunk []byte) (tokenType TokenType, gotOne bool) {
 	var constructors []constructor
 
 	if len(chunk) == 1 {
@@ -49,7 +49,7 @@ func checkIfChunkRepresentsToken(chunk []byte) (token Token, gotOne bool) {
 
 	for _, c := range constructors {
 		if c.function(chunk) {
-			return c.token, true
+			return c.tokenType, true
 		}
 	}
 

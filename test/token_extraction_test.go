@@ -9,7 +9,7 @@ import (
 
 func TestChannelIsClosedWhenThereAreNoBytes(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
-	go tokens.Extract(tokenChannel, []byte{})
+	go tokens.ExtractAll(tokenChannel, []byte{})
 	assertThereIsNothingLeft(t, tokenChannel)
 }
 
@@ -17,7 +17,7 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
 	bytes := []byte{0x00, 0x00, 0x00}
 
-	go tokens.Extract(tokenChannel, bytes)
+	go tokens.ExtractAll(tokenChannel, bytes)
 
 	for i := 0; i <= len(bytes); i++ {
 		expectingMore := i < len(bytes)
@@ -29,7 +29,7 @@ func TestChannelIsClosedWhenFinished(t *testing.T) {
 func TestChannelIsClosedUponReceivingInvalidToken(t *testing.T) {
 	tokenChannel := make(chan tokens.Token)
 	bytes := []byte{0x16, 0x00}
-	go tokens.Extract(tokenChannel, bytes)
+	go tokens.ExtractAll(tokenChannel, bytes)
 	readOneFrom(tokenChannel)
 	_, more := readOneFrom(tokenChannel)
 	assert.False(t, more)
@@ -38,7 +38,7 @@ func TestChannelIsClosedUponReceivingInvalidToken(t *testing.T) {
 func TestExtractingTokens(t *testing.T) {
 	entries := []struct {
 		bytes    []byte
-		expected tokens.Token
+		expected tokens.TokenType
 	}{
 		{[]byte{0x00}, tokens.EndOfFile},
 		{[]byte{0x01}, tokens.EndOfLine},
@@ -367,9 +367,9 @@ func TestExtractingTokens(t *testing.T) {
 
 	for _, entry := range entries {
 		tokenChannel := make(chan tokens.Token)
-		go tokens.Extract(tokenChannel, entry.bytes)
+		go tokens.ExtractAll(tokenChannel, entry.bytes)
 		token, _ := readOneFrom(tokenChannel)
-		assert.Equal(t, entry.expected.String(), token.String())
+		assert.Equal(t, entry.expected.String(), token.Type.String())
 		assertThereIsNothingLeft(t, tokenChannel)
 	}
 }
@@ -377,38 +377,38 @@ func TestExtractingTokens(t *testing.T) {
 func TestExtractingMultipleTokens(t *testing.T) {
 	entries := []struct {
 		bytes  []byte
-		output []tokens.Token
+		output []tokens.TokenType
 	}{
-		{[]byte{0x01, 0x01}, []tokens.Token{tokens.EndOfLine, tokens.EndOfLine}},
-		{[]byte{0x01, 0x00}, []tokens.Token{tokens.EndOfLine, tokens.EndOfFile}},
+		{[]byte{0x01, 0x01}, []tokens.TokenType{tokens.EndOfLine, tokens.EndOfLine}},
+		{[]byte{0x01, 0x00}, []tokens.TokenType{tokens.EndOfLine, tokens.EndOfFile}},
 
 		{[]byte{0x01, 0x01, 0x01},
-			[]tokens.Token{tokens.EndOfLine, tokens.EndOfLine, tokens.EndOfLine}},
+			[]tokens.TokenType{tokens.EndOfLine, tokens.EndOfLine, tokens.EndOfLine}},
 
 		{[]byte{
 			0x17, 0x00, 0x00, 0x00, 0x00,
 			0x17, 0x01, 0x00, 0x00, 0x00,
-		}, []tokens.Token{tokens.Integer, tokens.Integer}},
+		}, []tokens.TokenType{tokens.Integer, tokens.Integer}},
 
 		{[]byte{
 			0x16, 0xFF, 0x00, 0x00, 0xDD,
 			0x2B, 0x11, 0x11, 0x11, 0x11, 0x68, 0x69, 0x00,
-		}, []tokens.Token{tokens.Name, tokens.ChecksumTableEntry}},
+		}, []tokens.TokenType{tokens.Name, tokens.ChecksumTableEntry}},
 
 		{[]byte{
 			0x01,
 			0x23,
 			0x16, 0x93, 0x4D, 0xCD, 0xA1,
-		}, []tokens.Token{tokens.EndOfLine, tokens.StartOfFunction, tokens.Name}},
+		}, []tokens.TokenType{tokens.EndOfLine, tokens.StartOfFunction, tokens.Name}},
 	}
 
 	for _, entry := range entries {
 		tokenChannel := make(chan tokens.Token)
-		go tokens.Extract(tokenChannel, entry.bytes)
+		go tokens.ExtractAll(tokenChannel, entry.bytes)
 
 		for _, expected := range entry.output {
 			token, _ := readOneFrom(tokenChannel)
-			assert.Equal(t, expected.String(), token.String())
+			assert.Equal(t, expected.String(), token.Type.String())
 		}
 	}
 }

@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Starting decompilation...")
 
 	tokenChannel := make(chan tokens.Token)
-	go tokens.Extract(tokenChannel, bytes)
+	go tokens.ExtractAll(tokenChannel, bytes)
 
 	for range tokenChannel {
 	}

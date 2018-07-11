@@ -50,12 +50,12 @@ func getExpectedLength(firstCodeBlock []byte, firstCodeBlockOffset int) (int, bo
 	distanceTravelled := 0
 	longJumpParameter := 0
 	for {
-		token, subChunk, gotOne := searchForToken(nextChunk)
-		distanceTravelled += len(subChunk)
+		token, gotOne := searchForToken(nextChunk)
+		distanceTravelled += len(token.Chunk)
 		nextChunk = firstCodeBlock[distanceTravelled:]
 		if gotOne {
-			if token == LongJump {
-				longJumpParameter = readInt32(subChunk[1:])
+			if token.Type == LongJump {
+				longJumpParameter = readInt32(token.Chunk[1:])
 				break
 			}
 		} else {

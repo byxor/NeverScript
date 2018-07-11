@@ -1,8 +1,8 @@
 package tokens
 
 type constructor struct {
-	token    Token
-	function func([]byte) bool
+	tokenType TokenType
+	function  func([]byte) bool
 }
 
 var singleByteConstructors []constructor
