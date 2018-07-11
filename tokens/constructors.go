@@ -56,6 +56,7 @@ func init() {
 		{Name, requirePrefixAndLength(0x16, 5)},
 		{Integer, requirePrefixAndLength(0x17, 5)},
 		{Float, requirePrefixAndLength(0x1A, 5)},
+		{Vector, requirePrefixAndLength(0x1E, 13)},
 		{Pair, requirePrefixAndLength(0x1F, 9)},
 		{LongJump, requirePrefixAndLength(0x2E, 5)},
 		{OptimisedIf, requirePrefixAndLength(0x47, 3)},

@@ -13,6 +13,7 @@ const (
 	String
 	LocalString
 	Pair
+	Vector
 	While
 	Repeat
 	Break
