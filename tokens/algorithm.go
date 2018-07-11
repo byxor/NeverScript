@@ -10,21 +10,19 @@ import (
 func Extract(tokenChannel chan Token, chunk []byte) {
 	if len(chunk) == 0 {
 		close(tokenChannel)
-		return
-	}
-
-	token, subChunk, gotOne := searchForToken(chunk)
-	if gotOne {
-		color.Green(token.String())
-		color.White(hex.Dump(subChunk) + "\n")
-
-		tokenChannel <- token
-		nextChunk := chunk[len(subChunk):]
-		Extract(tokenChannel, nextChunk)
 	} else {
-		color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(subChunk)))
-		tokenChannel <- Invalid
-		close(tokenChannel)
+		token, subChunk, gotOne := searchForToken(chunk)
+		if gotOne {
+			color.Green(token.String())
+			color.White(hex.Dump(subChunk) + "\n")
+			tokenChannel <- token
+			nextChunk := chunk[len(subChunk):]
+			Extract(tokenChannel, nextChunk)
+		} else {
+			color.Yellow(fmt.Sprintf("Unrecognised chunk\n%s\n", hex.Dump(subChunk)))
+			tokenChannel <- Invalid
+			close(tokenChannel)
+		}
 	}
 }
 

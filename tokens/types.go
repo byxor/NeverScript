@@ -15,12 +15,13 @@ const (
 	While
 	Repeat
 	Break
-	And
 	Subtraction
 	Addition
 	Division
 	Multiplication
 	Not
+	Or
+	And
 	EqualityCheck
 	LessThanCheck
 	LessThanOrEqualCheck

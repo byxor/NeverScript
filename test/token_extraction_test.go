@@ -287,6 +287,7 @@ func TestExtractingTokens(t *testing.T) {
 			0x17, 0x01, 0x00, 0x00, 0x00,
 		}, tokens.Invalid},
 
+		{[]byte{0x32}, tokens.Or},
 		{[]byte{0x33}, tokens.And},
 		{[]byte{0x39}, tokens.Not},
 
