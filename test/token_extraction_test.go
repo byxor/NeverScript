@@ -48,7 +48,7 @@ func TestExtractingTokens(t *testing.T) {
 		{[]byte{0x06}, tokens.EndOfArray},
 
 		{[]byte{0x07}, tokens.Assignment},
-
+		{[]byte{0x08}, tokens.Dot},
 		{[]byte{0x09}, tokens.Comma},
 
 		{[]byte{0x0A}, tokens.Subtraction},

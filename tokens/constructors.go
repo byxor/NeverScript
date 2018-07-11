@@ -17,6 +17,7 @@ func init() {
 		{StartOfArray, requirePrefix(0x05)},
 		{EndOfArray, requirePrefix(0x06)},
 		{Assignment, requirePrefix(0x07)},
+		{Dot, requirePrefix(0x08)},
 		{Comma, requirePrefix(0x09)},
 		{StartOfExpression, requirePrefix(0x0E)},
 		{EndOfExpression, requirePrefix(0x0F)},

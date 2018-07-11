@@ -6,6 +6,7 @@ const (
 	EndOfFile Token = iota
 	EndOfLine
 	Comma
+	Dot
 	Assignment
 	LocalReference
 	AllLocalReferences
