@@ -16,7 +16,7 @@ func GenerateUsing(tokens []Token) NameTable {
 	var table = make(internalTable)
 
 	for _, token := range tokens {
-		if token.Type == ChecksumTableEntry {
+		if token.Type == NameTableEntry {
 			checksum := hex.EncodeToString(reverse(token.Chunk[1:5]))
 			fmt.Println(checksum)
 			name := string(token.Chunk[5 : len(token.Chunk)-1])

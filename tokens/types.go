@@ -59,7 +59,7 @@ const (
 	Name
 	ShortJump
 	LongJump
-	ChecksumTableEntry
+	NameTableEntry
 	NamespaceAccess
 	Invalid
 )
