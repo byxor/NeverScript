@@ -5,7 +5,7 @@ import (
 	. "github.com/byxor/qbd/tokens"
 )
 
-func GenerateUsing(tokens []Token) NameTable {
+func BuildFrom(tokens []Token) NameTable {
 	var entries = make(internalTable)
 	for _, token := range tokens {
 		if token.Type == NameTableEntry {

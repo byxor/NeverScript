@@ -37,7 +37,7 @@ func TestTableGeneration(t *testing.T) {
 		{"ffffffff", "AirStats"},
 	}
 
-	nameTable := nametable.GenerateUsing(tokens)
+	nameTable := nametable.BuildFrom(tokens)
 
 	for _, entry := range entries {
 		name := nameTable.Get(entry.checksum)
@@ -53,9 +53,10 @@ func TestUnrecognisedChecksums(t *testing.T) {
 		{"00000000", "&00000000"},
 		{"11223344", "&11223344"},
 		{"abcdef12", "&abcdef12"},
+		{"ffeeffee", "&ffeeffee"},
 	}
 
-	nameTable := nametable.GenerateUsing([]Token{})
+	nameTable := nametable.BuildFrom([]Token{})
 
 	for _, entry := range entries {
 		assert.Equal(t, entry.expected, nameTable.Get(entry.checksum))
