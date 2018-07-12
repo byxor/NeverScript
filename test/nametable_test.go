@@ -50,10 +50,10 @@ func TestUnrecognisedChecksums(t *testing.T) {
 		checksum string
 		expected string
 	}{
-		{"00000000", "&00000000"},
-		{"11223344", "&11223344"},
-		{"abcdef12", "&abcdef12"},
-		{"ffeeffee", "&ffeeffee"},
+		{"00000000", "%00000000%"},
+		{"11223344", "%11223344%"},
+		{"abcdef12", "%abcdef12%"},
+		{"ffeeffee", "%ffeeffee%"},
 	}
 
 	nameTable := nametable.BuildFrom([]Token{})

@@ -7,6 +7,8 @@ import (
 	"testing"
 )
 
+const any = 0x00
+
 func TestSyntax(t *testing.T) {
 	entries := []struct {
 		tokens   []Token
@@ -22,9 +24,14 @@ func TestSyntax(t *testing.T) {
 		{[]Token{{EndOfLine, nil}, {EndOfLine, nil}, {EndOfLine, nil}}, ";"},
 
 		// Integers
-		{[]Token{{Integer, []byte{0x17, 0x00, 0x00, 0x00, 0x00}}}, "0"},
-		{[]Token{{Integer, []byte{0x17, 0x01, 0x00, 0x00, 0x00}}}, "1"},
-		{[]Token{{Integer, []byte{0x17, 0xFF, 0xFF, 0xFF, 0xFF}}}, "-1"},
+		{[]Token{{Integer, []byte{any, 0x00, 0x00, 0x00, 0x00}}}, "0"},
+		{[]Token{{Integer, []byte{any, 0x01, 0x00, 0x00, 0x00}}}, "1"},
+		{[]Token{{Integer, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}}}, "-1"},
+
+		// Unknown Names
+		{[]Token{{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}}}, "%11223344%"},
+		{[]Token{{Name, []byte{any, 0x12, 0x00, 0x00, 0x99}}}, "%12000099%"},
+		{[]Token{{Name, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}}}, "%ffffffff%"},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)

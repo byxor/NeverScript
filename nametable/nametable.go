@@ -25,6 +25,6 @@ func (nt NameTable) Get(checksum string) string {
 	if name, ok := nt.entries[checksum]; ok {
 		return name
 	} else {
-		return "&" + checksum
+		return "%" + checksum + "%"
 	}
 }
