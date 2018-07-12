@@ -89,7 +89,7 @@ func hasStringComponent(bytes []byte) bool {
 	if length < headerLength {
 		return false
 	}
-	stringLength := readInt32(bytes[1:headerLength])
+	stringLength := ReadInt32(bytes[1:headerLength])
 	return length == headerLength+stringLength
 }
 

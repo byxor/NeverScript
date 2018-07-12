@@ -20,14 +20,14 @@ func isExecuteRandomBlock(chunk []byte) bool {
 	}
 
 	const numberOfBlocksLength = 4
-	numberOfBlocks := readInt32(chunk[prefixLength : prefixLength+numberOfBlocksLength])
+	numberOfBlocks := ReadInt32(chunk[prefixLength : prefixLength+numberOfBlocksLength])
 
 	weightSectionLength := 2 * numberOfBlocks
 	offsetSectionLength := 4 * numberOfBlocks
 	headerLength := prefixLength + numberOfBlocksLength + weightSectionLength + offsetSectionLength
 
 	offsetSectionOffset := headerLength - offsetSectionLength
-	firstOffset := readInt32(chunk[offsetSectionOffset : offsetSectionOffset+4])
+	firstOffset := ReadInt32(chunk[offsetSectionOffset : offsetSectionOffset+4])
 
 	firstCodeBlockOffset := offsetSectionOffset + firstOffset + 4
 
@@ -55,7 +55,7 @@ func getExpectedLength(firstCodeBlock []byte, firstCodeBlockOffset int) (int, bo
 		nextChunk = firstCodeBlock[distanceTravelled:]
 		if gotOne {
 			if token.Type == LongJump {
-				longJumpParameter = readInt32(token.Chunk[1:])
+				longJumpParameter = ReadInt32(token.Chunk[1:])
 				break
 			}
 		} else {

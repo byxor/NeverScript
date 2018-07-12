@@ -50,6 +50,6 @@ func checkIfChunkRepresentsToken(chunk []byte) (tokenType TokenType, gotOne bool
 	return Invalid, false
 }
 
-func readInt32(bytes []byte) int {
-	return int(binary.LittleEndian.Uint32(bytes))
+func ReadInt32(bytes []byte) int {
+	return int(int32(binary.LittleEndian.Uint32(bytes)))
 }
