@@ -82,6 +82,22 @@ func TestSyntax(t *testing.T) {
 			{Name, []byte{any, 0x0A, 0x00, 0x00, 0x00}}},
 			"%09000000% - $%0a000000%",
 		},
+
+		// Division ------------------------------------------------------
+		{[]Token{
+			{Integer, []byte{any, 0xA0, 00, 00, 00}},
+			{Division, nil},
+			{Integer, []byte{any, 0x02, 00, 00, 00}}},
+			"160 / 2",
+		},
+		{[]Token{
+			{LocalReference, nil},
+			{Name, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}},
+			{Division, nil},
+			{Integer, []byte{any, 0x20, 00, 00, 00}},
+			{NameTableEntry, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x6E, 0x67, 0x6C, 0x65, 0x00}}},
+			"$angle / 32",
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
