@@ -8,11 +8,10 @@ import (
 )
 
 func GenerateUsing(tokens []Token) string {
-	cleanTokens := cleanUp(tokens)
-	return generateUsing(cleanTokens, nametable.BuildFrom(tokens))
+	return generateUsing(clean(tokens), nametable.BuildFrom(tokens))
 }
 
-func cleanUp(tokens []Token) []Token {
+func clean(tokens []Token) []Token {
 	cleanTokens := make([]Token, len(tokens))
 
 	cleanTokenCount := 0
@@ -49,12 +48,6 @@ var evaluators = map[TokenType]evaluator{
 	NameTableEntry: basicString(""),
 }
 
-func basicString(s string) evaluator {
-	return func([]byte, nametable.NameTable) string {
-		return s
-	}
-}
-
 func evaluateInteger(chunk []byte, nameTable nametable.NameTable) string {
 	return strconv.Itoa(ReadInt32(chunk[1:]))
 }
@@ -62,4 +55,10 @@ func evaluateInteger(chunk []byte, nameTable nametable.NameTable) string {
 func evaluateName(chunk []byte, nameTable nametable.NameTable) string {
 	checksum := hex.EncodeToString(chunk[1:])
 	return nameTable.Get(checksum)
+}
+
+func basicString(s string) evaluator {
+	return func([]byte, nametable.NameTable) string {
+		return s
+	}
 }

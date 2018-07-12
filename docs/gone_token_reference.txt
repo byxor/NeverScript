@@ -1,0 +1,100 @@
+//  Token,                // int,byte,          string,             blubs string,
+    Comment = -2,         //Multi-line comment  // or /**/          #/
+    Null = -1,            // -1
+    EndOfFile = 0,        // 0   0x00                               :end
+    EndOfLine,            // 1   0x01                               :i
+    EndOfLineNumbers,     // 2   0x02                               :u(????????)
+    StartStruct,          // 3   0x03           {                   :s{
+    EndStruct,            // 4   0x04           }                   :s}
+    StartArray,           // 5   0x05           [                   :a{
+    EndArray,             // 6   0x06           ]                   :a}
+    Equals,               // 7   0x07           =                   =
+    Dot,                  // 8   0x08           .                   ->
+    Comma,                // 9   0x09           ,                   ;
+    Minus,                // 10  0x0A           -                   -
+    Add,                  // 11  0x0B           +                   +
+    Divide,               // 12  0x0C           /                   /
+    Multiply,             // 13  0x0D           *                   *
+    OpenParenthesis,      // 14  0x0E           (                   (
+    CloseParenthesis,     // 15  0x0F           )                   )
+    SameAs,               // 17  0x11           ==                  N/A   ;the compiler translates to Equals
+    LessThan,             // 18  0x12           <                   <
+    LessThanEqual,        // 19  0x13           <=                  N/A   ;doesn't work in THUG1+; works in THPG
+    GreaterThan,          // 20  0x14           >                   >
+    GreaterThanEqual,     // 21  0x15           >=                  N/A   ;doesn't work in THUG1+; works in THPG
+    Name,                 // 22  0x16           name or #"na me"    $name$
+    Integer,              // 23  0x17           ?                   %i(?,????????)
+    HexInteger,           // 24  0x18           0x????????          N/A
+    Float,                // 26  0x1A           ?.?                 %f(?.??????)
+    String,               // 27  0x1B           ""                  %s(?,"")
+    LocalString,          // 28  0x1C           ''                  %sc(?,"")
+    Vector,               // 30  0x1E           (?.?,?.?,?.?)       %vec3(?.??????,?.??????,?.??????)
+    Pair,                 // 31  0x1F           (?.?,?.?)           %vec2(?.??????,?.??????)
+    While,                // 32  0x20           while               while
+    Repeat,               // 33  0x21           repeat              loop_to
+    Break,                // 34  0x22           break               continue
+    Script,               // 35  0x23           script              function
+    EndScript,            // 36  0x24           endscript           endfunction
+    If,                   // 37  0x25           if                  doIf
+    Else,                 // 38  0x26           else                doElse
+    ElseIf,               // 39  0x27           elseif              N/A   ;doesn't work in THUG1+; works in THPG
+    EndIf,                // 40  0x28           endif               endif
+    Return,               // 41  0x29           return              return
+    ChecksumName,         // 43  0x2B           Table entries never make it into the .q
+    AllArguments,         // 44  0x2C           <...>               isNull
+    Argument,             // 45  0x2D           <?>                 %GLOBAL%
+    LongJump,             // 46  0x2E           !See 0x58 below     break_to
+    Random,               // 47  0x2F           Random              select
+    RandomRange,          // 48  0x30           RandomRange         N/A
+    // Only used internally by the compiler, never appears in a .qb, used as the random item identifier.
+    KeywordAt,            // 49  0x31           @                   POS(?)
+    Or,                   // 50  0x32           || or OR            OR
+    And,                  // 51  0x33           && or AND           AND
+    Xor,                  // 52  0x34           ^| or XOR           N/A   ;untested
+    ShiftLeft,            // 53  0x35           <<                  N/A   ;doesn't work in THUG1+;
+    ShiftRight,           // 54  0x36           >>                  N/A   ;doesn't work in THUG1+;
+    Random2,              // 55  0x37           Random2             select
+    RandomRange2,         // 56  0x38           RandomRange2        N/A
+    KeywordNot,           // 57  0x39           NOT                 NOT
+    Switch,               // 60  0x3C           switch              switch
+    EndSwitch,            // 61  0x3D           endswitch           end_switch
+    Case,                 // 62  0x3E           case                case
+    Default,              // 63  0x3F           default             default
+    RandomNoRepeat,       // 64  0x40           RandomNoRepeat      select
+    RandomPermute,        // 65  0x41           RandomPermute       select
+    Colon,                // 66  0x42           ::                  .
+    If2,                  // 71  0x47           if                  if
+    Else2,                // 72  0x48           else                else
+    ShortJump,            // 73  0x49           N/A                 endcase
+    
+    // THAW+ additional tokens
+    PakStruct,            // 74  0x4A           :{                  N/A
+    // these 2 were found in THPG along with elseif
+    PakArgument,          // 75  0x4B           :<>                 N/A
+    PakStringW,           // 76  0x4C           :''                 N/A
+    
+    // Only used internally by the compiler, never appears in a .qb
+    Define           = 82,// 82  0x52           #define
+    IfDef            = 83,// 83  0x53           #ifdef
+    ElseDef          = 84,// 84  0x54           #else
+    EndIfDef         = 85,// 85  0x55           #endif
+    IfNotDef         = 86,// 86  0x56           #ifndef
+    
+    // These output as Jump tokens 0x2E but are used outside of randoms so we need to handle them differently in code.
+    LoneJumpLocation = 87,// 87  0x57           keyword:            N/A
+    LoneJump         = 88,// 88  0x58           #goto keyword       N/A
+    
+    // Added to trigger when to rebuild the PakQbStruct when compiling
+    PakStructClose   = 89,// 89  0x59           }:                  N/A
+    
+    // Added to store the PakQb FileId on decompile so the file keeps the same FileId
+    // If compiling for THAW+ and this doesn't exist a FileId will be created based on the file name
+    // PakMagic is actually the first 4 bytes of a PakQb file and while usually 0 can be a checksum
+    // PakFileId is the checksum associated with this file
+    // typically a checksum of the full path and file name as it appears in qdir.txt
+    PakMagic         = 90,// 90  0x5A           #magic #"0x"
+    PakFileId        = 91,// 91  0x5B           #fileid #"0x"
+    //PakQb scripts have more than 1 QbKey type and more than one QbInteger type
+    PakQBKey2        = 92,// 92  0x5C           QbKey2(?) uint2(?)  N/A
+    PakQBKey3        = 93,// 93  0x5D           QbKey3(?) uint3(?)  N/A
+    PakInteger2      = 94,// 94  0x5E           QbInt2(?) int2(?)   N/A

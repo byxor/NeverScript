@@ -66,6 +66,15 @@ func TestSyntax(t *testing.T) {
 			},
 			"9 + 10",
 		},
+		{
+			[]Token{
+				{Name, []byte{any, 0x09, 0x00, 0x00, 0x00}},
+				{Addition, []byte{any}},
+				{Name, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
+				{NameTableEntry, []byte{any, 0x0A, 0x00, 0x00, 0x00, 0x66, 0x6F, 0x6F, 0x00}},
+			},
+			"%09000000% + foo",
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
