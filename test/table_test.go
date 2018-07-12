@@ -41,7 +41,9 @@ func TestUnrecognisedChecksums(t *testing.T) {
 		checksum int
 		expected string
 	}{
-		{0, "&00000000"},
+		{0x00000000, "&00000000"},
+		{0x11223344, "&44332211"},
+		{0xABCDEF12, "&12efcdab"},
 	}
 
 	nameTable := table.GenerateUsing([]Token{})
