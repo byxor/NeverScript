@@ -1,8 +1,8 @@
 package table
 
 import (
-	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	. "github.com/byxor/qbd/tokens"
 )
 
@@ -10,14 +10,15 @@ type NameTable struct {
 	entries internalTable
 }
 
-type internalTable map[int]string
+type internalTable map[string]string
 
 func GenerateUsing(tokens []Token) NameTable {
 	var table = make(internalTable)
 
 	for _, token := range tokens {
 		if token.Type == ChecksumTableEntry {
-			checksum := ReadInt32(token.Chunk[1:5])
+			checksum := hex.EncodeToString(reverse(token.Chunk[1:5]))
+			fmt.Println(checksum)
 			name := string(token.Chunk[5 : len(token.Chunk)-1])
 			table[checksum] = name
 		}
@@ -26,12 +27,20 @@ func GenerateUsing(tokens []Token) NameTable {
 	return NameTable{table}
 }
 
-func (nt NameTable) Get(checksum int) string {
+func (nt NameTable) Get(checksum string) string {
+	fmt.Println(nt.entries)
 	if name, ok := nt.entries[checksum]; ok {
 		return name
 	} else {
-		bytes := make([]byte, 4)
-		binary.LittleEndian.PutUint32(bytes, uint32(checksum))
-		return "&" + hex.EncodeToString(bytes)
+		return "&" + checksum
 	}
+}
+
+func reverse(chunk []byte) []byte {
+	length := len(chunk)
+	reversed := make([]byte, length)
+	for i, v := range chunk {
+		reversed[length-1-i] = v
+	}
+	return reversed
 }
