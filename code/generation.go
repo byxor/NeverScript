@@ -11,6 +11,9 @@ func GenerateUsing(tokens []Token) string {
 	if len(tokens) == 0 {
 		return ""
 	}
+
+	nameTable := nametable.BuildFrom(tokens)
+
 	if tokens[0].Type == EndOfLine {
 		return ";"
 	}
@@ -19,7 +22,7 @@ func GenerateUsing(tokens []Token) string {
 	}
 	if tokens[0].Type == Name {
 		checksum := hex.EncodeToString(tokens[0].Chunk[1:])
-		return nametable.BuildFrom([]Token{}).Get(checksum)
+		return nameTable.Get(checksum)
 	}
 	return ""
 }

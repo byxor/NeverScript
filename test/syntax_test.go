@@ -33,6 +33,15 @@ func TestSyntax(t *testing.T) {
 		{[]Token{{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}}}, "%11223344%"},
 		{[]Token{{Name, []byte{any, 0x12, 0x00, 0x00, 0x99}}}, "%12000099%"},
 		{[]Token{{Name, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}}}, "%ffffffff%"},
+
+		// Known Names
+		{[]Token{
+			{Name, []byte{any, 0x00, 0x00, 0x00, 0x00}},
+			{NameTableEntry, []byte{
+				any, 0x00, 0x00, 0x00, 0x00,
+				0x47, 0x45, 0x54, 0x44, 0x4F, 0x57, 0x4E, 0x00},
+			},
+		}, "GETDOWN"},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
