@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"github.com/byxor/qbd/code"
 	. "github.com/byxor/qbd/tokens"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +60,7 @@ func TestSyntax(t *testing.T) {
 		{
 			[]Token{
 				{Integer, []byte{any, 0x09, 0x00, 0x00, 0x00}},
-				{Addition, []byte{any}},
+				{Addition, nil},
 				{Integer, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
 			},
 			"9 + 10",
@@ -69,17 +68,35 @@ func TestSyntax(t *testing.T) {
 		{
 			[]Token{
 				{Name, []byte{any, 0x09, 0x00, 0x00, 0x00}},
-				{Addition, []byte{any}},
+				{Addition, nil},
 				{Name, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
 				{NameTableEntry, []byte{any, 0x0A, 0x00, 0x00, 0x00, 0x66, 0x6F, 0x6F, 0x00}},
 			},
 			"%09000000% + foo",
 		},
+
+		// Subtraction
+		{
+			[]Token{
+				{EndOfLine, nil},
+				{Integer, []byte{any, 0x00, 0xFF, 0xFF, 0xFF}},
+				{Subtraction, nil},
+				{Integer, []byte{any, 0x00, 0x00, 0x00, 0x00}},
+			},
+			"; -256 - 0",
+		},
+		{
+			[]Token{
+				{Name, []byte{any, 0x09, 0x00, 0x00, 0x00}},
+				{Subtraction, nil},
+				{LocalReference, nil},
+				{Name, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
+			},
+			"%09000000% - $%0a000000%",
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
-		fmt.Println(entry.tokens)
-		fmt.Println(code)
 		assert.Equal(t, entry.expected, code)
 	}
 }
