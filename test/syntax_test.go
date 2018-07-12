@@ -98,6 +98,22 @@ func TestSyntax(t *testing.T) {
 			{NameTableEntry, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x6E, 0x67, 0x6C, 0x65, 0x00}}},
 			"$angle / 32",
 		},
+
+		// Multiplication ------------------------------------------------------
+		{[]Token{
+			{Integer, []byte{any, 0x02, 0x00, 0x00, 0x00}},
+			{Multiplication, nil},
+			{Integer, []byte{any, 0x03, 0x00, 0x00, 0x00}}},
+			"2 * 3",
+		},
+		{[]Token{
+			{LocalReference, nil},
+			{Name, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}},
+			{Multiplication, nil},
+			{Integer, []byte{any, 0x20, 00, 00, 00}},
+			{NameTableEntry, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x6E, 0x67, 0x6C, 0x65, 0x00}}},
+			"$angle * 32",
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
