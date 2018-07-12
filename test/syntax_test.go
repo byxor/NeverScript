@@ -27,6 +27,7 @@ func TestSyntax(t *testing.T) {
 		{[]Token{{Integer, []byte{any, 0x00, 0x00, 0x00, 0x00}}}, "0"},
 		{[]Token{{Integer, []byte{any, 0x01, 0x00, 0x00, 0x00}}}, "1"},
 		{[]Token{{Integer, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}}}, "-1"},
+		{[]Token{{Integer, []byte{any, 0x2A, 0x43, 0x0F, 0x00}}}, "1000234"},
 
 		// Unknown Names
 		{[]Token{{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}}}, "%11223344%"},
