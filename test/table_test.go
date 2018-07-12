@@ -7,34 +7,33 @@ import (
 	"testing"
 )
 
-// func TestTableGeneration(t *testing.T) {
-// 	tokens := []Token{
+func TestTableGeneration(t *testing.T) {
+	tokens := []Token{
 
-// 		Token{ChecksumTableEntry,
-// 			[]byte{0x2B, 0x00, 0x00, 0x00, 0x00,
-// 				0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00}},
+		Token{ChecksumTableEntry,
+			[]byte{0x2B, 0x00, 0x00, 0x00, 0x00,
+				0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00}},
 
-// 		Token{ChecksumTableEntry,
-// 			[]byte{0x2B, 0x01, 0x00, 0x00, 0x00,
-// 				0x48, 0x69, 0x00}},
-// 	}
+		Token{ChecksumTableEntry,
+			[]byte{0x2B, 0x01, 0x00, 0x00, 0x00,
+				0x48, 0x69, 0x00}},
+	}
 
-// 	entries := []struct {
-// 		checksum int
-// 		expected string
-// 	}{
-// 		{0, "Hello"},
-// 		{1, "Hi"},
-// 	}
+	entries := []struct {
+		checksum int
+		expected string
+	}{
+		{0, "Hello"},
+		{1, "Hi"},
+	}
 
-// 	nameTable := table.GenerateUsing(tokens)
+	nameTable := table.GenerateUsing(tokens)
 
-// 	for _, entry := range entries {
-// 		name, ok := nameTable[entry.checksum]
-// 		assert.True(t, ok)
-// 		assert.Equal(t, entry.expected, name)
-// 	}
-// }
+	for _, entry := range entries {
+		name := nameTable.Get(entry.checksum)
+		assert.Equal(t, entry.expected, name)
+	}
+}
 
 func TestUnrecognisedChecksums(t *testing.T) {
 	entries := []struct {
