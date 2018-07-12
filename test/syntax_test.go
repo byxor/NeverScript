@@ -14,38 +14,17 @@ func TestSyntax(t *testing.T) {
 	}{
 		{[]Token{}, ""},
 
-		{[]Token{
-			Token{EndOfFile, nil},
-		}, ""},
+		{[]Token{{EndOfFile, nil}}, ""},
 
 		// Ends of lines
-		{[]Token{
-			Token{EndOfLine, nil},
-		}, ";"},
-
-		{[]Token{
-			Token{EndOfLine, nil},
-			Token{EndOfLine, nil},
-		}, ";"},
-
-		{[]Token{
-			Token{EndOfLine, nil},
-			Token{EndOfLine, nil},
-			Token{EndOfLine, nil},
-		}, ";"},
+		{[]Token{{EndOfLine, nil}}, ";"},
+		{[]Token{{EndOfLine, nil}, {EndOfLine, nil}}, ";"},
+		{[]Token{{EndOfLine, nil}, {EndOfLine, nil}, {EndOfLine, nil}}, ";"},
 
 		// Integers
-		{[]Token{
-			Token{Integer, []byte{0x17, 0x00, 0x00, 0x00, 0x00}},
-		}, "0"},
-
-		{[]Token{
-			Token{Integer, []byte{0x17, 0x01, 0x00, 0x00, 0x00}},
-		}, "1"},
-
-		{[]Token{
-			Token{Integer, []byte{0x17, 0xFF, 0xFF, 0xFF, 0xFF}},
-		}, "-1"},
+		{[]Token{{Integer, []byte{0x17, 0x00, 0x00, 0x00, 0x00}}}, "0"},
+		{[]Token{{Integer, []byte{0x17, 0x01, 0x00, 0x00, 0x00}}}, "1"},
+		{[]Token{{Integer, []byte{0x17, 0xFF, 0xFF, 0xFF, 0xFF}}}, "-1"},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
