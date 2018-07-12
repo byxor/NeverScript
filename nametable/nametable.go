@@ -1,4 +1,4 @@
-package table
+package nametable
 
 import (
 	"encoding/hex"

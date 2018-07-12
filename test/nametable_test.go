@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/byxor/qbd/table"
+	"github.com/byxor/qbd/nametable"
 	. "github.com/byxor/qbd/tokens"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -37,7 +37,7 @@ func TestTableGeneration(t *testing.T) {
 		{"ffffffff", "AirStats"},
 	}
 
-	nameTable := table.GenerateUsing(tokens)
+	nameTable := nametable.GenerateUsing(tokens)
 
 	for _, entry := range entries {
 		name := nameTable.Get(entry.checksum)
@@ -55,7 +55,7 @@ func TestUnrecognisedChecksums(t *testing.T) {
 		{"abcdef12", "&abcdef12"},
 	}
 
-	nameTable := table.GenerateUsing([]Token{})
+	nameTable := nametable.GenerateUsing([]Token{})
 
 	for _, entry := range entries {
 		assert.Equal(t, entry.expected, nameTable.Get(entry.checksum))
