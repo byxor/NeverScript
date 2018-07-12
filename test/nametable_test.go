@@ -15,7 +15,7 @@ func TestTableGeneration(t *testing.T) {
 				0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x00}},
 
 		Token{NameTableEntry,
-			[]byte{0x2B, 0x01, 0x00, 0x00, 0x00,
+			[]byte{0x2B, 0x00, 0x00, 0x00, 0x01,
 				0x48, 0x69, 0x00}},
 
 		Token{NameTableEntry,
@@ -33,7 +33,7 @@ func TestTableGeneration(t *testing.T) {
 	}{
 		{"00000000", "Hello"},
 		{"00000001", "Hi"},
-		{"fc000000", "THUGPro"},
+		{"000000fc", "THUGPro"},
 		{"ffffffff", "AirStats"},
 	}
 
