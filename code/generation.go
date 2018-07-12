@@ -8,25 +8,58 @@ import (
 )
 
 func GenerateUsing(tokens []Token) string {
+	cleanTokens := cleanUp(tokens)
+	return generateUsing(cleanTokens, nametable.BuildFrom(tokens))
+}
+
+func cleanUp(tokens []Token) []Token {
+	cleanTokens := make([]Token, len(tokens))
+
+	cleanTokenCount := 0
+	lastToken := Token{Invalid, nil}
+
+	for _, token := range tokens {
+		if !(token.Type == EndOfLine && lastToken.Type == EndOfLine) {
+			cleanTokens[cleanTokenCount] = token
+			cleanTokenCount++
+		}
+		lastToken = token
+	}
+
+	return cleanTokens[:cleanTokenCount]
+}
+
+func generateUsing(tokens []Token, nameTable nametable.NameTable) string {
 	if len(tokens) == 0 {
 		return ""
 	}
-
-	nameTable := nametable.BuildFrom(tokens)
-
-	if tokens[0].Type == EndOfLine {
-		return ";"
-	}
-	if tokens[0].Type == Integer {
-		return evaluateInteger(tokens[0].Chunk[1:])
-	}
-	if tokens[0].Type == Name {
-		checksum := hex.EncodeToString(tokens[0].Chunk[1:])
-		return nameTable.Get(checksum)
-	}
-	return ""
+	evaluator := evaluators[tokens[0].Type]
+	result := evaluator(tokens[0].Chunk, nameTable)
+	return result + generateUsing(tokens[1:], nameTable)
 }
 
-func evaluateInteger(chunk []byte) string {
-	return strconv.Itoa(ReadInt32(chunk))
+type evaluator func([]byte, nametable.NameTable) string
+
+var evaluators = map[TokenType]evaluator{
+	EndOfFile:      basicString(""),
+	EndOfLine:      basicString(";"),
+	Addition:       basicString(" + "),
+	Integer:        evaluateInteger,
+	Name:           evaluateName,
+	NameTableEntry: basicString(""),
+}
+
+func basicString(s string) evaluator {
+	return func([]byte, nametable.NameTable) string {
+		return s
+	}
+}
+
+func evaluateInteger(chunk []byte, nameTable nametable.NameTable) string {
+	return strconv.Itoa(ReadInt32(chunk[1:]))
+}
+
+func evaluateName(chunk []byte, nameTable nametable.NameTable) string {
+	checksum := hex.EncodeToString(chunk[1:])
+	return nameTable.Get(checksum)
 }
