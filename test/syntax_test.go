@@ -4,6 +4,7 @@ import (
 	"github.com/byxor/qbd/code"
 	. "github.com/byxor/qbd/tokens"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -145,9 +146,43 @@ func TestSyntax(t *testing.T) {
 			{EndOfArray, nil}},
 			"[[%ff0000dd%] [%bbeeeeff%]]",
 		},
+		{[]Token{
+			{EndOfLine, nil},
+			{Name, []byte{any, 0xEF, 0xEF, 0xEF, 0xEF}},
+			{Assignment, nil},
+			{StartOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0xFF, 0x00, 0x00, 0xDD}},
+			{EndOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0xBB, 0xEE, 0xEE, 0xFF}},
+			{EndOfArray, nil},
+			{EndOfArray, nil},
+			{EndOfLine, nil},
+			{Name, []byte{any, 0xEE, 0xEE, 0xEE, 0xEE}},
+			{Assignment, nil},
+			{StartOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}},
+			{EndOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0x55, 0x66, 0x77, 0x88}},
+			{EndOfArray, nil},
+			{EndOfArray, nil},
+			{NameTableEntry, []byte{any, 0xEF, 0xEF, 0xEF, 0xEF, 0x66, 0x6F, 0x6F, 0x00}},
+			{NameTableEntry, []byte{any, 0xEE, 0xEE, 0xEE, 0xEE, 0x62, 0x61, 0x72, 0x00}}},
+			lines(
+				"; foo = [[%ff0000dd%] [%bbeeeeff%]]",
+				"; bar = [[%11223344%] [%55667788%]]",
+			),
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
 		assert.Equal(t, entry.expected, code)
 	}
+}
+
+func lines(lines ...string) string {
+	return strings.Join(lines, "\n")
 }

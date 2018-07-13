@@ -10,9 +10,9 @@ type evaluator func(*stateHolder) string
 
 var evaluators = map[TokenType]evaluator{
 	EndOfFile:      basicString(""),
-	EndOfLine:      basicString("; "),
+	EndOfLine:      basicString("\n; "),
 	StartOfArray:   evaluateStartOfArray,
-	EndOfArray:     basicString("]"),
+	EndOfArray:     evaluateEndOfArray,
 	Assignment:     basicString(" = "),
 	Addition:       basicString(" + "),
 	Subtraction:    basicString(" - "),
@@ -27,6 +27,11 @@ var evaluators = map[TokenType]evaluator{
 func evaluateStartOfArray(state *stateHolder) string {
 	state.arrayDepth++
 	return basicString("[")(state)
+}
+
+func evaluateEndOfArray(state *stateHolder) string {
+	state.arrayDepth--
+	return basicString("]")(state)
 }
 
 func evaluateInteger(state *stateHolder) string {
