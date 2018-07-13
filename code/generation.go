@@ -10,11 +10,12 @@ import (
 func GenerateUsing(tokens []Token) string {
 	cleanTokens := clean(tokens)
 	state := stateHolder{
-		tokens:     cleanTokens,
-		token:      Token{Invalid, nil},
-		index:      0,
-		names:      nametable.BuildFrom(cleanTokens),
-		arrayDepth: 0,
+		tokens:             cleanTokens,
+		token:              Token{Invalid, nil},
+		index:              0,
+		names:              nametable.BuildFrom(cleanTokens),
+		arrayDepth:         0,
+		neverAddWhitespace: false,
 	}
 	return strings.TrimSpace(generateUsing(&state))
 }
@@ -52,7 +53,10 @@ func makeStatefulAdjustments(atom string, state *stateHolder) string {
 			notLastElement := state.tokens[state.index+1].Type != EndOfArray
 
 			if notFirstElement && notLastElement {
-				output += " "
+				if !state.neverAddWhitespace {
+					output += " "
+					state.neverAddWhitespace = false
+				}
 			}
 		}
 	}
@@ -60,9 +64,10 @@ func makeStatefulAdjustments(atom string, state *stateHolder) string {
 }
 
 type stateHolder struct {
-	tokens     []Token
-	token      Token
-	index      int
-	names      nametable.NameTable
-	arrayDepth int
+	tokens             []Token
+	token              Token
+	index              int
+	names              nametable.NameTable
+	arrayDepth         int
+	neverAddWhitespace bool
 }

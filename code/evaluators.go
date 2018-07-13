@@ -18,10 +18,15 @@ var evaluators = map[TokenType]evaluator{
 	Subtraction:    basicString(" - "),
 	Multiplication: basicString(" * "),
 	Division:       basicString(" / "),
-	LocalReference: basicString("$"),
+	LocalReference: evaluateLocalReference,
 	Integer:        evaluateInteger,
 	Name:           evaluateName,
 	NameTableEntry: basicString(""),
+}
+
+func evaluateLocalReference(state *stateHolder) string {
+	state.neverAddWhitespace = true
+	return basicString("$")(state)
 }
 
 func evaluateStartOfArray(state *stateHolder) string {

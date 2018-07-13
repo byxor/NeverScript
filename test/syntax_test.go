@@ -166,6 +166,7 @@ func TestSyntax(t *testing.T) {
 			{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}},
 			{EndOfArray, nil},
 			{StartOfArray, nil},
+			{LocalReference, nil},
 			{Name, []byte{any, 0x55, 0x66, 0x77, 0x88}},
 			{EndOfArray, nil},
 			{EndOfArray, nil},
@@ -173,7 +174,7 @@ func TestSyntax(t *testing.T) {
 			{NameTableEntry, []byte{any, 0xEE, 0xEE, 0xEE, 0xEE, 0x62, 0x61, 0x72, 0x00}}},
 			lines(
 				"; foo = [[%ff0000dd%] [%bbeeeeff%]]",
-				"; bar = [[%11223344%] [%55667788%]]",
+				"; bar = [[%11223344%] [$%55667788%]]",
 			),
 		},
 	}
