@@ -114,6 +114,29 @@ func TestSyntax(t *testing.T) {
 			{NameTableEntry, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x6E, 0x67, 0x6C, 0x65, 0x00}}},
 			"$angle * 32",
 		},
+
+		// Arrays ------------------------------------------------------
+		{[]Token{{StartOfArray, nil}, {EndOfArray, nil}}, "[]"},
+		{[]Token{
+			{StartOfArray, nil},
+			{Integer, []byte{any, 0x12, 0x34, 0x56, 0x78}},
+			{Integer, []byte{any, 0x00, 0x00, 0x00, 0x00}},
+			{Integer, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
+			{Integer, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}},
+			{EndOfArray, nil}},
+			"[2018915346 0 10 -1]",
+		},
+		{[]Token{
+			{StartOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0xFF, 0x00, 0x00, 0xDD}},
+			{EndOfArray, nil},
+			{StartOfArray, nil},
+			{Name, []byte{any, 0xBB, 0xEE, 0xEE, 0xFF}},
+			{EndOfArray, nil},
+			{EndOfArray, nil}},
+			"[[%ff0000dd%] [%bbeeeeff%]]",
+		},
 	}
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)

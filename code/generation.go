@@ -8,19 +8,52 @@ import (
 )
 
 func GenerateUsing(tokens []Token) string {
-	return strings.TrimSpace(
-		generateUsing(clean(tokens), nametable.BuildFrom(tokens)),
-	)
+	cleanTokens := clean(tokens)
+	state := stateMap{
+		"tokens":  cleanTokens,
+		"token":   nil,
+		"names":   nametable.BuildFrom(cleanTokens),
+		"index":   0,
+		"inArray": 0,
+	}
+	return strings.TrimSpace(generateUsing(state))
 }
 
-func generateUsing(tokens []Token, nameTable nametable.NameTable) string {
+func generateUsing(state stateMap) string {
+	tokens := state["tokens"].([]Token)
+
 	if len(tokens) == 0 {
 		return ""
 	}
-	if evaluator, ok := evaluators[tokens[0].Type]; ok {
-		result := evaluator(tokens[0].Chunk, nameTable)
-		return result + generateUsing(tokens[1:], nameTable)
+
+	index := state["index"].(int)
+
+	if index >= len(tokens) {
+		return ""
+	}
+
+	token := tokens[index]
+	state["token"] = token
+
+	if evaluator, ok := evaluators[token.Type]; ok {
+		result := evaluator(state)
+		state["index"] = index + 1
+
+		if state["inArray"].(int) > 0 {
+			inRange := index < len(tokens)-1 && index > 0
+			if inRange {
+				notFirstElement := token.Type != StartOfArray
+				notLastElement := tokens[index+1].Type != EndOfArray
+				if notFirstElement && notLastElement {
+					result += " "
+				}
+			}
+		}
+
+		return result + generateUsing(state)
 	} else {
 		panic(fmt.Sprintf("No evaluator found for %s tokens!", tokens[0].Type.String()))
 	}
 }
+
+type stateMap map[string]interface{}

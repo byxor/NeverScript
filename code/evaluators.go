@@ -7,11 +7,13 @@ import (
 	"strconv"
 )
 
-type evaluator func([]byte, nametable.NameTable) string
+type evaluator func(stateMap) string
 
 var evaluators = map[TokenType]evaluator{
 	EndOfFile:      basicString(""),
 	EndOfLine:      basicString("; "),
+	StartOfArray:   evaluateStartOfArray,
+	EndOfArray:     basicString("]"),
 	Addition:       basicString(" + "),
 	Subtraction:    basicString(" - "),
 	Multiplication: basicString(" * "),
@@ -22,17 +24,24 @@ var evaluators = map[TokenType]evaluator{
 	NameTableEntry: basicString(""),
 }
 
-func evaluateInteger(chunk []byte, nameTable nametable.NameTable) string {
-	return strconv.Itoa(ReadInt32(chunk[1:]))
+func evaluateStartOfArray(state stateMap) string {
+	state["inArray"] = 1
+	return basicString("[")(state)
 }
 
-func evaluateName(chunk []byte, nameTable nametable.NameTable) string {
-	checksum := hex.EncodeToString(chunk[1:])
-	return nameTable.Get(checksum)
+func evaluateInteger(state stateMap) string {
+	token := state["token"].(Token)
+	return strconv.Itoa(ReadInt32(token.Chunk[1:]))
+}
+
+func evaluateName(state stateMap) string {
+	token := state["token"].(Token)
+	checksum := hex.EncodeToString(token.Chunk[1:])
+	return state["names"].(nametable.NameTable).Get(checksum)
 }
 
 func basicString(s string) evaluator {
-	return func([]byte, nametable.NameTable) string {
+	return func(stateMap) string {
 		return s
 	}
 }
