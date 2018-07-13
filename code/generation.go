@@ -37,9 +37,9 @@ func generateUsing(state stateMap) string {
 
 	if evaluator, ok := evaluators[token.Type]; ok {
 		result := evaluator(state)
-		result = makeStatefulAdjustments(result, state)
+		tweaked := makeStatefulAdjustments(result, state)
 		state["index"] = index + 1
-		return result + generateUsing(state)
+		return tweaked + generateUsing(state)
 	} else {
 		panic(fmt.Sprintf("No evaluator found for %s tokens!", tokens[0].Type.String()))
 	}
