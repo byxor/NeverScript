@@ -17,13 +17,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Starting decompilation...")
-
 	tokenChannel := make(chan tokens.Token)
 	go tokens.ExtractAll(tokenChannel, bytes)
 
 	tokens := []tokens.Token{}
-
 	for token := range tokenChannel {
 		tokens = append(tokens, token)
 	}
@@ -31,6 +28,4 @@ func main() {
 	code := code.GenerateUsing(tokens)
 
 	fmt.Println(code)
-
-	fmt.Println("Stopped decompilation.")
 }
