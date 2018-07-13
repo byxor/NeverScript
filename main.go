@@ -1,10 +1,9 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
+	"github.com/byxor/qbd/code"
 	"github.com/byxor/qbd/tokens"
-	"github.com/fatih/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,21 +22,15 @@ func main() {
 	tokenChannel := make(chan tokens.Token)
 	go tokens.ExtractAll(tokenChannel, bytes)
 
+	tokens := []tokens.Token{}
+
 	for token := range tokenChannel {
-		type colorFunction func(format string, a ...interface{})
-		var displayType, displayChunk colorFunction
-
-		if token.Type == tokens.Invalid {
-			displayType = color.Red
-			displayChunk = color.Red
-		} else {
-			displayType = color.Green
-			displayChunk = color.White
-		}
-
-		displayType(token.Type.String())
-		displayChunk(hex.Dump(token.Chunk) + "\n")
+		tokens = append(tokens, token)
 	}
+
+	code := code.GenerateUsing(tokens)
+
+	fmt.Println(code)
 
 	fmt.Println("Stopped decompilation.")
 }

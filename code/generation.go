@@ -31,12 +31,15 @@ func generateUsing(state *stateHolder) string {
 
 	state.token = state.tokens[state.index]
 
+	var atom string
+
 	evaluator, ok := evaluators[state.token.Type]
-	if !ok {
-		panic(fmt.Sprintf("No evaluator found for %s tokens!", state.token.Type.String()))
+	if ok {
+		atom = evaluator(state)
+	} else {
+		atom = fmt.Sprintf("<%s?>", state.token.Type.String())
 	}
 
-	atom := evaluator(state)
 	tweaked := makeStatefulAdjustments(atom, state)
 	state.index++
 	return tweaked + generateUsing(state)
