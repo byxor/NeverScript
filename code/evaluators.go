@@ -9,19 +9,31 @@ import (
 type evaluator func(*stateHolder) string
 
 var evaluators = map[TokenType]evaluator{
-	EndOfFile:      basicString(""),
-	EndOfLine:      basicString("\n; "),
-	StartOfArray:   evaluateStartOfArray,
-	EndOfArray:     evaluateEndOfArray,
-	Assignment:     basicString(" = "),
-	Addition:       basicString(" + "),
-	Subtraction:    basicString(" - "),
-	Multiplication: basicString(" * "),
-	Division:       basicString(" / "),
-	LocalReference: evaluateLocalReference,
-	Integer:        evaluateInteger,
-	Name:           evaluateName,
-	NameTableEntry: basicString(""),
+	EndOfFile:         basicString(""),
+	EndOfLine:         basicString("\n; "),
+	StartOfArray:      evaluateStartOfArray,
+	EndOfArray:        evaluateEndOfArray,
+	StartOfExpression: evaluateStartOfExpression,
+	EndOfExpression:   evaluateEndOfExpression,
+	Assignment:        basicString(" = "),
+	Addition:          basicString(" + "),
+	Subtraction:       basicString(" - "),
+	Multiplication:    basicString(" * "),
+	Division:          basicString(" / "),
+	LocalReference:    evaluateLocalReference,
+	Integer:           evaluateInteger,
+	Name:              evaluateName,
+	NameTableEntry:    basicString(""),
+}
+
+func evaluateStartOfExpression(state *stateHolder) string {
+	state.neverAddWhitespace = true
+	return basicString("(")(state)
+}
+
+func evaluateEndOfExpression(state *stateHolder) string {
+	state.neverAddWhitespace = true
+	return basicString(")")(state)
 }
 
 func evaluateLocalReference(state *stateHolder) string {

@@ -124,6 +124,16 @@ func TestSyntax(t *testing.T) {
 			"%00000000% = %11111111%",
 		},
 
+		// Expressions ------------------------------------------------------
+		{[]Token{
+			{StartOfExpression, nil},
+			{Integer, []byte{any, 0x09, 0x00, 0x00, 0x00}},
+			{Addition, nil},
+			{Integer, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
+			{EndOfExpression, nil}},
+			"(9 + 10)",
+		},
+
 		// Arrays ------------------------------------------------------
 		{[]Token{{StartOfArray, nil}, {EndOfArray, nil}}, "[]"},
 		{[]Token{
@@ -132,8 +142,13 @@ func TestSyntax(t *testing.T) {
 			{Integer, []byte{any, 0x00, 0x00, 0x00, 0x00}},
 			{Integer, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
 			{Integer, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}},
+			{StartOfExpression, nil},
+			{Integer, []byte{any, 0x09, 0x00, 0x00, 0x00}},
+			{Addition, nil},
+			{Integer, []byte{any, 0x0A, 0x00, 0x00, 0x00}},
+			{EndOfExpression, nil},
 			{EndOfArray, nil}},
-			"[2018915346 0 10 -1]",
+			"[2018915346 0 10 -1 (9 + 10)]",
 		},
 		{[]Token{
 			{StartOfArray, nil},
