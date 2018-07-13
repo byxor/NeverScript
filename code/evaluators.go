@@ -2,12 +2,11 @@ package code
 
 import (
 	"encoding/hex"
-	"github.com/byxor/qbd/nametable"
 	. "github.com/byxor/qbd/tokens"
 	"strconv"
 )
 
-type evaluator func(stateMap) string
+type evaluator func(*stateHolder) string
 
 var evaluators = map[TokenType]evaluator{
 	EndOfFile:      basicString(""),
@@ -25,24 +24,22 @@ var evaluators = map[TokenType]evaluator{
 	NameTableEntry: basicString(""),
 }
 
-func evaluateStartOfArray(state stateMap) string {
-	state["inArray"] = 1
+func evaluateStartOfArray(state *stateHolder) string {
+	state.arrayDepth++
 	return basicString("[")(state)
 }
 
-func evaluateInteger(state stateMap) string {
-	token := state["token"].(Token)
-	return strconv.Itoa(ReadInt32(token.Chunk[1:]))
+func evaluateInteger(state *stateHolder) string {
+	return strconv.Itoa(ReadInt32(state.token.Chunk[1:]))
 }
 
-func evaluateName(state stateMap) string {
-	token := state["token"].(Token)
-	checksum := hex.EncodeToString(token.Chunk[1:])
-	return state["names"].(nametable.NameTable).Get(checksum)
+func evaluateName(state *stateHolder) string {
+	checksum := hex.EncodeToString(state.token.Chunk[1:])
+	return state.names.Get(checksum)
 }
 
 func basicString(s string) evaluator {
-	return func(stateMap) string {
+	return func(*stateHolder) string {
 		return s
 	}
 }
