@@ -115,6 +115,14 @@ func TestSyntax(t *testing.T) {
 			"$angle * 32",
 		},
 
+		// Assignment ------------------------------------------------------
+		{[]Token{
+			{Name, []byte{any, 0x00, 0x00, 0x00, 0x00}},
+			{Assignment, nil},
+			{Name, []byte{any, 0x11, 0x11, 0x11, 0x11}}},
+			"%00000000% = %11111111%",
+		},
+
 		// Arrays ------------------------------------------------------
 		{[]Token{{StartOfArray, nil}, {EndOfArray, nil}}, "[]"},
 		{[]Token{

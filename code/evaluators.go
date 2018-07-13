@@ -14,6 +14,7 @@ var evaluators = map[TokenType]evaluator{
 	EndOfLine:      basicString("; "),
 	StartOfArray:   evaluateStartOfArray,
 	EndOfArray:     basicString("]"),
+	Assignment:     basicString(" = "),
 	Addition:       basicString(" + "),
 	Subtraction:    basicString(" - "),
 	Multiplication: basicString(" * "),
