@@ -2,6 +2,7 @@ package tokens
 
 import (
 	"encoding/binary"
+	"math"
 )
 
 func ExtractAll(tokenChannel chan Token, chunk []byte) {
@@ -52,4 +53,9 @@ func checkIfChunkRepresentsToken(chunk []byte) (tokenType TokenType, gotOne bool
 
 func ReadInt32(bytes []byte) int {
 	return int(int32(binary.LittleEndian.Uint32(bytes)))
+}
+
+func ReadFloat32(bytes []byte) float32 {
+	bits := binary.LittleEndian.Uint32(bytes)
+	return math.Float32frombits(bits)
 }

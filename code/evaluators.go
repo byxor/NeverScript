@@ -2,8 +2,10 @@ package code
 
 import (
 	"encoding/hex"
-	. "github.com/byxor/qbd/tokens"
+	"fmt"
 	"strconv"
+
+	. "github.com/byxor/qbd/tokens"
 )
 
 type evaluator func(*stateHolder) string
@@ -22,6 +24,9 @@ var evaluators = map[TokenType]evaluator{
 	Division:          basicString(" / "),
 	LocalReference:    evaluateLocalReference,
 	Integer:           evaluateInteger,
+	Float:             evaluateFloat,
+	Pair:              evaluatePair,
+	Vector:            evaluateVector,
 	Name:              evaluateName,
 	NameTableEntry:    basicString(""),
 }
@@ -53,6 +58,23 @@ func evaluateEndOfArray(state *stateHolder) string {
 
 func evaluateInteger(state *stateHolder) string {
 	return strconv.Itoa(ReadInt32(state.token.Chunk[1:]))
+}
+
+func evaluateFloat(state *stateHolder) string {
+	return fmt.Sprintf("%.2ff", ReadFloat32(state.token.Chunk[1:]))
+}
+
+func evaluateVector(state *stateHolder) string {
+	firstValue := ReadFloat32(state.token.Chunk[1:5])
+	secondValue := ReadFloat32(state.token.Chunk[5:9])
+	thirdValue := ReadFloat32(state.token.Chunk[9:])
+	return fmt.Sprintf("vec3<%.2ff, %.2ff, %.2ff>", firstValue, secondValue, thirdValue)
+}
+
+func evaluatePair(state *stateHolder) string {
+	firstValue := ReadFloat32(state.token.Chunk[1:5])
+	secondValue := ReadFloat32(state.token.Chunk[5:])
+	return fmt.Sprintf("vec2<%.2ff, %.2ff>", firstValue, secondValue)
 }
 
 func evaluateName(state *stateHolder) string {

@@ -1,11 +1,12 @@
 package test
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/byxor/qbd/code"
 	. "github.com/byxor/qbd/tokens"
 	"github.com/stretchr/testify/assert"
-	"strings"
-	"testing"
 )
 
 const any = 0x00
@@ -28,6 +29,21 @@ func TestSyntax(t *testing.T) {
 		{[]Token{{Integer, []byte{any, 0x01, 0x00, 0x00, 0x00}}}, "1"},
 		{[]Token{{Integer, []byte{any, 0xFF, 0xFF, 0xFF, 0xFF}}}, "-1"},
 		{[]Token{{Integer, []byte{any, 0x2A, 0x43, 0x0F, 0x00}}}, "1000234"},
+
+		// Floats ------------------------------------------------------------
+		{[]Token{{Float, []byte{any, 0x00, 0x00, 0xA0, 0x40}}}, "5.00f"},
+		{[]Token{{Float, []byte{any, 0x33, 0x33, 0x03, 0x41}}}, "8.20f"},
+		{[]Token{{Float, []byte{any, 0x33, 0xB3, 0x05, 0x43}}}, "133.70f"},
+
+		// Pairs ------------------------------------------------------------
+		{[]Token{{Pair, []byte{any, 0x66, 0x66, 0x66, 0x3F, 0x00, 0x00, 0x80, 0x3F}}}, "vec2<0.90f, 1.00f>"},
+		{[]Token{{Pair, []byte{any, 0xCD, 0xCC, 0x4C, 0x3F, 0x00, 0x00, 0x80, 0x3F}}}, "vec2<0.80f, 1.00f>"},
+		{[]Token{{Pair, []byte{any, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xA0, 0x40}}}, "vec2<5.00f, 5.00f>"},
+
+		// Vectors ------------------------------------------------------------
+		{[]Token{{Vector, []byte{any, 0x66, 0x66, 0x66, 0x3F, 0x00, 0x00, 0x01, 0x16, 0xCD, 0xCC, 0x4C, 0x3F}}}, "vec3<0.90f, 0.00f, 0.80f>"},
+		{[]Token{{Vector, []byte{any, 0x00, 0x00, 0xC8, 0x42, 0x00, 0x00, 0x48, 0x42, 0xCD, 0xCC, 0x4C, 0x3F}}}, "vec3<100.00f, 50.00f, 0.80f>"},
+		{[]Token{{Vector, []byte{any, 0x00, 0x00, 0x70, 0x41, 0x00, 0x00, 0x01, 0x16, 0x00, 0x00, 0x70, 0x41}}}, "vec3<15.00f, 0.00f, 15.00f>"},
 
 		// Unknown Names ------------------------------------------------------
 		{[]Token{{Name, []byte{any, 0x11, 0x22, 0x33, 0x44}}}, "%11223344%"},
