@@ -1,9 +1,5 @@
 package tokens
 
-func YEET() func([]byte) bool {
-	return isExecuteRandomBlock
-}
-
 func isExecuteRandomBlock(chunk []byte) bool {
 
 	prefix := byte(0x2F)
