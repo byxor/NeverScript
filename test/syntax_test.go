@@ -69,6 +69,13 @@ func TestSyntax(t *testing.T) {
 			"TurboTime",
 		},
 
+		// Strings -------------------------------------------------------
+		{[]Token{{String, []byte{
+			any, 0x0D, 0x00, 0x00, 0x00, 0x4A, 0x6F,
+			0x79, 0x20, 0x44, 0x69, 0x76, 0x69, 0x73,
+			0x69, 0x6F, 0x6E, 0x00}}},
+			"\"Joy Division\""},
+
 		// Addition  ------------------------------------------------------
 		{[]Token{
 			{Integer, []byte{any, 0x09, 0x00, 0x00, 0x00}},
