@@ -2,24 +2,12 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:1fa2c219cae1212ec04bac52090e8e624dd1c6dcc6d1444098d2d762a3142ff1"
-  name = "github.com/byxor/qbd"
-  packages = [
-    "code",
-    "nametable",
-    "tokens",
-  ]
-  pruneopts = "UT"
-  revision = "6e715ef081fd4a59a77ab1b215132d2085803ecb"
-
-[[projects]]
-  digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
+  digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   pruneopts = "UT"
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
@@ -40,11 +28,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/byxor/qbd/code",
-    "github.com/byxor/qbd/nametable",
-    "github.com/byxor/qbd/tokens",
-    "github.com/stretchr/testify/assert",
-  ]
+  input-imports = ["github.com/stretchr/testify/assert"]
   solver-name = "gps-cdcl"
   solver-version = 1
