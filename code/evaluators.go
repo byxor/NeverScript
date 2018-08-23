@@ -29,6 +29,7 @@ var evaluators = map[TokenType]evaluator{
 	Vector:            evaluateVector,
 	Name:              evaluateName,
 	NameTableEntry:    basicString(""),
+	String:            evaluateString,
 }
 
 func evaluateStartOfExpression(state *stateHolder) string {
@@ -80,6 +81,11 @@ func evaluatePair(state *stateHolder) string {
 func evaluateName(state *stateHolder) string {
 	checksum := hex.EncodeToString(state.token.Chunk[1:])
 	return state.names.Get(checksum)
+}
+
+func evaluateString(state *stateHolder) string {
+	chunk := state.token.Chunk
+	return "\"" + string(chunk[5:len(chunk)-1]) + "\""
 }
 
 func basicString(s string) evaluator {
