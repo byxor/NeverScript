@@ -76,6 +76,10 @@ func TestSyntax(t *testing.T) {
 			0x69, 0x6F, 0x6E, 0x00}}},
 			"\"Joy Division\""},
 
+		{[]Token{
+			{String, []byte{any, 0x03, 0x00, 0x00, 0x00, 0x48, 0x69, 0x00}}},
+			"\"Hi\""},
+
 		// Addition  ------------------------------------------------------
 		{[]Token{
 			{Integer, []byte{any, 0x09, 0x00, 0x00, 0x00}},
@@ -229,6 +233,7 @@ func TestSyntax(t *testing.T) {
 			),
 		},
 	}
+
 	for _, entry := range entries {
 		code := code.GenerateUsing(entry.tokens)
 		assert.Equal(t, entry.expected, code)
