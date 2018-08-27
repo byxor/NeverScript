@@ -62,6 +62,7 @@ func init() {
 		{OptimisedIf, requirePrefixAndLength(0x47, 3)},
 		{OptimisedElse, requirePrefixAndLength(0x48, 3)},
 		{ShortJump, requirePrefixAndLength(0x49, 3)},
+		{RandomRange, requirePrefixAndLength(0x30, 9)},
 		{NameTableEntry, isCheckSumTableEntry},
 		{String, isString},
 		{LocalString, isLocalString},

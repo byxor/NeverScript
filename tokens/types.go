@@ -35,6 +35,7 @@ const (
 	GreaterThanCheck
 	GreaterThanOrEqualCheck
 	ExecuteRandomBlock
+	RandomRange
 	StartOfExpression
 	EndOfExpression
 	StartOfStruct
