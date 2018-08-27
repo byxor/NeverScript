@@ -8,10 +8,6 @@ import (
 	. "github.com/byxor/qbd/tokens"
 )
 
-const (
-	floatFormat = "%.7f"
-)
-
 type evaluator func(*stateHolder) string
 
 var evaluators = map[TokenType]evaluator{
@@ -66,20 +62,29 @@ func evaluateInteger(state *stateHolder) string {
 }
 
 func evaluateFloat(state *stateHolder) string {
-	return fmt.Sprintf(floatFormat, ReadFloat32(state.token.Chunk[1:]))
+	return formatFloat(ReadFloat32(state.token.Chunk[1:]))
+}
+
+func evaluatePair(state *stateHolder) string {
+	firstValue := ReadFloat32(state.token.Chunk[1:5])
+	secondValue := ReadFloat32(state.token.Chunk[5:])
+	return fmt.Sprintf(
+		"vec2<%s, %s>",
+		formatFloat(firstValue),
+		formatFloat(secondValue),
+	)
 }
 
 func evaluateVector(state *stateHolder) string {
 	firstValue := ReadFloat32(state.token.Chunk[1:5])
 	secondValue := ReadFloat32(state.token.Chunk[5:9])
 	thirdValue := ReadFloat32(state.token.Chunk[9:])
-	return fmt.Sprintf("vec3<"+floatFormat+", "+floatFormat+", "+floatFormat+">", firstValue, secondValue, thirdValue)
-}
-
-func evaluatePair(state *stateHolder) string {
-	firstValue := ReadFloat32(state.token.Chunk[1:5])
-	secondValue := ReadFloat32(state.token.Chunk[5:])
-	return fmt.Sprintf("vec2<"+floatFormat+", "+floatFormat+">", firstValue, secondValue)
+	return fmt.Sprintf(
+		"vec3<%s, %s, %s>",
+		formatFloat(firstValue),
+		formatFloat(secondValue),
+		formatFloat(thirdValue),
+	)
 }
 
 func evaluateName(state *stateHolder) string {
@@ -96,4 +101,23 @@ func basicString(s string) evaluator {
 	return func(*stateHolder) string {
 		return s
 	}
+}
+
+func formatFloat(f float32) string {
+	return trimUnnecessaryDigits(fmt.Sprintf("%.7f", f))
+}
+
+func trimUnnecessaryDigits(floatString string) string {
+	end := 0
+	for i := len(floatString) - 1; i >= 0; i-- {
+		if floatString[i-1] == '.' {
+			end = i
+			break
+		}
+		if floatString[i] != '0' {
+			end = i
+			break
+		}
+	}
+	return floatString[:end+1]
 }
