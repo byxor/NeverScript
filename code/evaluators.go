@@ -8,6 +8,10 @@ import (
 	. "github.com/byxor/qbd/tokens"
 )
 
+const (
+	floatFormat = "%.7ff"
+)
+
 type evaluator func(*stateHolder) string
 
 var evaluators = map[TokenType]evaluator{
@@ -62,20 +66,20 @@ func evaluateInteger(state *stateHolder) string {
 }
 
 func evaluateFloat(state *stateHolder) string {
-	return fmt.Sprintf("%.2ff", ReadFloat32(state.token.Chunk[1:]))
+	return fmt.Sprintf(floatFormat, ReadFloat32(state.token.Chunk[1:]))
 }
 
 func evaluateVector(state *stateHolder) string {
 	firstValue := ReadFloat32(state.token.Chunk[1:5])
 	secondValue := ReadFloat32(state.token.Chunk[5:9])
 	thirdValue := ReadFloat32(state.token.Chunk[9:])
-	return fmt.Sprintf("vec3<%.2ff, %.2ff, %.2ff>", firstValue, secondValue, thirdValue)
+	return fmt.Sprintf("vec3<"+floatFormat+", "+floatFormat+", "+floatFormat+">", firstValue, secondValue, thirdValue)
 }
 
 func evaluatePair(state *stateHolder) string {
 	firstValue := ReadFloat32(state.token.Chunk[1:5])
 	secondValue := ReadFloat32(state.token.Chunk[5:])
-	return fmt.Sprintf("vec2<%.2ff, %.2ff>", firstValue, secondValue)
+	return fmt.Sprintf("vec2<"+floatFormat+", "+floatFormat+">", firstValue, secondValue)
 }
 
 func evaluateName(state *stateHolder) string {
