@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	floatFormat = "%.7ff"
+	floatFormat = "%.7f"
 )
 
 type evaluator func(*stateHolder) string
