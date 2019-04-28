@@ -1,4 +1,4 @@
-package tests
+package decompiler
 
 import (
 	"github.com/byxor/NeverScript/decompiler/tokens"

@@ -1,4 +1,4 @@
-package tests
+package shared
 
 import (
 	"github.com/byxor/NeverScript/compiler/checksums"
