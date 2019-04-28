@@ -2,9 +2,7 @@ package compiler
 
 import (
 	"github.com/alecthomas/participle"
-	// "github.com/alecthomas/repr"
 	"github.com/byxor/NeverScript/compiler/grammar"
-	"fmt"
 )
 
 func Compile(code string) ([]byte, error) {
