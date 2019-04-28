@@ -13,6 +13,7 @@ const any = 0xF4
 func TestCompilation(t *testing.T) {
 	Convey("When compiling NeverScript code", t, func() {
 		Convey("We get QB bytecode", func() {
+
 			testThat("Files end with 0x00", []testEntry{
 				{"", []byte{0x00}},
 			})
@@ -48,16 +49,37 @@ type testEntry struct {
 func testThat(someRequirementIsMet string, entries []testEntry) {
 	description := fmt.Sprintf("Test: %s", someRequirementIsMet)
 
-	Convey(description, func() {
+	test := func() {
 		for _, entry := range entries {
-			result, err := compiler.Compile(entry.code)
-
+			bytecode, err := compiler.Compile(entry.code)
 			So(err, ShouldBeNil)
 
-			replaceIrrelevantBytesFromFirstArgument(result, entry.expectedBytecode)
-			So(result, shouldContainSubsequence, entry.expectedBytecode)
+			replaceIrrelevantBytesFromFirstArgument(bytecode, entry.expectedBytecode)
+			So(bytecode, shouldContainSubsequence, entry.expectedBytecode)
 		}
-	})
+	}
+
+	Convey(description, test)
+}
+
+func replaceIrrelevantBytesFromFirstArgument(first, second []byte) {
+	length := min(len(first), len(second))
+
+	for i := 0; i < length; i++ {
+		currentByteIsIrrelevant := second[i] == any
+
+		if currentByteIsIrrelevant {
+			first[i] = any
+		}
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
 }
 
 func shouldContainSubsequence(actual interface{}, expected ...interface{}) string {
@@ -85,22 +107,4 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 	}
 
 	return sequenceNotFound
-}
-
-func replaceIrrelevantBytesFromFirstArgument(actualBytes []byte, expectedBytes []byte) {
-	length := min(len(actualBytes), len(expectedBytes))
-
-	for i := 0; i < length; i++ {
-		if expectedBytes[i] == any {
-			actualBytes[i] = any
-		}
-	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
 }
