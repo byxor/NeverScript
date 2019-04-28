@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"github.com/byxor/NeverScript/compiler"
+	"github.com/byxor/NeverScript/shared/filenames"
 )
 
 const (
@@ -32,7 +33,7 @@ func main() {
 		argumentsWereSupplied = true
 
 		inputFileName := *arguments.FileToCompile
-		outputFilename := fmt.Sprintf("%s.qb", inputFileName[:len(inputFileName) - 3])
+		outputFilename := filenames.NsToQb(inputFileName)
 
 		fmt.Printf("Compiling '%s'...\n", inputFileName)
 
@@ -57,7 +58,9 @@ func main() {
 		argumentsWereSupplied = true
 
 		fmt.Printf("Decompiling '%s'...\n", *arguments.FileToDecompile)
-		fmt.Print("This is not implemented yet, sorry.")
+		fmt.Println("This is not implemented yet, sorry.")
+
+		fmt.Println()
 		fmt.Println("done.")
 	}
 
