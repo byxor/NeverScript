@@ -17,6 +17,8 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 * Tony Hawk's American Wasteland (THAW)
 * Guitar Hero III (GH3)
 
+All of these games use variations of Neversoft's scripting engine. We are primarily targetting THUG2, but we aim to create a language that is somewhat compatible with multiple games.
+
 ## Work in progress
 
 This project is a work in progress; many things are incomplete.
