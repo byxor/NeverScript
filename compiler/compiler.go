@@ -4,50 +4,60 @@ import (
 	"github.com/alecthomas/participle"
 	"github.com/byxor/NeverScript/compiler/grammar"
 	"github.com/byxor/NeverScript/shared/tokens"
+	"github.com/pkg/errors"
+)
+
+const (
+	bytecodeSize = 10 * 1000 * 1000
+	junkByte = 0xFF
 )
 
 func Compile(code string) ([]byte, error) {
 	syntaxTree, err := parseCodeIntoSyntaxTree(code)
+
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, errors.Wrap(err, "Failed to get syntax tree")
 	}
 
-	bytecode := make([]byte, 500)
-	index := 0
-	push := func(bytes ...byte) {
+	bytecode := make([]byte, bytecodeSize)
+	numberOfUsedBytes := 0
+
+	pushBytes := func(bytes ...byte) {
 		for i, b := range bytes {
-			bytecode[index+i] = b
+			bytecode[numberOfUsedBytes+i] = b
 		}
-		index += len(bytes)
+		numberOfUsedBytes += len(bytes)
 	}
 
-	push(tokens.EndOfLine)
+	pushBytes(tokens.EndOfLine)
 
 	for _, declaration := range syntaxTree.Declarations {
 		if declaration.EndOfLine != nil {
-			push(tokens.EndOfLine)
-		} else if declaration.BooleanAssignment != nil {
-			dontCare := byte(0xFF)
-			nameChecksum := []byte{dontCare, dontCare, dontCare, dontCare}
-			trueOrFalse := declaration.BooleanAssignment.Boolean.Value
+			pushBytes(tokens.EndOfLine)
+			continue
+		}
 
-			var assignmentValue byte
-			if trueOrFalse == "true" {
-				assignmentValue = 0x01
-			} else {
-				assignmentValue = 0x00
-			}
+		if declaration.BooleanAssignment != nil {
+			name := []byte{junkByte, junkByte, junkByte, junkByte}
 
-			push(0x16)
-			push(nameChecksum...)
-			push(0x07)
-			push(0x17, assignmentValue, 0x00, 0x00, 0x00)
+			value := convertBooleanTextToByte(
+				declaration.BooleanAssignment.Boolean.Value,
+			)
+
+			pushBytes(tokens.Name)
+			pushBytes(name...)
+			pushBytes(tokens.Equals)
+
+			// Using an Int because Bools don't exist in the QB format.
+			// Instead, we represent them with 0 or 1.
+			pushBytes(tokens.Int, value, 0, 0, 0)
+			continue
 		}
 	}
 
-	push(tokens.EndOfFile)
+	pushBytes(tokens.EndOfFile)
 
-	return bytecode[0:index], nil
+	return bytecode[:numberOfUsedBytes], nil
 }
 
 func parseCodeIntoSyntaxTree(code string) (*grammar.SyntaxTree, error) {
@@ -60,8 +70,16 @@ func parseCodeIntoSyntaxTree(code string) (*grammar.SyntaxTree, error) {
 
 	err := parser.ParseString(code, syntaxTree)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to run participle")
 	}
 
 	return syntaxTree, nil
+}
+
+func convertBooleanTextToByte(text string) byte {
+	if text == "true" {
+		return 0x01
+	} else {
+		return 0x00
+	}
 }
