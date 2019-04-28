@@ -4,6 +4,7 @@ import (
 	"github.com/alecthomas/participle"
 	// "github.com/alecthomas/repr"
 	"github.com/byxor/NeverScript/compiler/grammar"
+	"fmt"
 )
 
 func Compile(code string) ([]byte, error) {
@@ -33,9 +34,19 @@ func Compile(code string) ([]byte, error) {
 
 			nameChecksum := []byte{dontCare, dontCare, dontCare, dontCare}
 
+			trueOrFalse := declaration.BooleanAssignment.Boolean.Value
+
+			var assignmentValue byte
+			if trueOrFalse == "true" {
+				assignmentValue = 0x01
+			} else {
+				assignmentValue = 0x00
+			}
+
 			push(0x16)
 			push(nameChecksum...)
-			push(0x07, 0x17, 0x01, 0x00, 0x00, 0x00)
+			push(0x07)
+			push(0x17, assignmentValue, 0x00, 0x00, 0x00)
 		}
 	}
 

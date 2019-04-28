@@ -20,5 +20,5 @@ type BooleanAssignment struct {
 }
 
 type Boolean struct {
-	Value string `"true"|"false"`
+	Value string `@"true"|@"false"`
 }
