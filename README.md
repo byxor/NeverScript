@@ -21,7 +21,7 @@ All of these games use variations of Neversoft's scripting engine. We are primar
 
 ## Getting started
 
-Want to try the language?
+Want to try the language? Unfortunately, it's not ready yet.
 
 NeverScript Syntax Guide: [neverscript-syntax.ns](neverscript-syntax.ns)
 
