@@ -24,10 +24,9 @@ const (
 
 func main() {
 	arguments := parseCommandLineArguments()
+	argumentsWereSupplied := false
 
 	fmt.Println(banner[1:])
-
-	argumentsWereSupplied := false
 
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
@@ -36,18 +35,15 @@ func main() {
 		outputFilename := filenames.NsToQb(inputFileName)
 
 		fmt.Printf("Compiling '%s'...\n", inputFileName)
-
 		data, err := ioutil.ReadFile(inputFileName)
 		check(err)
 
 		code := string(data)
-
 		bytecode, err := compiler.Compile(code)
 		check(err)
 
 		err = ioutil.WriteFile(outputFilename, bytecode, 0777)
 		check(err)
-
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 
 		fmt.Println()
