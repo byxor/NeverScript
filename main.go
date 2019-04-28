@@ -16,13 +16,15 @@ const (
 / /\  /  __/\ V /  __/ |  _\ \ (__| |  | | |_) | |_ 
 \_\ \/ \___| \_/ \___|_|  \__/\___|_|  |_| .__/ \__|
                                          |_|        
+           The QB programming language.
+----------------------------------------------------
 `
 )
 
 func main() {
 	arguments := parseCommandLineArguments()
 
-	fmt.Println(banner)
+	fmt.Println(banner[1:])
 
 	argumentsWereSupplied := false
 
