@@ -1,8 +1,8 @@
 package test
 
 import (
-	"github.com/byxor/qbd/nametable"
-	. "github.com/byxor/qbd/tokens"
+	"github.com/byxor/NeverScript/decompiler/nametable"
+	. "github.com/byxor/NeverScript/decompiler/tokens"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

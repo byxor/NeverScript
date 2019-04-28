@@ -1,7 +1,7 @@
 package code
 
 import (
-	. "github.com/byxor/qbd/tokens"
+	. "github.com/byxor/NeverScript/decompiler/tokens"
 )
 
 func clean(tokens []Token) []Token {
