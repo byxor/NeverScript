@@ -31,9 +31,12 @@ func main() {
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
 
-		fmt.Printf("Compiling '%s'... ", *arguments.FileToCompile)
+		inputFileName := *arguments.FileToCompile
+		outputFilename := fmt.Sprintf("%s.qb", inputFileName[:len(inputFileName) - 3])
 
-		data, err := ioutil.ReadFile(*arguments.FileToCompile)
+		fmt.Printf("Compiling '%s'...\n", inputFileName)
+
+		data, err := ioutil.ReadFile(inputFileName)
 		check(err)
 
 		code := string(data)
@@ -41,17 +44,21 @@ func main() {
 		bytecode, err := compiler.Compile(code)
 		check(err)
 
-		fmt.Println("done")
+		err = ioutil.WriteFile(outputFilename, bytecode, 0777)
+		check(err)
 
-		fmt.Println(bytecode)
+		fmt.Printf("  Created '%s'.\n", outputFilename)
+
+		fmt.Println()
+		fmt.Println("done.")
 	}
 
 	if *arguments.FileToDecompile != "" {
 		argumentsWereSupplied = true
 
-		fmt.Printf("Compiling '%s'... ", *arguments.FileToDecompile)
-		fmt.Print("(not implemented yet)")
-		fmt.Println("done")
+		fmt.Printf("Decompiling '%s'...\n", *arguments.FileToDecompile)
+		fmt.Print("This is not implemented yet, sorry.")
+		fmt.Println("done.")
 	}
 
 	if !argumentsWereSupplied {
