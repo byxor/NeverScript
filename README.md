@@ -23,12 +23,17 @@ All of these games use variations of Neversoft's scripting engine. We are primar
 
 Want to try the language? Unfortunately, it's not ready yet.
 
-**NeverScript Syntax Guide:** [neverscript-syntax.ns](neverscript-syntax.ns)
+### Where to learn NeverScript:
 
-In the meantime, feel free to learn about other QB-targetting languages, or the QB format itself:
+**NeverScript syntax guide:** [neverscript-syntax.ns](neverscript-syntax.ns)
 
-* Blub scripting guide by Morten - http://www.thps-mods.com/forum/viewtopic.php?t=806
-* Bytecode documentation by Gone - http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
+### Where to learn about other QB languages:
+
+**Blub scripting guide by Morten:** http://www.thps-mods.com/forum/viewtopic.php?t=806
+
+### Where to learn about the QB format:
+
+**Bytecode documentation by Gone:** http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
 
 ## Work in progress
 
