@@ -1,0 +1,105 @@
+// At the top level, we can define global variables.
+
+// Integers
+my_number = 256;            // Decimal     (Base 10)
+my_number = 0x1234D00D;     // Hexadecimal (Base 16)
+my_number = 0b10100111001;  // Binary      (Base 2)
+my_number = 0o1234567;      // Octal       (Base 8)
+
+// Floats
+my_float = 123.45;
+my_float = 18.0;            // .0 required to avoid ambiguity with integers
+
+// Booleans
+neverscript_rocks = true;
+neverscript_sucks = false;
+
+// Strings
+my_string = "Hello, I contain text!";
+my_string = "";
+
+// Arrays
+my_array = [1 2 3 4];
+my_array = ["Foo" "Bar" "Baz"];
+my_array = [[1 2] [3 4]];
+
+// Pairs (2 floats packed together as a unit)
+my_pair = (0.2, 0.3);
+my_pair = (99.0, 500.0);
+
+// Vectors (3 floats packed together as a unit)
+vector_1 = (0.0, 0.0, 0.0);
+vector_2 = (0.1, 0.2, 0.3);
+
+// Structs
+language = {
+    name = "NeverScript";
+    is_fun = true;
+};
+
+nested1 = {
+    nested2 = {
+        foo = 10;
+        bar = 20;
+        nested3 = {
+            baz = [1 2 3 4];
+        };
+    };
+};
+
+nameless_struct = {10 minutes};
+
+// Functions are also defined at the top level.
+//
+// Inside functions, slightly more complex language features are enabled.
+// e.g.
+//
+// -    `<` and `>` can be used to reference local memory (local variables & parameters).
+//
+// -    `(` and `)` can be used to perform calculations and to control the precedence of operations.
+// -    `+` does subtraction.
+// -    `-` does subtraction.
+// -    `*` does multiplication.
+// -    `/` does division.
+//
+// -    Example:        (((5 + 5) * 10) / 4)
+//      Evaluates to:   25
+//
+// -    Calculations can contain variables.
+//      Example:        (<score> * 250)
+//      Evaluates to:   ?
+//
+// -    `return` can be used to store variables into the caller's local memory.
+//      Example:        return foo=10;
+//
+// -    Multiple values can be returned.
+//      Example:        return foo=10 bar=20;
+//
+//      See the `add` function (which is called in `main`) for an example of how to use this feature.
+
+func add {
+    return add_result=(<first> + <second>);
+};
+
+func change_global_string {
+    change my_string = "Oh no... Global state has been modified!";
+};
+
+func main {
+    print text="Hello"
+
+    // Add two numbers and print the return value
+    add first=10 second=20;
+    print text=<add_result>;
+
+    // Call a function across multiple lines (style 1)
+    kick_player name="byxor"
+                reason="using techs during game of koth";
+
+    // Call a function across multiple lines (style 2):
+    kick_player
+        name = "byxor"
+        reason = "using techs during game of koth";
+
+    print text="Goodbye";
+};
