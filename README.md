@@ -23,7 +23,7 @@ All of these games use variations of Neversoft's scripting engine. We are primar
 
 Want to try the language? Unfortunately, it's not ready yet.
 
-NeverScript Syntax Guide: [neverscript-syntax.ns](neverscript-syntax.ns)
+**NeverScript Syntax Guide:** [neverscript-syntax.ns](neverscript-syntax.ns)
 
 In the meantime, feel free to learn about other QB-targetting languages, or the QB format itself:
 
