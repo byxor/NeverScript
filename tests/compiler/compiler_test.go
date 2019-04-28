@@ -13,8 +13,7 @@ const any = 0xF4
 func TestCompilation(t *testing.T) {
 	Convey("When compiling NeverScript code", t, func() {
 		Convey("We get QB bytecode", func() {
-
-			testThat("File ends with 0x00", []testEntry{
+			testThat("Files end with 0x00", []testEntry{
 				{"", []byte{0x00}},
 			})
 
@@ -30,11 +29,12 @@ func TestCompilation(t *testing.T) {
 
 			testThat("Boolean variables can be declared", []testEntry{
 				{"is_awesome = true;", []byte{0x01, 0x16, any, any, any, any,
-					0x07, 0x17, 0x01, 0x00, 0x00, 0x00,
-					0x01, 0x00}},
+                                              0x07, 0x17, 0x01, 0x00, 0x00, 0x00,
+					                          0x01, 0x00}},
+
 				{"you_lost = false;", []byte{0x01, 0x16, any, any, any, any,
-					0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
-					0x01, 0x00}},
+					                         0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+					                         0x01, 0x00}},
 			})
 		})
 	})
@@ -46,7 +46,7 @@ type testEntry struct {
 }
 
 func testThat(someRequirementIsMet string, entries []testEntry) {
-	description := fmt.Sprintf("Test that: %s", someRequirementIsMet)
+	description := fmt.Sprintf("Test: %s", someRequirementIsMet)
 
 	Convey(description, func() {
 		for _, entry := range entries {

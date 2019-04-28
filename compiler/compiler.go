@@ -3,35 +3,32 @@ package compiler
 import (
 	"github.com/alecthomas/participle"
 	"github.com/byxor/NeverScript/compiler/grammar"
+	"github.com/byxor/NeverScript/shared/tokens"
 )
 
 func Compile(code string) ([]byte, error) {
-
-	program, err := parse(code)
+	syntaxTree, err := parseCodeIntoSyntaxTree(code)
 	if err != nil {
 		return []byte{}, err
 	}
 
 	bytecode := make([]byte, 500)
-	marker := 0
-
+	index := 0
 	push := func(bytes ...byte) {
 		for i, b := range bytes {
-			bytecode[marker+i] = b
+			bytecode[index+i] = b
 		}
-		marker += len(bytes)
+		index += len(bytes)
 	}
 
-	push(0x01)
+	push(tokens.EndOfLine)
 
-	for _, declaration := range program.Declarations {
+	for _, declaration := range syntaxTree.Declarations {
 		if declaration.EndOfLine != nil {
-			push(0x01)
+			push(tokens.EndOfLine)
 		} else if declaration.BooleanAssignment != nil {
 			dontCare := byte(0xFF)
-
 			nameChecksum := []byte{dontCare, dontCare, dontCare, dontCare}
-
 			trueOrFalse := declaration.BooleanAssignment.Boolean.Value
 
 			var assignmentValue byte
@@ -48,24 +45,23 @@ func Compile(code string) ([]byte, error) {
 		}
 	}
 
-	push(0x00)
-	return bytecode[0:marker], nil
+	push(tokens.EndOfFile)
+
+	return bytecode[0:index], nil
 }
 
-func parse(code string) (*grammar.Program, error) {
+func parseCodeIntoSyntaxTree(code string) (*grammar.SyntaxTree, error) {
 	parser := participle.MustBuild(
-		&grammar.Program{},
+		&grammar.SyntaxTree{},
 		participle.UseLookahead(2),
 	)
 
-	result := &grammar.Program{}
+	syntaxTree := &grammar.SyntaxTree{}
 
-	err := parser.ParseString(code, result)
+	err := parser.ParseString(code, syntaxTree)
 	if err != nil {
 		return nil, err
 	}
 
-	// repr.Println(result, repr.Indent("  "), repr.OmitEmpty(true))
-
-	return result, nil
+	return syntaxTree, nil
 }

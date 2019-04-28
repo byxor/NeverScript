@@ -1,6 +1,6 @@
 package grammar
 
-type Program struct {
+type SyntaxTree struct {
 	Declarations []*Declaration `@@*`
 }
 
