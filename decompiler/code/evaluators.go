@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	. "github.com/byxor/qbd/tokens"
+	. "github.com/byxor/NeverScript/decompiler/tokens"
 )
 
 type evaluator func(*stateHolder) string

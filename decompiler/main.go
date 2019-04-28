@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/byxor/qbd/code"
-	"github.com/byxor/qbd/tokens"
+	"github.com/byxor/NeverScript/decompiler/code"
+	"github.com/byxor/NeverScript/decompiler/tokens"
 	"io/ioutil"
 	"log"
 	"os"

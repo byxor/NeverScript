@@ -2,7 +2,7 @@ package nametable
 
 import (
 	"encoding/hex"
-	. "github.com/byxor/qbd/tokens"
+	. "github.com/byxor/NeverScript/decompiler/tokens"
 )
 
 func BuildFrom(tokens []Token) NameTable {

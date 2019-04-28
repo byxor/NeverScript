@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/byxor/qbd/code"
-	. "github.com/byxor/qbd/tokens"
+	"github.com/byxor/NeverScript/decompiler/code"
+	. "github.com/byxor/NeverScript/decompiler/tokens"
 	"github.com/stretchr/testify/assert"
 )
 
