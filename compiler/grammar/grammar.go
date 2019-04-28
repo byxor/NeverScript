@@ -6,7 +6,7 @@ type Program struct {
 
 type Declaration struct {
 	EndOfLine         *EndOfLine         `  @@`
-    BooleanAssignment *BooleanAssignment `| @@`
+	BooleanAssignment *BooleanAssignment `| @@`
 }
 
 type EndOfLine struct {

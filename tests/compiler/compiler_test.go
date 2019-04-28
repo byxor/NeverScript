@@ -1,10 +1,10 @@
 package compiler
 
 import (
-	"github.com/byxor/NeverScript/compiler"
-	. "github.com/smartystreets/goconvey/convey"
 	"bytes"
 	"fmt"
+	"github.com/byxor/NeverScript/compiler"
+	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
@@ -30,11 +30,11 @@ func TestCompilation(t *testing.T) {
 
 			testThat("Boolean variables can be declared", []testEntry{
 				{"is_awesome = true;", []byte{0x01, 0x16, any, any, any, any,
-                                              0x07, 0x17, 0x01, 0x00, 0x00, 0x00,
-				                              0x01, 0x00}},
+					0x07, 0x17, 0x01, 0x00, 0x00, 0x00,
+					0x01, 0x00}},
 				{"you_lost = false;", []byte{0x01, 0x16, any, any, any, any,
-                                             0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
-				                             0x01, 0x00}},
+					0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+					0x01, 0x00}},
 			})
 		})
 	})
@@ -49,14 +49,14 @@ func testThat(someRequirementIsMet string, entries []testEntry) {
 	description := fmt.Sprintf("Test that: %s", someRequirementIsMet)
 
 	Convey(description, func() {
-    	for _, entry := range entries {
-    		result, err := compiler.Compile(entry.code)
-    		
-    		So(err, ShouldBeNil)
-    
-    		replaceIrrelevantBytesFromFirstArgument(result, entry.expectedBytecode)
-    		So(result, shouldContainSubsequence, entry.expectedBytecode)
-    	}
+		for _, entry := range entries {
+			result, err := compiler.Compile(entry.code)
+
+			So(err, ShouldBeNil)
+
+			replaceIrrelevantBytesFromFirstArgument(result, entry.expectedBytecode)
+			So(result, shouldContainSubsequence, entry.expectedBytecode)
+		}
 	})
 }
 
@@ -75,8 +75,8 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 		return sequenceNotFound
 	}
 
-	for i := 0; i < len(sequence) - len(subsequence) + 1; i++ {
-		sliceOfSequence := sequence[i:i+len(subsequence)]
+	for i := 0; i < len(sequence)-len(subsequence)+1; i++ {
+		sliceOfSequence := sequence[i : i+len(subsequence)]
 
 		if bytes.Equal(sliceOfSequence, subsequence) {
 			sequenceFound := ""
