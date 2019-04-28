@@ -25,15 +25,12 @@ Want to try the language? Unfortunately, it's not ready yet.
 
 ### Where to learn NeverScript:
 
-**NeverScript syntax guide:** [neverscript-syntax.ns](neverscript-syntax.ns)
+* **NeverScript syntax guide:** [neverscript-syntax.ns](neverscript-syntax.ns)
 
-### Where to learn about other QB languages:
+### Other useful resources:
 
-**Blub scripting guide by Morten:** http://www.thps-mods.com/forum/viewtopic.php?t=806
-
-### Where to learn about the QB format:
-
-**Bytecode documentation by Gone:** http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
+* **Blub scripting guide by Morten:** http://www.thps-mods.com/forum/viewtopic.php?t=806
+* **Bytecode documentation by Gone:** http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
 
 ## Work in progress
 
