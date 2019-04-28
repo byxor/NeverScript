@@ -21,6 +21,8 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 
 This project is a work in progress; many things are incomplete.
 
+There's currently no way to run the tools, but the tests are executable. We plan to address this soon.
+
 You can track our progress [here](https://github.com/byxor/NeverScript/projects/1).
 
 ## Special Thanks
