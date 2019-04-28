@@ -1,6 +1,13 @@
 package filenames
 
 func QbToNs(filename string) string {
-	filenameWithoutExtension := filename[:len(filename)-3]
-	return filenameWithoutExtension + ".ns"
+	return withoutExtension(filename) + ".ns"
+}
+
+func NsToQb(filename string) string {
+	return withoutExtension(filename) + ".qb"
+}
+
+func withoutExtension(filename string) string {
+	return filename[:len(filename)-3]
 }
