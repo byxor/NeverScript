@@ -19,6 +19,17 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 
 All of these games use variations of Neversoft's scripting engine. We are primarily targetting THUG2, but we aim to create a language that is somewhat compatible with multiple games.
 
+## Getting started
+
+Want to try the language?
+
+A document describing NeverScript's Syntax is coming soon!
+
+**In the meantime, feel free to learn about other QB-targetting languages, and the QB format itself:**
+
+* Bytecode documentation by Gone - http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
+* Blub scripting guide by Morten - http://www.thps-mods.com/forum/viewtopic.php?t=806
+
 ## Work in progress
 
 This project is a work in progress; many things are incomplete.
