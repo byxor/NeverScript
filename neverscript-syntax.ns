@@ -82,7 +82,7 @@ func add {
 };
 
 func change_global_string {
-    change my_string = "Oh no... Global state has been modified!";
+    change my_string="Oh no... Global state has been modified!";
 };
 
 func main {
