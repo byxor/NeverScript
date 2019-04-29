@@ -8,4 +8,5 @@ const (
 
 	Name = 0x16
 	Int  = 0x17
+	String = 0x1B
 )

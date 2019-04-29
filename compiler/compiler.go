@@ -76,6 +76,24 @@ func Compile(code string) ([]byte, error) {
 			pushBytes(valueBytes...)
 			continue
 		}
+
+		if declaration.StringAssignment != nil {
+			name := []byte{junkByte, junkByte, junkByte, junkByte}
+
+			string := declaration.StringAssignment.Value
+			unquotedString := string[1:len(string)-1]
+
+			lengthBytes := checksums.LittleEndian(uint32(len(unquotedString)))
+			stringBytes := []byte(unquotedString)
+
+			pushBytes(tokens.Name)
+			pushBytes(name...)
+			pushBytes(tokens.Equals)
+			pushBytes(tokens.String)
+			pushBytes(lengthBytes...)
+			pushBytes(stringBytes...)
+			pushBytes(0x00)
+		}
 	}
 
 	pushBytes(tokens.EndOfFile)

@@ -112,6 +112,19 @@ func TestCompilation(t *testing.T) {
 					0x07, 0x17, 0xFF, 0xFF, 0xFF, 0xFF,
 					0x01, 0x00}},
 			})
+
+			testThat("String variables can be declared", []testEntry{
+				{`empty = "";`, []byte{
+					0x01, 0x16, any, any, any, any,
+					0x07, 0x1B, 0x00, 0x00, 0x00, 0x00,
+					0x00, 0x01, 0x00}},
+
+				{`name = "byxor";`, makeBytes(
+					0x01, 0x16, any, any, any, any,
+					0x07, 0x1B, 0x00, 0x00, 0x00, 0x00,
+					"byxor", 0x00,
+					0x01, 0x00)},
+			})
 		})
 	})
 }
@@ -182,4 +195,27 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 	}
 
 	return sequenceNotFound
+}
+
+func makeBytes(elements ...interface{}) []byte {
+	theBytes := make([]byte, 1024)
+	size := 0
+
+	for _, element := range elements {
+		if theByte, ok := element.(byte); ok {
+			theBytes[size] = theByte
+			size++
+			continue
+		}
+
+		if theString, ok := element.(string); ok {
+			for _, theRune := range theString {
+				theBytes[size] = byte(theRune)
+				size++
+			}
+			continue
+		}
+	}
+
+	return theBytes[:size]
 }

@@ -8,6 +8,7 @@ type Declaration struct {
 	EndOfLine         string             `  @Semicolon`
 	BooleanAssignment *BooleanAssignment `| @@`
 	IntegerAssignment *IntegerAssignment `| @@`
+	StringAssignment  *StringAssignment  `| @@`
 }
 
 type BooleanAssignment struct {
@@ -20,6 +21,12 @@ type IntegerAssignment struct {
 	Name   string   `@Identifier`
 	Equals string   `@Equals`
 	Value  *Integer `@@`
+}
+
+type StringAssignment struct {
+	Name   string `@Identifier`
+	Equals string `@Equals`
+	Value  string `@String`
 }
 
 type Integer struct {
