@@ -5,6 +5,7 @@ import (
 	"github.com/byxor/NeverScript/compiler/grammar"
 	"github.com/byxor/NeverScript/shared/tokens"
 	"github.com/pkg/errors"
+	"encoding/binary"
 )
 
 const (
@@ -46,7 +47,9 @@ func Compile(code string) ([]byte, error) {
 			pushBytes(tokens.Equals)
 
 			// The QB format has no Boolean type.
-			// Ints with a value of 0 or 1 are used instead.
+			// Instead, we must use Ints with a value of 0 or 1.
+			//
+			// Floats are also legal, but Ints are simpler.
 			pushBytes(tokens.Int, value, 0, 0, 0)
 			continue
 		}
@@ -54,10 +57,15 @@ func Compile(code string) ([]byte, error) {
 		if declaration.IntegerAssignment != nil {
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
 
+			value := *declaration.IntegerAssignment.Integer.Decimal
+			valueBytes := make([]byte, 4)
+			binary.LittleEndian.PutUint32(valueBytes, value)
+
 			pushBytes(tokens.Name)
 			pushBytes(name...)
 			pushBytes(tokens.Equals)
-			pushBytes(tokens.Int, 0, 0, 0, 0)
+			pushBytes(tokens.Int)
+			pushBytes(valueBytes...)
 			continue
 		}
 	}

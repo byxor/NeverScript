@@ -42,6 +42,14 @@ func TestCompilation(t *testing.T) {
 				{"high_score = 0;", []byte{0x01, 0x16, any, any, any, any,
                                            0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
 					                       0x01, 0x00}},
+
+				{"high_score = 1;", []byte{0x01, 0x16, any, any, any, any,
+                                           0x07, 0x17, 0x01, 0x00, 0x00, 0x00,
+					                       0x01, 0x00}},
+
+				{"num_players = 255;", []byte{0x01, 0x16, any, any, any, any,
+                                              0x07, 0x17, 0xFF, 0x00, 0x00, 0x00,
+					                          0x01, 0x00}},
 			})
 		})
 	})

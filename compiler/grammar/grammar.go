@@ -31,5 +31,5 @@ type IntegerAssignment struct {
 }
 
 type Integer struct {
-	Decimal *float64 `@Int`
+	Decimal *uint32 `@Int`
 }
