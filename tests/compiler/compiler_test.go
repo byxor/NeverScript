@@ -74,6 +74,14 @@ func TestCompilation(t *testing.T) {
 				{"boostplant_limit = 0b0;", []byte{0x01, 0x16, any, any, any, any,
                                                    0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
 			                                       0x01, 0x00}},
+
+				{"boostplant_limit = 0b1010;", []byte{0x01, 0x16, any, any, any, any,
+                                                      0x07, 0x17, 0x0A, 0x00, 0x00, 0x00,
+			                                          0x01, 0x00}},
+
+				{"max_value = 0b11111111111111111111111111111111;", []byte{0x01, 0x16, any, any, any, any,
+                                                                           0x07, 0x17, 0xFF, 0xFF, 0xFF, 0xFF,
+                                                                           0x01, 0x00}},
 			})
 		})
 	})
