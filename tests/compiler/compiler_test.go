@@ -50,6 +50,20 @@ func TestCompilation(t *testing.T) {
 				{"num_players = 255;", []byte{0x01, 0x16, any, any, any, any,
                                               0x07, 0x17, 0xFF, 0x00, 0x00, 0x00,
 					                          0x01, 0x00}},
+
+				{"max_value = 4294967295;", []byte{0x01, 0x16, any, any, any, any,
+                                                   0x07, 0x17, 0xFF, 0xFF, 0xFF, 0xFF,
+					                               0x01, 0x00}},
+			})
+			
+			testThat("Integer variables can be declared in hexadecimal form", []testEntry{
+				{"y_scale = 0x0;", []byte{0x01, 0x16, any, any, any, any,
+                                          0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+			                              0x01, 0x00}},
+
+				{"z_scale = 0xBADBABE;", []byte{0x01, 0x16, any, any, any, any,
+                                                0x07, 0x17, 0xBE, 0xBA, 0xAD, 0x0B,
+			                                    0x01, 0x00}},
 			})
 		})
 	})
