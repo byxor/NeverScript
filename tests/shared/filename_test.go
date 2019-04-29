@@ -8,29 +8,29 @@ import (
 
 func TestConvertingQbToNs(t *testing.T) {
 	Convey(".qb filenames are converted .ns filenames", t, func() {
-    	entries := []testEntry{
-    		{"a.qb", "a.ns"},
-    		{"foo.qb", "foo.ns"},
+		entries := []testEntry{
+			{"a.qb", "a.ns"},
+			{"foo.qb", "foo.ns"},
 			{"~/foo/bar/baz.qb", "~/foo/bar/baz.ns"},
-    	}
-    	for _, entry := range entries {
+		}
+		for _, entry := range entries {
 			output := filenames.QbToNs(entry.input)
-    		So(output, ShouldEqual, entry.expectedOutput)
-    	}
+			So(output, ShouldEqual, entry.expectedOutput)
+		}
 	})
 }
 
 func TestConvertingNsToQb(t *testing.T) {
 	Convey(".ns filenames are converted .qb filenames", t, func() {
-    	entries := []testEntry{
-    		{"a.ns", "a.qb"},
+		entries := []testEntry{
+			{"a.ns", "a.qb"},
 			{"foo.ns", "foo.qb"},
 			{"~/foo/bar/baz.ns", "~/foo/bar/baz.qb"},
-    	}
-    	for _, entry := range entries {
+		}
+		for _, entry := range entries {
 			output := filenames.NsToQb(entry.input)
-    		So(output, ShouldEqual, entry.expectedOutput)
-    	}
+			So(output, ShouldEqual, entry.expectedOutput)
+		}
 	})
 }
 
