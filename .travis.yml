@@ -1,13 +1,12 @@
 language: go
+sudo: false
 
 go:
 - "1.12"
 
-install:
-- go get github.com/byxor/NeverScript
+before_install:
 - go get golang.org/x/tools/cmd/cover
 - go get github.com/mattn/goveralls
 
 script:
-- go test -v -covermode=count -coverprofile=coverage.out
-- $GOPATH/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+- $GOPATH/bin/goveralls -service=travis-ci
