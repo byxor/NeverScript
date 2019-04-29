@@ -11,9 +11,9 @@ type Declaration struct {
 }
 
 type BooleanAssignment struct {
-	Name    string `@Identifier`
-	Equals  string `@Equals`
-	Value   string `@Boolean`
+	Name   string `@Identifier`
+	Equals string `@Equals`
+	Value  string `@Boolean`
 }
 
 type IntegerAssignment struct {

@@ -18,7 +18,7 @@ var NsLexer = lexer.Must(lexer.Regexp(
 		`|(?P<Integer_Base8>0o[0-7]+)` +
 		`|(?P<Integer_Base2>0b[0-1]+)` +
 		`|(?P<Integer_Base10>[0-9]+)` +
-	    `` + 
+		`` +
 		`|(?P<Identifier>[a-zA-Z][a-zA-Z_\d]*)` +
 		// `|(?P<String>"(?:\\.|[^"])*")` +
 		// `|(?P<Float>\d+(?:\.\d+)?)` +

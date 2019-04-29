@@ -3,14 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript/shared/filenames"
+	"io/ioutil"
+	"os"
 )
 
 const (
-    banner = `
+	banner = `
      __                    __           _       _   
   /\ \ \_____   _____ _ __/ _\ ___ _ __(_)_ __ | |_ 
  /  \/ / _ \ \ / / _ \ '__\ \ / __| '__| | '_ \| __|
@@ -66,12 +66,12 @@ func main() {
 }
 
 type commandLineArguments struct {
-    FileToCompile *string
-    FileToDecompile *string
+	FileToCompile   *string
+	FileToDecompile *string
 }
 
 func parseCommandLineArguments() commandLineArguments {
-	args := commandLineArguments {
+	args := commandLineArguments{
 		FileToCompile:   flag.String("c", "", "Specify a file to compile (.ns)."),
 		FileToDecompile: flag.String("d", "", "Specify a file to decompile (.qb)."),
 	}

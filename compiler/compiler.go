@@ -1,19 +1,19 @@
 package compiler
 
 import (
+	goErrors "errors"
 	"github.com/alecthomas/participle"
 	"github.com/byxor/NeverScript/compiler/grammar"
 	"github.com/byxor/NeverScript/shared/checksums"
 	"github.com/byxor/NeverScript/shared/tokens"
 	"github.com/pkg/errors"
-	goErrors "errors"
-	"strconv"
 	"log"
+	"strconv"
 )
 
 const (
 	bytecodeSize = 10 * 1000 * 1000
-	junkByte = 0xFF
+	junkByte     = 0xFF
 )
 
 func Compile(code string) ([]byte, error) {
