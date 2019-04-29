@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/byxor/NeverScript.svg?branch=master)](https://travis-ci.com/byxor/NeverScript) [![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/) 
+[![Build Status](https://travis-ci.com/byxor/NeverScript.svg?branch=master)](https://travis-ci.com/byxor/NeverScript)  [![codecov](https://codecov.io/gh/byxor/NeverScript/branch/master/graph/badge.svg)](https://codecov.io/gh/byxor/NeverScript) [![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/) 
 
 ```
      __                    __           _       _   
