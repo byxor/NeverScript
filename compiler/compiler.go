@@ -112,15 +112,21 @@ func convertIntegerNodeToUint32(node grammar.Integer) (uint32, error) {
 	text, base, nodeIsEmpty := (func() (text string, base int, nodeIsEmpty bool) {
 		nodeIsEmpty = false
 
+		if node.Base16 != "" {
+			base = 16
+			text = node.Base16[2:]
+			return
+		}
+
 		if node.Base10 != "" {
 			base = 10
 			text = node.Base10
 			return
 		}
 
-		if node.Base16 != "" {
-			base = 16
-			text = node.Base16[2:]
+		if node.Base8 != "" {
+			base = 8
+			text = node.Base8[2:]
 			return
 		}
 

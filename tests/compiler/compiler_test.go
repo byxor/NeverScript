@@ -71,17 +71,31 @@ func TestCompilation(t *testing.T) {
 			})
 
 			testThat("Integer variables can be declared in a binary format", []testEntry{
-				{"boostplant_limit = 0b0;", []byte{0x01, 0x16, any, any, any, any,
-                                                   0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
-			                                       0x01, 0x00}},
+				{"larry = 0b0;", []byte{0x01, 0x16, any, any, any, any,
+                                        0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+			                            0x01, 0x00}},
 
-				{"boostplant_limit = 0b1010;", []byte{0x01, 0x16, any, any, any, any,
-                                                      0x07, 0x17, 0x0A, 0x00, 0x00, 0x00,
-			                                          0x01, 0x00}},
+				{"silverstein = 0b1010;", []byte{0x01, 0x16, any, any, any, any,
+                                                 0x07, 0x17, 0x0A, 0x00, 0x00, 0x00,
+			                                     0x01, 0x00}},
 
 				{"max_value = 0b11111111111111111111111111111111;", []byte{0x01, 0x16, any, any, any, any,
                                                                            0x07, 0x17, 0xFF, 0xFF, 0xFF, 0xFF,
                                                                            0x01, 0x00}},
+			})
+
+			testThat("Integer variables can be declared in an octal format", []testEntry{
+				{"zero = 0o0;", []byte{0x01, 0x16, any, any, any, any,
+                                       0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+			                           0x01, 0x00}},
+
+				{"eight = 0o10;", []byte{0x01, 0x16, any, any, any, any,
+                                         0x07, 0x17, 0x08, 0x00, 0x00, 0x00,
+			                             0x01, 0x00}},
+
+				{"max_value = 0o37777777777;", []byte{0x01, 0x16, any, any, any, any,
+                                                      0x07, 0x17, 0xFF, 0xFF, 0xFF, 0xFF,
+                                                      0x01, 0x00}},
 			})
 		})
 	})
