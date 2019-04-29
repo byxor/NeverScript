@@ -17,8 +17,12 @@ type BooleanAssignment struct {
 }
 
 type IntegerAssignment struct {
-	Name    string `@Identifier`
-	Equals  string `@Equals`
-	Base10  string `( @Integer_Base10`
-	Base16  string `| @Integer_Base16 )`
+	Name    string   `@Identifier`
+	Equals  string   `@Equals`
+	Value   *Integer `@@`
+}
+
+type Integer struct {
+	Base10  string `  @Integer_Base10`
+	Base16  string `| @Integer_Base16`
 }

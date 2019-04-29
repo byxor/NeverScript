@@ -6,6 +6,7 @@ import (
 	"github.com/byxor/NeverScript/shared/checksums"
 	"github.com/byxor/NeverScript/shared/tokens"
 	"github.com/pkg/errors"
+	goErrors "errors"
 	"strconv"
 	"log"
 )
@@ -51,9 +52,7 @@ func Compile(code string) ([]byte, error) {
 			pushBytes(tokens.Equals)
 
 			// The QB format has no Boolean type.
-			// Instead, we must use Ints with a value of 0 or 1.
-			//
-			// Floats are also legal, but Ints are simpler.
+			// Instead, we use Ints with a value of 0 or 1.
 			pushBytes(tokens.Int, value, 0, 0, 0)
 			continue
 		}
@@ -63,21 +62,9 @@ func Compile(code string) ([]byte, error) {
 
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
 
-			var value uint32
-			if assignment.Base10 != "" {
-				temp, err := strconv.ParseUint(assignment.Base10, 10, 32)
-				if err != nil {
-					return []byte{}, errors.Wrap(err, "Failed to parse Base 10 integer")
-				}
-
-				value = uint32(temp)
-			} else if assignment.Base16 != "" {
-				temp, err := strconv.ParseUint(assignment.Base16[2:], 16, 32)
-				if err != nil {
-					return []byte{}, errors.Wrap(err, "Failed to parse Base 16 integer")
-				}
-
-				value = uint32(temp)
+			value, err := convertIntegerNodeToUint32(*assignment.Value)
+			if err != nil {
+				return []byte{}, errors.Wrap(err, "Failed to convert grammar.Integer to uint32")
 			}
 
 			valueBytes := checksums.LittleEndian(value)
@@ -119,4 +106,33 @@ func convertBooleanTextToByte(text string) byte {
 	} else {
 		return 0x00
 	}
+}
+
+func convertIntegerNodeToUint32(integer grammar.Integer) (uint32, error) {
+	var text string
+	var base int
+	nodeIsEmpty := true
+
+	if integer.Base10 != "" {
+		nodeIsEmpty = false
+		text = integer.Base10
+		base = 10
+	}
+
+	if integer.Base16 != "" {
+		nodeIsEmpty = false
+		text = integer.Base16[2:]
+		base = 16
+	}
+
+	if nodeIsEmpty {
+		return 0, goErrors.New("Integer node is empty")
+	}
+
+	value, err := strconv.ParseUint(text, base, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(value), nil
 }
