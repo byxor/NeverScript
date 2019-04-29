@@ -5,8 +5,11 @@ go:
 - "1.12"
 
 before_install:
-- go get golang.org/x/tools/cmd/cover
-- go get github.com/mattn/goveralls
+- go get -t -v ./...
+- go get -u github.com/ory/go-acc
 
 script:
-- $GOPATH/bin/goveralls -service=travis-ci
+- go-acc ./...
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)

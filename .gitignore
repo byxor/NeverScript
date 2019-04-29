@@ -1,3 +1,4 @@
 NeverScript
 ns
 .coveralls.yml
+*.out
