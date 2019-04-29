@@ -7,6 +7,7 @@ type SyntaxTree struct {
 type Declaration struct {
 	EndOfLine         *EndOfLine         `  @@`
 	BooleanAssignment *BooleanAssignment `| @@`
+	IntegerAssignment *IntegerAssignment `| @@`
 }
 
 type EndOfLine struct {
@@ -21,4 +22,14 @@ type BooleanAssignment struct {
 
 type Boolean struct {
 	Value string `@"true"|@"false"`
+}
+
+type IntegerAssignment struct {
+	Name    string   `@Ident`
+	Equals  string   `"="`
+	Integer *Integer `@@`
+}
+
+type Integer struct {
+	Decimal *float64 `@Int`
 }

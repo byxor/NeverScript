@@ -37,6 +37,12 @@ func TestCompilation(t *testing.T) {
 					                         0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
 					                         0x01, 0x00}},
 			})
+
+			testThat("Integer variables can be declared", []testEntry{
+				{"high_score = 0;", []byte{0x01, 0x16, any, any, any, any,
+                                           0x07, 0x17, 0x00, 0x00, 0x00, 0x00,
+					                       0x01, 0x00}},
+			})
 		})
 	})
 }

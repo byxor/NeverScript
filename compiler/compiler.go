@@ -39,18 +39,25 @@ func Compile(code string) ([]byte, error) {
 
 		if declaration.BooleanAssignment != nil {
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
-
-			value := convertBooleanTextToByte(
-				declaration.BooleanAssignment.Boolean.Value,
-			)
+			value := convertBooleanTextToByte(declaration.BooleanAssignment.Boolean.Value)
 
 			pushBytes(tokens.Name)
 			pushBytes(name...)
 			pushBytes(tokens.Equals)
 
-			// Using an Int because Bools don't exist in the QB format.
-			// Instead, we represent them with 0 or 1.
+			// The QB format has no Boolean type.
+			// Ints with a value of 0 or 1 are used instead.
 			pushBytes(tokens.Int, value, 0, 0, 0)
+			continue
+		}
+
+		if declaration.IntegerAssignment != nil {
+			name := []byte{junkByte, junkByte, junkByte, junkByte}
+
+			pushBytes(tokens.Name)
+			pushBytes(name...)
+			pushBytes(tokens.Equals)
+			pushBytes(tokens.Int, 0, 0, 0, 0)
 			continue
 		}
 	}
