@@ -108,22 +108,31 @@ func convertBooleanTextToByte(text string) byte {
 	}
 }
 
-func convertIntegerNodeToUint32(integer grammar.Integer) (uint32, error) {
-	var text string
-	var base int
-	nodeIsEmpty := true
-
-	if integer.Base10 != "" {
+func convertIntegerNodeToUint32(node grammar.Integer) (uint32, error) {
+	text, base, nodeIsEmpty := (func() (text string, base int, nodeIsEmpty bool) {
 		nodeIsEmpty = false
-		text = integer.Base10
-		base = 10
-	}
 
-	if integer.Base16 != "" {
-		nodeIsEmpty = false
-		text = integer.Base16[2:]
-		base = 16
-	}
+		if node.Base10 != "" {
+			base = 10
+			text = node.Base10
+			return
+		}
+
+		if node.Base16 != "" {
+			base = 16
+			text = node.Base16[2:]
+			return
+		}
+
+		if node.Base2 != "" {
+			base = 2
+			text = node.Base2[2:]
+			return
+		}
+
+		nodeIsEmpty = true
+		return
+	})()
 
 	if nodeIsEmpty {
 		return 0, goErrors.New("Integer node is empty")
