@@ -5,31 +5,20 @@ type SyntaxTree struct {
 }
 
 type Declaration struct {
-	EndOfLine         *EndOfLine         `  @@`
+	EndOfLine         string             `  @Semicolon`
 	BooleanAssignment *BooleanAssignment `| @@`
 	IntegerAssignment *IntegerAssignment `| @@`
 }
 
-type EndOfLine struct {
-	Value *string `";"`
-}
-
 type BooleanAssignment struct {
-	Name    string   `@Ident`
-	Equals  string   `"="`
-	Boolean *Boolean `@@`
-}
-
-type Boolean struct {
-	Value string `@"true"|@"false"`
+	Name    string `@Identifier`
+	Equals  string `@Equals`
+	Value   string `@Boolean`
 }
 
 type IntegerAssignment struct {
-	Name    string   `@Ident`
-	Equals  string   `"="`
-	Integer *Integer `@@`
-}
-
-type Integer struct {
-	Decimal *uint32 `@Int`
+	Name    string `@Identifier`
+	Equals  string `@Equals`
+	Base10  string `( @Integer_Base10`
+	Base16  string `| @Integer_Base16 )`
 }

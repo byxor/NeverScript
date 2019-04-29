@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"github.com/byxor/NeverScript/compiler/checksums"
+	"github.com/byxor/NeverScript/shared/checksums"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )

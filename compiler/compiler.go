@@ -3,9 +3,11 @@ package compiler
 import (
 	"github.com/alecthomas/participle"
 	"github.com/byxor/NeverScript/compiler/grammar"
+	"github.com/byxor/NeverScript/shared/checksums"
 	"github.com/byxor/NeverScript/shared/tokens"
 	"github.com/pkg/errors"
-	"encoding/binary"
+	"strconv"
+	"log"
 )
 
 const (
@@ -33,14 +35,16 @@ func Compile(code string) ([]byte, error) {
 	pushBytes(tokens.EndOfLine)
 
 	for _, declaration := range syntaxTree.Declarations {
-		if declaration.EndOfLine != nil {
+		log.Printf("%+v\n", declaration)
+
+		if declaration.EndOfLine != "" {
 			pushBytes(tokens.EndOfLine)
 			continue
 		}
 
 		if declaration.BooleanAssignment != nil {
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
-			value := convertBooleanTextToByte(declaration.BooleanAssignment.Boolean.Value)
+			value := convertBooleanTextToByte(declaration.BooleanAssignment.Value)
 
 			pushBytes(tokens.Name)
 			pushBytes(name...)
@@ -55,11 +59,28 @@ func Compile(code string) ([]byte, error) {
 		}
 
 		if declaration.IntegerAssignment != nil {
+			assignment := declaration.IntegerAssignment
+
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
 
-			value := *declaration.IntegerAssignment.Integer.Decimal
-			valueBytes := make([]byte, 4)
-			binary.LittleEndian.PutUint32(valueBytes, value)
+			var value uint32
+			if assignment.Base10 != "" {
+				temp, err := strconv.ParseUint(assignment.Base10, 10, 32)
+				if err != nil {
+					return []byte{}, errors.Wrap(err, "Failed to parse Base 10 integer")
+				}
+
+				value = uint32(temp)
+			} else if assignment.Base16 != "" {
+				temp, err := strconv.ParseUint(assignment.Base16[2:], 16, 32)
+				if err != nil {
+					return []byte{}, errors.Wrap(err, "Failed to parse Base 16 integer")
+				}
+
+				value = uint32(temp)
+			}
+
+			valueBytes := checksums.LittleEndian(value)
 
 			pushBytes(tokens.Name)
 			pushBytes(name...)
@@ -78,6 +99,7 @@ func Compile(code string) ([]byte, error) {
 func parseCodeIntoSyntaxTree(code string) (*grammar.SyntaxTree, error) {
 	parser := participle.MustBuild(
 		&grammar.SyntaxTree{},
+		participle.Lexer(grammar.NsLexer),
 		participle.UseLookahead(2),
 	)
 
