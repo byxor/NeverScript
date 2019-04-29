@@ -4,6 +4,7 @@ go:
 - "1.12"
 
 install:
+- go get github.com/byxor/NeverScript
 - go get golang.org/x/tools/cmd/cover
 - go get github.com/mattn/goveralls
 
