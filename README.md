@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/byxor/NeverScript.svg?branch=master)](https://travis-ci.com/byxor/NeverScript) [![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/) 
+
 ```
      __                    __           _       _   
   /\ \ \_____   _____ _ __/ _\ ___ _ __(_)_ __ | |_ 
