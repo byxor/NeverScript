@@ -20,9 +20,6 @@ var NsLexer = lexer.Must(lexer.Regexp(
 		`|(?P<Integer_Base10>[0-9]+)` +
 		`` +
 		`|(?P<Identifier>[a-zA-Z][a-zA-Z_\d]*)` +
-		// `|(?P<String>"(?:\\.|[^"])*")` +
-		// `|(?P<Float>\d+(?:\.\d+)?)` +
-		// `|(?P<Punct>[][=])` +
 		`` +
 		`|(?P<Semicolon>;)` +
 		`|(?P<Equals>=)` +
