@@ -30,19 +30,3 @@ func TestChecksums(t *testing.T) {
 	})
 }
 
-func TestLittleEndian(t *testing.T) {
-	Convey("Checksums are correctly converted to little endian", t, func() {
-		data := []struct {
-			checksumContents uint32
-			expectedBytes    []byte
-		}{
-			{0xD77B6FF9, []byte{0xF9, 0x6F, 0x7B, 0xD7}},
-			{0x12345678, []byte{0x78, 0x56, 0x34, 0x12}},
-		}
-		for _, entry := range data {
-			checksum := NeverScript.NewChecksum(entry.checksumContents)
-			actualBytes := checksumService.EncodeAsLittleEndian(checksum)
-			So(actualBytes, ShouldResemble, entry.expectedBytes)
-		}
-	})
-}

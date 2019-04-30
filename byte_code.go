@@ -86,16 +86,16 @@ func (this ByteCode) Contains(other ByteCode) (bool, error) {
 }
 
 func (this ByteCode) IsEqualTo_IgnoreByte(other ByteCode, byteToIgnore byte) bool {
-	forceFutureComparisonsToPass(other, &this, byteToIgnore)
+	forceFutureComparisonsToPass(&this, other, byteToIgnore)
 	return this.IsEqualTo(other)
 }
 
 func (this ByteCode) Contains_IgnoreByte(other ByteCode, byteToIgnore byte) (bool, error) {
-	forceFutureComparisonsToPass(other, &this, byteToIgnore)
+	forceFutureComparisonsToPass(&this, other, byteToIgnore)
 	return this.Contains(other)
 }
 
-func forceFutureComparisonsToPass(byteCodeToCheck ByteCode, byteCodeToModify *ByteCode, byteToIgnore byte) {
+func forceFutureComparisonsToPass(byteCodeToModify *ByteCode, byteCodeToCheck ByteCode, byteToIgnore byte) {
 	length := min(byteCodeToCheck.length, byteCodeToModify.length)
 
 	for i := 0; i < length; i++ {

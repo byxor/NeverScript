@@ -2,7 +2,6 @@ package checksums
 
 import (
 	"github.com/byxor/NeverScript"
-	"unsafe"
 )
 
 type Service interface {
@@ -11,7 +10,6 @@ type Service interface {
 	//
 	// Uses the same CRC Algorithm as THUG1.
 	GenerateFrom(identifier string) NeverScript.Checksum
-	EncodeAsLittleEndian(checksum NeverScript.Checksum) []byte
 }
 
 type service struct{}
@@ -42,13 +40,6 @@ func (this service) GenerateFrom(identifier string) NeverScript.Checksum {
 	}
 
 	return NeverScript.NewChecksum(rc)
-}
-
-func (this service) EncodeAsLittleEndian(checksum NeverScript.Checksum) []byte {
-	value := checksum.ToUint32()
-
-	checksumBytes := (*[4]byte)(unsafe.Pointer(&value))
-	return (*checksumBytes)[:]
 }
 
 var crcTable = [256]uint32{

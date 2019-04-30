@@ -7,6 +7,7 @@ import (
 	"github.com/byxor/NeverScript/checksums"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"reflect"
 	"encoding/hex"
 )
 
@@ -175,12 +176,12 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 		return "Couldn't cast 'subsequence' to ByteCode"
 	}
 
-	// temp, ok := expected[1].(byte)
-	// if !ok {
-	// 	return "Couldn't cast 'temp' to int"
-	// }
+	temp, ok := expected[1].(byte)
+	if !ok {
+		return "Couldn't cast 'temp' to int"
+	}
 
-	// byteToIgnore := byte(temp)
+	byteToIgnore := byte(temp)
 
 	sequenceNotFound := fmt.Sprintf(
 		"%s\nSequence:    %v\nSubsequence: %v\n",
@@ -189,8 +190,7 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 		hex.Dump(subsequence.ToBytes()),
 	)
 
-	// containsSubsequence, err := sequence.Contains_IgnoreByte(subsequence, byteToIgnore)
-	containsSubsequence, err := sequence.Contains(subsequence)
+	containsSubsequence, err := sequence.Contains_IgnoreByte(subsequence, byteToIgnore)
 	if err != nil {
 		return err.Error()
 	}
@@ -207,6 +207,13 @@ func makeBytes(elements ...interface{}) []byte {
 	size := 0
 
 	for _, element := range elements {
+		if theInt, ok := element.(uint8); ok {
+			theByte := byte(theInt)
+			theBytes[size] = theByte
+			size++
+			continue
+		}
+
 		if theInt, ok := element.(int); ok {
 			theByte := byte(theInt)
 			theBytes[size] = theByte
@@ -221,6 +228,8 @@ func makeBytes(elements ...interface{}) []byte {
 			}
 			continue
 		}
+
+		panic(fmt.Sprintf("Could not make bytes. 'byte' or 'string' required, '%s' provided instead.", reflect.TypeOf(element)))
 	}
 
 	return theBytes[:size]

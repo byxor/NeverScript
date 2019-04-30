@@ -1,5 +1,4 @@
-// Package compiler provides the use-case of compiling
-// NeverScript source code into QB ByteCode.
+// Package compiler provides the use-case of compiling NeverScript source code into QB ByteCode.
 //
 // Used by modders.
 package compiler
@@ -8,8 +7,8 @@ import (
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/pkg/errors"
-	"log"
 	"strconv"
+	"encoding/binary"
 	goErrors "errors"
 )
 
@@ -41,7 +40,6 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 	byteCode.Push(NeverScript.EndOfLineToken)
 
 	for _, declaration := range syntaxTree.Declarations {
-		log.Printf("%+v\n", declaration)
 
 		if declaration.EndOfLine != "" {
 			byteCode.Push(NeverScript.EndOfLineToken)
@@ -50,14 +48,12 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 
 		if declaration.BooleanAssignment != nil {
 			assignment := declaration.BooleanAssignment
-
 			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
 			value := convertBooleanTextToByte(assignment.Value)
 
 			byteCode.Push(NeverScript.NameToken)
 			byteCode.Push(nameBytes...)
 			byteCode.Push(NeverScript.EqualsToken)
-
 			// The QB format has no Boolean type.
 			// Instead, we use Ints with a value of 0 or 1.
 			byteCode.Push(NeverScript.IntToken, value, 0, 0, 0)
@@ -69,13 +65,11 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 
 			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
 
-			checksum, err := convertIntegerNodeToChecksum(*assignment.Value)
-
+			value, err := convertIntegerNodeToUint32(*assignment.Value)
 			if err != nil {
-				return byteCode, errors.Wrap(err, "Failed to convert compiler.integer to checksum")
+				return byteCode, errors.Wrap(err, "Failed to convert integer node to uint32")
 			}
-
-			valueBytes := this.checksumService.EncodeAsLittleEndian(checksum)
+			valueBytes := convertUint32ToLittleEndian(value)
 
 			byteCode.Push(NeverScript.NameToken)
 			byteCode.Push(nameBytes...)
@@ -83,6 +77,27 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 			byteCode.Push(NeverScript.IntToken)
 			byteCode.Push(valueBytes...)
 			continue
+		}
+
+		if declaration.StringAssignment != nil {
+			assignment := declaration.StringAssignment
+
+			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+
+			quotedString := assignment.Value
+			unquotedString := unquote(quotedString)
+
+			lengthBytes := convertUint32ToLittleEndian(uint32(len(unquotedString)))
+			stringBytes := []byte(unquotedString)
+			nullTerminator := byte(0x00)
+
+			byteCode.Push(NeverScript.NameToken)
+			byteCode.Push(nameBytes...)
+			byteCode.Push(NeverScript.EqualsToken)
+			byteCode.Push(NeverScript.StringToken)
+			byteCode.Push(lengthBytes...)
+			byteCode.Push(stringBytes...)
+			byteCode.Push(nullTerminator)
 		}
 	}
 
@@ -99,7 +114,7 @@ func convertBooleanTextToByte(text string) byte {
 	}
 }
 
-func convertIntegerNodeToChecksum(node integer) (NeverScript.Checksum, error) {
+func convertIntegerNodeToUint32(node integer) (uint32, error) {
 	text, base, nodeIsEmpty := (func() (text string, base int, nodeIsEmpty bool) {
 		nodeIsEmpty = false
 
@@ -132,15 +147,24 @@ func convertIntegerNodeToChecksum(node integer) (NeverScript.Checksum, error) {
 	})()
 
 	if nodeIsEmpty {
-		return NeverScript.NewEmptyChecksum(), goErrors.New("Integer node is empty")
+		return 0, goErrors.New("Integer node is empty")
 	}
 
 	temp, err := strconv.ParseUint(text, base, 32)
 	if err != nil {
-		return NeverScript.NewEmptyChecksum(), err
+		return 0, err
 	}
 
-	content := uint32(temp)
-
-	return NeverScript.NewChecksum(content), nil
+	return uint32(temp), nil
 }
+
+func unquote(string string) string {
+	return string[1:len(string)-1]
+}
+
+func convertUint32ToLittleEndian(value uint32) []byte {
+	bytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(bytes, value)
+	return bytes
+}
+
