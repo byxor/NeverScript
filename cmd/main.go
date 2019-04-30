@@ -1,8 +1,9 @@
-package main
+package cmd
 
 import (
 	"flag"
 	"fmt"
+	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript/shared/filenames"
 	"io/ioutil"
@@ -22,6 +23,8 @@ const (
 `
 )
 
+var compilerService = compiler.NewService()
+
 func main() {
 	arguments := parseCommandLineArguments()
 	argumentsWereSupplied := false
@@ -38,11 +41,11 @@ func main() {
 		data, err := ioutil.ReadFile(inputFileName)
 		check(err)
 
-		code := string(data)
-		bytecode, err := compiler.Compile(code)
+		sourceCode := NeverScript.NewSourceCode(string(data))
+		byteCode, err := compilerService.Compile(sourceCode)
 		check(err)
 
-		err = ioutil.WriteFile(outputFilename, bytecode, 0777)
+		err = ioutil.WriteFile(outputFilename, byteCode, 0777)
 		check(err)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 

@@ -1,12 +1,14 @@
-package compiler
+package tests
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
+	"github.com/byxor/NeverScript"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
+
+var service = compiler.NewService()
 
 const any = 0xF4
 
@@ -15,7 +17,8 @@ func TestCompilation(t *testing.T) {
 		Convey("We get QB bytecode", func() {
 
 			testThat("Files end with 0x00", []testEntry{
-				{"", []byte{0x00}},
+				{NeverScript.NewSourceCode(""),
+					NeverScript.NewByteCode([]byte{0x00})},
 			})
 
 			testThat("Semicolons insert 0x01", []testEntry{
@@ -136,8 +139,8 @@ func TestCompilation(t *testing.T) {
 }
 
 type testEntry struct {
-	code             string
-	expectedBytecode []byte
+	sourceCode       NeverScript.SourceCode
+	expectedBytecode NeverScript.ByteCode
 }
 
 func testThat(someRequirementIsMet string, entries []testEntry) {
@@ -145,7 +148,7 @@ func testThat(someRequirementIsMet string, entries []testEntry) {
 
 	test := func() {
 		for _, entry := range entries {
-			bytecode, err := compiler.Compile(entry.code)
+			bytecode, err := service.Compile(entry.code)
 			So(err, ShouldBeNil)
 
 			replaceIrrelevantBytesFromFirstArgument(bytecode, entry.expectedBytecode)
@@ -177,30 +180,21 @@ func min(a, b int) int {
 }
 
 func shouldContainSubsequence(actual interface{}, expected ...interface{}) string {
-	sequence := actual.([]byte)
-	subsequence := expected[0].([]byte)
+	sequence, _ := actual.(NeverScript.ByteCode)
+	subsequence, _ := expected[0].(NeverScript.ByteCode)
 
-	sequenceNotFound := fmt.Sprintf(
+	sequenceNotFound := zfmt.Sprintf(
 		"%s\nSequence:    %v\nSubsequence: %v\n",
 		"Sequence doesn't contain expected subsequence.",
 		sequence,
 		subsequence,
 	)
 
-	if len(subsequence) > len(sequence) {
+	if !sequence.Contains(subsequence) {
 		return sequenceNotFound
 	}
 
-	for i := 0; i < len(sequence)-len(subsequence)+1; i++ {
-		sliceOfSequence := sequence[i : i+len(subsequence)]
-
-		if bytes.Equal(sliceOfSequence, subsequence) {
-			sequenceFound := ""
-			return sequenceFound
-		}
-	}
-
-	return sequenceNotFound
+	return ""
 }
 
 func makeBytes(elements ...interface{}) []byte {
