@@ -6,7 +6,6 @@ import (
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/byxor/NeverScript/compiler"
-	"github.com/byxor/NeverScript/shared/filenames"
 	"io/ioutil"
 	"os"
 )
@@ -39,7 +38,7 @@ func main() {
 		argumentsWereSupplied = true
 
 		inputFileName := *arguments.FileToCompile
-		outputFilename := filenames.NsToQb(inputFileName)
+		outputFilename := NeverScript.NsToQb(inputFileName)
 
 		fmt.Printf("Compiling '%s'...\n", inputFileName)
 		data, err := ioutil.ReadFile(inputFileName)

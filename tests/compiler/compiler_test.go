@@ -1,4 +1,4 @@
-package tests
+package compiler
 
 import (
 	"encoding/hex"

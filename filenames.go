@@ -1,4 +1,4 @@
-package filenames
+package NeverScript
 
 func QbToNs(filename string) string {
 	return withoutExtension(filename) + ".ns"

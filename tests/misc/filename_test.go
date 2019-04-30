@@ -1,7 +1,7 @@
-package shared
+package misc
 
 import (
-	"github.com/byxor/NeverScript/shared/filenames"
+	"github.com/byxor/NeverScript"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestConvertingQbToNs(t *testing.T) {
 			{"~/foo/bar/baz.qb", "~/foo/bar/baz.ns"},
 		}
 		for _, entry := range entries {
-			output := filenames.QbToNs(entry.input)
+			output := NeverScript.QbToNs(entry.input)
 			So(output, ShouldEqual, entry.expectedOutput)
 		}
 	})
@@ -28,7 +28,7 @@ func TestConvertingNsToQb(t *testing.T) {
 			{"~/foo/bar/baz.ns", "~/foo/bar/baz.qb"},
 		}
 		for _, entry := range entries {
-			output := filenames.NsToQb(entry.input)
+			output := NeverScript.NsToQb(entry.input)
 			So(output, ShouldEqual, entry.expectedOutput)
 		}
 	})
