@@ -4,12 +4,12 @@
 package compiler
 
 import (
+	"encoding/binary"
+	goErrors "errors"
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/pkg/errors"
 	"strconv"
-	"encoding/binary"
-	goErrors "errors"
 )
 
 type Service interface {
@@ -159,7 +159,7 @@ func convertIntegerNodeToUint32(node integer) (uint32, error) {
 }
 
 func unquote(string string) string {
-	return string[1:len(string)-1]
+	return string[1 : len(string)-1]
 }
 
 func convertUint32ToLittleEndian(value uint32) []byte {
@@ -167,4 +167,3 @@ func convertUint32ToLittleEndian(value uint32) []byte {
 	binary.LittleEndian.PutUint32(bytes, value)
 	return bytes
 }
-

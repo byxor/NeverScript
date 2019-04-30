@@ -1,8 +1,8 @@
 package compiler
 
 import (
-	"github.com/byxor/NeverScript"
 	"github.com/alecthomas/participle"
+	"github.com/byxor/NeverScript"
 	"github.com/pkg/errors"
 )
 

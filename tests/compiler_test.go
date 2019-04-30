@@ -1,20 +1,20 @@
 package tests
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/byxor/NeverScript"
-	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript/checksums"
+	"github.com/byxor/NeverScript/compiler"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 	"reflect"
-	"encoding/hex"
+	"testing"
 )
 
 var (
 	checksumService = checksums.NewService()
 	compilerService = compiler.NewService(checksumService)
-	any = byte(0xF4)
+	any             = byte(0xF4)
 )
 
 func TestCompilation(t *testing.T) {
@@ -229,9 +229,8 @@ func makeBytes(elements ...interface{}) []byte {
 			continue
 		}
 
-		panic(fmt.Sprintf("Could not make bytes. 'byte' or 'string' required, '%s' provided instead.", reflect.TypeOf(element)))
+		panic(fmt.Sprintf("Could not make bytes. 'byte'/'string' required, '%s' provided instead.", reflect.TypeOf(element)))
 	}
 
 	return theBytes[:size]
 }
-

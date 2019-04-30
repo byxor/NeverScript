@@ -6,7 +6,7 @@ const (
 
 	Equals = 0x07
 
-	Name = 0x16
-	Int  = 0x17
+	Name   = 0x16
+	Int    = 0x17
 	String = 0x1B
 )

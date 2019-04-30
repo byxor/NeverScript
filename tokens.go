@@ -6,7 +6,7 @@ const (
 
 	EqualsToken = 0x07
 
-	NameToken = 0x16
-	IntToken  = 0x17
+	NameToken   = 0x16
+	IntToken    = 0x17
 	StringToken = 0x1B
 )

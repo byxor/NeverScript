@@ -2,8 +2,8 @@ package NeverScript
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
 	goErrors "errors"
+	"github.com/pkg/errors"
 )
 
 type ByteCode struct {
@@ -72,7 +72,7 @@ func (this ByteCode) Contains(other ByteCode) (bool, error) {
 	iterateUpTo := this.length - other.length + 1
 
 	for i := 0; i < iterateUpTo; i++ {
-		sliceOfThis, err := this.GetSlice(i, i + other.length)
+		sliceOfThis, err := this.GetSlice(i, i+other.length)
 		if err != nil {
 			return false, errors.Wrap(err, "Failed to get slice of bytecode")
 		}
@@ -118,5 +118,5 @@ func min(a, b int) int {
 
 var (
 	indexOutOfRange = goErrors.New("Index is out of range")
-	nilByteCode = NewEmptyByteCode()
+	nilByteCode     = NewEmptyByteCode()
 )
