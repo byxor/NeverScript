@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	checksumService = checksums.NewMockService()
+	checksumService = checksums.NewService()
 	compilerService = compiler.NewService(checksumService)
 	any = byte(0xF4)
 )

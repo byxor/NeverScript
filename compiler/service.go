@@ -9,7 +9,6 @@ import (
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/pkg/errors"
 	"log"
-	"fmt"
 	"strconv"
 	goErrors "errors"
 )
@@ -76,18 +75,7 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 				return byteCode, errors.Wrap(err, "Failed to convert compiler.integer to checksum")
 			}
 
-			// BUG WTF?!?!?"£?!"$?!"$ FUCK YOU.
 			valueBytes := this.checksumService.EncodeAsLittleEndian(checksum)
-			fmt.Printf(`----------------------` + "\n" +
-				`GENERATING BYTECODE FOR INTEGER ASSIGNMENT.` + "\n" +
-				`*assignment.Value=%v` + "\n" +
-				`checksum=%v` + "\n" +
-				`valueBytes=%v` + "\n" +
-				"\n",
-				*assignment.Value,
-				checksum,
-				valueBytes,
-			)
 
 			byteCode.Push(NeverScript.NameToken)
 			byteCode.Push(nameBytes...)
