@@ -81,7 +81,7 @@ func Compile(code string) ([]byte, error) {
 			name := []byte{junkByte, junkByte, junkByte, junkByte}
 
 			string := declaration.StringAssignment.Value
-			unquotedString := string[1:len(string)-1]
+			unquotedString := unquote(string)
 
 			lengthBytes := checksums.LittleEndian(uint32(len(unquotedString)))
 			stringBytes := []byte(unquotedString)
@@ -168,4 +168,8 @@ func convertIntegerNodeToUint32(node grammar.Integer) (uint32, error) {
 	}
 
 	return uint32(value), nil
+}
+
+func unquote(string string) string {
+	return string[1:len(string)-1]
 }

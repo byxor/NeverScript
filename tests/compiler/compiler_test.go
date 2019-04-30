@@ -3,6 +3,7 @@ package compiler
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"github.com/byxor/NeverScript/compiler"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -121,8 +122,14 @@ func TestCompilation(t *testing.T) {
 
 				{`name = "byxor";`, makeBytes(
 					0x01, 0x16, any, any, any, any,
-					0x07, 0x1B, 0x00, 0x00, 0x00, 0x00,
+					0x07, 0x1B, 0x05, 0x00, 0x00, 0x00,
 					"byxor", 0x00,
+					0x01, 0x00)},
+
+				{`weapon = "EML";`, makeBytes(
+					0x01, 0x16, any, any, any, any,
+					0x07, 0x1B, 0x03, 0x00, 0x00, 0x00,
+					"EML", 0x00,
 					0x01, 0x00)},
 			})
 		})
@@ -202,7 +209,8 @@ func makeBytes(elements ...interface{}) []byte {
 	size := 0
 
 	for _, element := range elements {
-		if theByte, ok := element.(byte); ok {
+		if theInt, ok := element.(int); ok {
+			theByte := byte(theInt)
 			theBytes[size] = theByte
 			size++
 			continue
@@ -215,7 +223,11 @@ func makeBytes(elements ...interface{}) []byte {
 			}
 			continue
 		}
+
+		fmt.Println(reflect.TypeOf(element))
 	}
+
+	fmt.Println(theBytes[:size])
 
 	return theBytes[:size]
 }
