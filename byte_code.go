@@ -34,6 +34,10 @@ func (this ByteCode) GetSlice(startIndex, endIndex int) (ByteCode, error) {
 	return NewByteCode(content), nil
 }
 
+func (this ByteCode) GetBytes() []byte {
+	return this.content
+}
+
 func (this ByteCode) IsLongerThan(other ByteCode) bool {
 	return this.length > other.length
 }

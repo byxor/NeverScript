@@ -45,7 +45,7 @@ func main() {
 		byteCode, err := compilerService.Compile(sourceCode)
 		check(err)
 
-		err = ioutil.WriteFile(outputFilename, byteCode, 0777)
+		err = ioutil.WriteFile(outputFilename, byteCode.GetBytes(), 0777)
 		check(err)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 

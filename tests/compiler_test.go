@@ -8,9 +8,10 @@ import (
 	"testing"
 )
 
-var service = compiler.NewService()
-
-const any = 0xF4
+var (
+	service = compiler.NewService()
+	any = byte(0xF4)
+)
 
 func TestCompilation(t *testing.T) {
 	Convey("When compiling NeverScript code", t, func() {
@@ -148,44 +149,24 @@ func testThat(someRequirementIsMet string, entries []testEntry) {
 	test := func() {
 		for _, entry := range entries {
 			sourceCode := NeverScript.NewSourceCode(entry.sourceCodeContent)
-			expectedByteCode := NeverScript.NewByteCode(entry.byteCodeContent)
+			expectedByteCode := NeverScript.NewByteCode(entry.expectedByteCodeContent)
 
-			actualByteCode, err := service.Compile(entry.code)
+			actualByteCode, err := service.Compile(sourceCode)
 			So(err, ShouldBeNil)
 
-			
-
-			replaceIrrelevantBytesFromFirstArgument(bytecode, entry.expectedBytecode)
-			So(bytecode, shouldContainSubsequence, entry.expectedBytecode)
+			So(actualByteCode, shouldContainSubsequence, expectedByteCode, any)
 		}
 	}
 
 	Convey(description, test)
 }
 
-func replaceIrrelevantBytesFromFirstArgument(first, second []byte) {
-	length := min(len(first), len(second))
-
-	for i := 0; i < length; i++ {
-		currentByteIsIrrelevant := second[i] == any
-
-		if currentByteIsIrrelevant {
-			first[i] = any
-		}
-	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	} else {
-		return b
-	}
-}
-
 func shouldContainSubsequence(actual interface{}, expected ...interface{}) string {
 	sequence, _ := actual.(NeverScript.ByteCode)
 	subsequence, _ := expected[0].(NeverScript.ByteCode)
+
+	temp, _ := expected[1].(int)
+	byteToIgnore := byte(temp)
 
 	sequenceNotFound := fmt.Sprintf(
 		"%s\nSequence:    %v\nSubsequence: %v\n",
@@ -194,7 +175,7 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 		subsequence,
 	)
 
-	if !sequence.Contains(subsequence) {
+	if !sequence.Contains_IgnoreByte(subsequence, byteToIgnore) {
 		return sequenceNotFound
 	}
 
@@ -224,3 +205,4 @@ func makeBytes(elements ...interface{}) []byte {
 
 	return theBytes[:size]
 }
+
