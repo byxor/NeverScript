@@ -4,7 +4,7 @@ type syntaxTree struct {
 	Declarations []*declaration `@@*`
 }
 
-type Declaration struct {
+type declaration struct {
 	EndOfLine         string             `  @Semicolon`
 	BooleanAssignment *booleanAssignment `| @@`
 	IntegerAssignment *integerAssignment `| @@`
