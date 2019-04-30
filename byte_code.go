@@ -2,7 +2,8 @@ package NeverScript
 
 import (
 	"bytes"
-	"errors"
+	"github.com/pkg/errors"
+	goErrors "errors"
 )
 
 type ByteCode struct {
@@ -63,22 +64,25 @@ func (this ByteCode) IsEqualTo(other ByteCode) bool {
 	return bytes.Equal(this.content, other.content)
 }
 
-func (this ByteCode) Contains(other ByteCode) bool {
+func (this ByteCode) Contains(other ByteCode) (bool, error) {
 	if other.IsLongerThan(this) {
-		return false
+		return false, nil
 	}
 
 	iterateUpTo := this.length - other.length + 1
 
 	for i := 0; i < iterateUpTo; i++ {
-		sliceOfThis, _ := this.GetSlice(i, i + other.length)
+		sliceOfThis, err := this.GetSlice(i, i + other.length)
+		if err != nil {
+			return false, errors.Wrap(err, "Failed to get slice of bytecode")
+		}
 
 		if sliceOfThis.IsEqualTo(other) {
-			return true
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 func (this ByteCode) IsEqualTo_IgnoreByte(other ByteCode, byteToIgnore byte) bool {
@@ -86,7 +90,7 @@ func (this ByteCode) IsEqualTo_IgnoreByte(other ByteCode, byteToIgnore byte) boo
 	return this.IsEqualTo(other)
 }
 
-func (this ByteCode) Contains_IgnoreByte(other ByteCode, byteToIgnore byte) bool {
+func (this ByteCode) Contains_IgnoreByte(other ByteCode, byteToIgnore byte) (bool, error) {
 	forceFutureComparisonsToPass(other, &this, byteToIgnore)
 	return this.Contains(other)
 }
@@ -113,6 +117,6 @@ func min(a, b int) int {
 }
 
 var (
-	indexOutOfRange = errors.New("Index is out of range")
+	indexOutOfRange = goErrors.New("Index is out of range")
 	nilByteCode = NewEmptyByteCode()
 )

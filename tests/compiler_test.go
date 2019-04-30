@@ -165,11 +165,22 @@ func testThat(someRequirementIsMet string, entries []testEntry) {
 }
 
 func shouldContainSubsequence(actual interface{}, expected ...interface{}) string {
-	sequence, _ := actual.(NeverScript.ByteCode)
-	subsequence, _ := expected[0].(NeverScript.ByteCode)
+	sequence, ok := actual.(NeverScript.ByteCode)
+	if !ok {
+		return "Couldn't cast 'sequence' to ByteCode"
+	}
 
-	temp, _ := expected[1].(int)
-	byteToIgnore := byte(temp)
+	subsequence, ok := expected[0].(NeverScript.ByteCode)
+	if !ok {
+		return "Couldn't cast 'subsequence' to ByteCode"
+	}
+
+	// temp, ok := expected[1].(byte)
+	// if !ok {
+	// 	return "Couldn't cast 'temp' to int"
+	// }
+
+	// byteToIgnore := byte(temp)
 
 	sequenceNotFound := fmt.Sprintf(
 		"%s\nSequence:    %v\nSubsequence: %v\n",
@@ -178,7 +189,13 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 		hex.Dump(subsequence.ToBytes()),
 	)
 
-	if !sequence.Contains_IgnoreByte(subsequence, byteToIgnore) {
+	// containsSubsequence, err := sequence.Contains_IgnoreByte(subsequence, byteToIgnore)
+	containsSubsequence, err := sequence.Contains(subsequence)
+	if err != nil {
+		return err.Error()
+	}
+
+	if !containsSubsequence {
 		return sequenceNotFound
 	}
 

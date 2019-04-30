@@ -9,6 +9,7 @@ import (
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/pkg/errors"
 	"log"
+	"fmt"
 	"strconv"
 	goErrors "errors"
 )
@@ -70,11 +71,23 @@ func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byte
 			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
 
 			checksum, err := convertIntegerNodeToChecksum(*assignment.Value)
+
 			if err != nil {
 				return byteCode, errors.Wrap(err, "Failed to convert compiler.integer to checksum")
 			}
 
+			// BUG WTF?!?!?"£?!"$?!"$ FUCK YOU.
 			valueBytes := this.checksumService.EncodeAsLittleEndian(checksum)
+			fmt.Printf(`----------------------` + "\n" +
+				`GENERATING BYTECODE FOR INTEGER ASSIGNMENT.` + "\n" +
+				`*assignment.Value=%v` + "\n" +
+				`checksum=%v` + "\n" +
+				`valueBytes=%v` + "\n" +
+				"\n",
+				*assignment.Value,
+				checksum,
+				valueBytes,
+			)
 
 			byteCode.Push(NeverScript.NameToken)
 			byteCode.Push(nameBytes...)
@@ -134,10 +147,12 @@ func convertIntegerNodeToChecksum(node integer) (NeverScript.Checksum, error) {
 		return NeverScript.NewEmptyChecksum(), goErrors.New("Integer node is empty")
 	}
 
-	value, err := strconv.ParseUint(text, base, 32)
+	temp, err := strconv.ParseUint(text, base, 32)
 	if err != nil {
 		return NeverScript.NewEmptyChecksum(), err
 	}
 
-	return NeverScript.NewChecksum(uint32(value)), nil
+	content := uint32(temp)
+
+	return NeverScript.NewChecksum(content), nil
 }
