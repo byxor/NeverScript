@@ -3,7 +3,6 @@ package compiler
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"github.com/byxor/NeverScript/compiler"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -223,11 +222,7 @@ func makeBytes(elements ...interface{}) []byte {
 			}
 			continue
 		}
-
-		fmt.Println(reflect.TypeOf(element))
 	}
-
-	fmt.Println(theBytes[:size])
 
 	return theBytes[:size]
 }
