@@ -76,6 +76,24 @@ func Compile(code string) ([]byte, error) {
 			pushBytes(valueBytes...)
 			continue
 		}
+
+		if declaration.StringAssignment != nil {
+			name := []byte{junkByte, junkByte, junkByte, junkByte}
+
+			string := declaration.StringAssignment.Value
+			unquotedString := unquote(string)
+
+			lengthBytes := checksums.LittleEndian(uint32(len(unquotedString)))
+			stringBytes := []byte(unquotedString)
+
+			pushBytes(tokens.Name)
+			pushBytes(name...)
+			pushBytes(tokens.Equals)
+			pushBytes(tokens.String)
+			pushBytes(lengthBytes...)
+			pushBytes(stringBytes...)
+			pushBytes(0x00)
+		}
 	}
 
 	pushBytes(tokens.EndOfFile)
@@ -150,4 +168,8 @@ func convertIntegerNodeToUint32(node grammar.Integer) (uint32, error) {
 	}
 
 	return uint32(value), nil
+}
+
+func unquote(string string) string {
+	return string[1:len(string)-1]
 }
