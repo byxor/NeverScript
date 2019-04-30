@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/byxor/NeverScript.svg?branch=master)](https://travis-ci.com/byxor/NeverScript)
-[![codecov](https://codecov.io/gh/byxor/NeverScript/branch/master/graph/badge.svg)](https://codecov.io/gh/byxor/NeverScript
+[![codecov](https://codecov.io/gh/byxor/NeverScript/branch/master/graph/badge.svg)](https://codecov.io/gh/byxor/NeverScript)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/19a181d0df0a4eb5a24b1de49c042919)](https://app.codacy.com/app/byxor/NeverScript?utm_source=github.com&utm_medium=referral&utm_content=byxor/NeverScript&utm_campaign=Badge_Grade_Dashboard)
 [![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/) 
 
