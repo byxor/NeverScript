@@ -2,14 +2,17 @@ package tests
 
 import (
 	"fmt"
-	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript"
+	"github.com/byxor/NeverScript/compiler"
+	"github.com/byxor/NeverScript/checksums"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"encoding/hex"
 )
 
 var (
-	service = compiler.NewService()
+	checksumService = checksums.NewMockService()
+	compilerService = compiler.NewService(checksumService)
 	any = byte(0xF4)
 )
 
@@ -151,7 +154,7 @@ func testThat(someRequirementIsMet string, entries []testEntry) {
 			sourceCode := NeverScript.NewSourceCode(entry.sourceCodeContent)
 			expectedByteCode := NeverScript.NewByteCode(entry.expectedByteCodeContent)
 
-			actualByteCode, err := service.Compile(sourceCode)
+			actualByteCode, err := compilerService.Compile(sourceCode)
 			So(err, ShouldBeNil)
 
 			So(actualByteCode, shouldContainSubsequence, expectedByteCode, any)
@@ -171,8 +174,8 @@ func shouldContainSubsequence(actual interface{}, expected ...interface{}) strin
 	sequenceNotFound := fmt.Sprintf(
 		"%s\nSequence:    %v\nSubsequence: %v\n",
 		"Sequence doesn't contain expected subsequence.",
-		sequence,
-		subsequence,
+		hex.Dump(sequence.ToBytes()),
+		hex.Dump(subsequence.ToBytes()),
 	)
 
 	if !sequence.Contains_IgnoreByte(subsequence, byteToIgnore) {

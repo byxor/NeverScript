@@ -17,6 +17,15 @@ func NewByteCode(content []byte) ByteCode {
 	}
 }
 
+func NewEmptyByteCode() ByteCode {
+	return NewByteCode([]byte{})
+}
+
+func (this *ByteCode) Push(bytes ...byte) {
+	this.content = append(this.content, bytes...)
+	this.length += len(bytes)
+}
+
 func (this ByteCode) GetSlice(startIndex, endIndex int) (ByteCode, error) {
 	if startIndex < 0 {
 		return nilByteCode, indexOutOfRange
@@ -34,7 +43,7 @@ func (this ByteCode) GetSlice(startIndex, endIndex int) (ByteCode, error) {
 	return NewByteCode(content), nil
 }
 
-func (this ByteCode) GetBytes() []byte {
+func (this ByteCode) ToBytes() []byte {
 	return this.content
 }
 
@@ -105,5 +114,5 @@ func min(a, b int) int {
 
 var (
 	indexOutOfRange = errors.New("Index is out of range")
-	nilByteCode = NewByteCode([]byte{})
+	nilByteCode = NewEmptyByteCode()
 )

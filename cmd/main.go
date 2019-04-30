@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/compiler"
+	"github.com/byxor/NeverScript/checksums"
 	"github.com/byxor/NeverScript/shared/filenames"
 	"io/ioutil"
 	"os"
@@ -23,7 +24,10 @@ const (
 `
 )
 
-var compilerService = compiler.NewService()
+var (
+	checksumService = checksums.NewService()
+	compilerService = compiler.NewService(checksumService)
+)
 
 func main() {
 	arguments := parseCommandLineArguments()
@@ -45,7 +49,7 @@ func main() {
 		byteCode, err := compilerService.Compile(sourceCode)
 		check(err)
 
-		err = ioutil.WriteFile(outputFilename, byteCode.GetBytes(), 0777)
+		err = ioutil.WriteFile(outputFilename, byteCode.ToBytes(), 0777)
 		check(err)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 

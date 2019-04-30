@@ -9,3 +9,7 @@ func NewSourceCode(content string) SourceCode {
 		content: content,
 	}
 }
+
+func (this SourceCode) ToString() string {
+	return this.content
+}
