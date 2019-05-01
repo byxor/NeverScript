@@ -5,8 +5,8 @@ package compiler
 
 import (
 	"encoding/binary"
-	"fmt"
 	goErrors "errors"
+	"fmt"
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/checksums"
 	"github.com/pkg/errors"
@@ -79,7 +79,7 @@ func (this *service) processBooleanAssignment(assignment booleanAssignment) erro
 	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
 
 	value, err := convertBooleanTextToByte(assignment.Value)
-	if err !=nil {
+	if err != nil {
 		return errors.Wrap(err, "Failed to convert boolean text to byte")
 	}
 
