@@ -30,8 +30,6 @@ func NewService(checksumService checksums.Service) Service {
 	}
 }
 
-var junkByte = byte(0xF4)
-
 func (this *service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.ByteCode, error) {
 	this.byteCode.Clear()
 
@@ -76,7 +74,7 @@ func (this *service) processDeclaration(declaration declaration) error {
 }
 
 func (this *service) processBooleanAssignment(assignment booleanAssignment) error {
-	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+	nameBytes := getArbitraryNameBytes()
 
 	value, err := convertBooleanTextToByte(assignment.Value)
 	if err != nil {
@@ -94,7 +92,7 @@ func (this *service) processBooleanAssignment(assignment booleanAssignment) erro
 }
 
 func (this *service) processIntegerAssignment(assignment integerAssignment) error {
-	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+	nameBytes := getArbitraryNameBytes()
 
 	value, err := convertIntegerNodeToUint32(*assignment.Value)
 	if err != nil {
@@ -112,7 +110,7 @@ func (this *service) processIntegerAssignment(assignment integerAssignment) erro
 }
 
 func (this *service) processStringAssignment(assignment stringAssignment) {
-	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+	nameBytes := getArbitraryNameBytes()
 
 	quotedString := assignment.Value
 	unquotedString := unquote(quotedString)
@@ -140,47 +138,38 @@ func convertBooleanTextToByte(text string) (byte, error) {
 }
 
 func convertIntegerNodeToUint32(node integer) (uint32, error) {
-	text, base, nodeIsEmpty := (func() (text string, base int, nodeIsEmpty bool) {
-		nodeIsEmpty = false
+	base, text, err := getBaseAndTextFromIntegerNode(node)
 
-		if node.Base16 != "" {
-			base = 16
-			text = node.Base16[2:]
-			return
-		}
-
-		if node.Base10 != "" {
-			base = 10
-			text = node.Base10
-			return
-		}
-
-		if node.Base8 != "" {
-			base = 8
-			text = node.Base8[2:]
-			return
-		}
-
-		if node.Base2 != "" {
-			base = 2
-			text = node.Base2[2:]
-			return
-		}
-
-		nodeIsEmpty = true
-		return
-	})()
-
-	if nodeIsEmpty {
-		return 0, goErrors.New("Integer node is empty")
+	if err != nil {
+		return 0, errors.Wrap(err, "")
 	}
 
 	temp, err := strconv.ParseUint(text, base, 32)
 	if err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "")
 	}
 
 	return uint32(temp), nil
+}
+
+func getBaseAndTextFromIntegerNode(node integer) (int, string, error) {
+	if node.Base16 != "" {
+		return 16, node.Base16[2:], nil
+	}
+
+	if node.Base10 != "" {
+		return 10, node.Base10, nil
+	}
+
+	if node.Base8 != "" {
+		return 8, node.Base8[2:], nil
+	}
+
+	if node.Base2 != "" {
+		return 2, node.Base2[2:], nil
+	}
+
+	return 0, "", goErrors.New("Integer node is empty")
 }
 
 func unquote(string string) string {
@@ -191,4 +180,9 @@ func convertUint32ToLittleEndian(value uint32) []byte {
 	bytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(bytes, value)
 	return bytes
+}
+
+func getArbitraryNameBytes() []byte {
+	dontCare := byte(0xF4)
+	return []byte{dontCare, dontCare, dontCare, dontCare}
 }
