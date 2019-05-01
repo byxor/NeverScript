@@ -5,6 +5,7 @@ package compiler
 
 import (
 	"encoding/binary"
+	"fmt"
 	goErrors "errors"
 	"github.com/byxor/NeverScript"
 	"github.com/byxor/NeverScript/checksums"
@@ -42,28 +43,7 @@ func (this *service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byt
 	this.byteCode.Push(NeverScript.EndOfLineToken)
 
 	for _, declaration := range syntaxTree.Declarations {
-		if declaration.EndOfLine != "" {
-			this.byteCode.Push(NeverScript.EndOfLineToken)
-			continue
-		}
-
-		if declaration.BooleanAssignment != nil {
-			this.processBooleanAssignment(*declaration.BooleanAssignment)
-			continue
-		}
-
-		if declaration.IntegerAssignment != nil {
-			err := this.processIntegerAssignment(*declaration.IntegerAssignment)
-			if err != nil {
-				return this.byteCode, errors.Wrap(err, "Failed to process Integer Assignment")
-			}
-			continue
-		}
-
-		if declaration.StringAssignment != nil {
-			this.processStringAssignment(*declaration.StringAssignment)
-			continue
-		}
+		this.processDeclaration(*declaration)
 	}
 
 	this.byteCode.Push(NeverScript.EndOfFileToken)
@@ -71,17 +51,46 @@ func (this *service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.Byt
 	return this.byteCode, nil
 }
 
-func (this *service) processBooleanAssignment(assignment booleanAssignment) {
+func (this *service) processDeclaration(declaration declaration) error {
+	if declaration.EndOfLine != "" {
+		this.byteCode.Push(NeverScript.EndOfLineToken)
+		return nil
+	}
+
+	if declaration.BooleanAssignment != nil {
+		err := this.processBooleanAssignment(*declaration.BooleanAssignment)
+		return errors.Wrap(err, "Failed to process Boolean Assignment")
+	}
+
+	if declaration.IntegerAssignment != nil {
+		err := this.processIntegerAssignment(*declaration.IntegerAssignment)
+		return errors.Wrap(err, "Failed to process Integer Assignment")
+	}
+
+	if declaration.StringAssignment != nil {
+		this.processStringAssignment(*declaration.StringAssignment)
+		return nil
+	}
+
+	return nil
+}
+
+func (this *service) processBooleanAssignment(assignment booleanAssignment) error {
 	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
-	value := convertBooleanTextToByte(assignment.Value)
+
+	value, err := convertBooleanTextToByte(assignment.Value)
+	if err !=nil {
+		return errors.Wrap(err, "Failed to convert boolean text to byte")
+	}
 
 	this.byteCode.Push(NeverScript.NameToken)
 	this.byteCode.Push(nameBytes...)
 	this.byteCode.Push(NeverScript.EqualsToken)
-
 	// The QB format has no Boolean type.
 	// Instead, we use Ints with a value of 0 or 1.
 	this.byteCode.Push(NeverScript.IntToken, value, 0, 0, 0)
+
+	return nil
 }
 
 func (this *service) processIntegerAssignment(assignment integerAssignment) error {
@@ -121,12 +130,13 @@ func (this *service) processStringAssignment(assignment stringAssignment) {
 	this.byteCode.Push(nullTerminator)
 }
 
-func convertBooleanTextToByte(text string) byte {
+func convertBooleanTextToByte(text string) (byte, error) {
 	if text == "true" {
-		return 0x01
-	} else {
-		return 0x00
+		return 0x01, nil
+	} else if text == "false" {
+		return 0x00, nil
 	}
+	return 0, goErrors.New(fmt.Sprintf("Cannot convert '%s' to a 0 or 1.", text))
 }
 
 func convertIntegerNodeToUint32(node integer) (uint32, error) {
