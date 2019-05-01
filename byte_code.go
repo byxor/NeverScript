@@ -34,15 +34,15 @@ func (this *ByteCode) Push(bytes ...byte) {
 
 func (this ByteCode) GetSlice(startIndex, endIndex int) (ByteCode, error) {
 	if startIndex < 0 {
-		return nilByteCode, indexOutOfRange
+		return nilByteCode, SliceIndexOutOfRange
 	}
 
 	if startIndex >= endIndex {
-		return nilByteCode, indexOutOfRange
+		return nilByteCode, SliceIndexOutOfRange
 	}
 
 	if endIndex > this.length {
-		return nilByteCode, indexOutOfRange
+		return nilByteCode, SliceIndexOutOfRange
 	}
 
 	content := this.content[startIndex:endIndex]
@@ -109,6 +109,6 @@ func min(a, b int) int {
 }
 
 var (
-	indexOutOfRange = goErrors.New("Index is out of range")
-	nilByteCode     = NewEmptyByteCode()
+	SliceIndexOutOfRange = goErrors.New("Index is out of range")
+	nilByteCode          = NewEmptyByteCode()
 )
