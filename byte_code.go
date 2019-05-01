@@ -22,6 +22,11 @@ func NewEmptyByteCode() ByteCode {
 	return NewByteCode([]byte{})
 }
 
+func (this *ByteCode) Clear() {
+	this.content = []byte{}
+	this.length = 0
+}
+
 func (this *ByteCode) Push(bytes ...byte) {
 	this.content = append(this.content, bytes...)
 	this.length += len(bytes)

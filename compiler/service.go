@@ -19,91 +19,106 @@ type Service interface {
 // service is the implementation of Service.
 type service struct {
 	checksumService checksums.Service
+	byteCode        NeverScript.ByteCode
 }
 
 func NewService(checksumService checksums.Service) Service {
 	return &service{
 		checksumService: checksumService,
+		byteCode:        NeverScript.NewEmptyByteCode(),
 	}
 }
 
 var junkByte = byte(0xF4)
 
-func (this service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.ByteCode, error) {
-	byteCode := NeverScript.NewEmptyByteCode()
+func (this *service) Compile(sourceCode NeverScript.SourceCode) (NeverScript.ByteCode, error) {
+	this.byteCode.Clear()
 
 	syntaxTree, err := buildSyntaxTreeFrom(sourceCode)
 	if err != nil {
-		return byteCode, errors.Wrap(err, "Failed to build syntax tree")
+		return this.byteCode, errors.Wrap(err, "Failed to build syntax tree")
 	}
 
-	byteCode.Push(NeverScript.EndOfLineToken)
+	this.byteCode.Push(NeverScript.EndOfLineToken)
 
 	for _, declaration := range syntaxTree.Declarations {
-
 		if declaration.EndOfLine != "" {
-			byteCode.Push(NeverScript.EndOfLineToken)
+			this.byteCode.Push(NeverScript.EndOfLineToken)
 			continue
 		}
 
 		if declaration.BooleanAssignment != nil {
-			assignment := declaration.BooleanAssignment
-			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
-			value := convertBooleanTextToByte(assignment.Value)
-
-			byteCode.Push(NeverScript.NameToken)
-			byteCode.Push(nameBytes...)
-			byteCode.Push(NeverScript.EqualsToken)
-			// The QB format has no Boolean type.
-			// Instead, we use Ints with a value of 0 or 1.
-			byteCode.Push(NeverScript.IntToken, value, 0, 0, 0)
+			this.processBooleanAssignment(*declaration.BooleanAssignment)
 			continue
 		}
 
 		if declaration.IntegerAssignment != nil {
-			assignment := declaration.IntegerAssignment
-
-			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
-
-			value, err := convertIntegerNodeToUint32(*assignment.Value)
+			err := this.processIntegerAssignment(*declaration.IntegerAssignment)
 			if err != nil {
-				return byteCode, errors.Wrap(err, "Failed to convert integer node to uint32")
+				return this.byteCode, errors.Wrap(err, "Failed to process Integer Assignment")
 			}
-			valueBytes := convertUint32ToLittleEndian(value)
-
-			byteCode.Push(NeverScript.NameToken)
-			byteCode.Push(nameBytes...)
-			byteCode.Push(NeverScript.EqualsToken)
-			byteCode.Push(NeverScript.IntToken)
-			byteCode.Push(valueBytes...)
 			continue
 		}
 
 		if declaration.StringAssignment != nil {
-			assignment := declaration.StringAssignment
-
-			nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
-
-			quotedString := assignment.Value
-			unquotedString := unquote(quotedString)
-
-			lengthBytes := convertUint32ToLittleEndian(uint32(len(unquotedString)))
-			stringBytes := []byte(unquotedString)
-			nullTerminator := byte(0x00)
-
-			byteCode.Push(NeverScript.NameToken)
-			byteCode.Push(nameBytes...)
-			byteCode.Push(NeverScript.EqualsToken)
-			byteCode.Push(NeverScript.StringToken)
-			byteCode.Push(lengthBytes...)
-			byteCode.Push(stringBytes...)
-			byteCode.Push(nullTerminator)
+			this.processStringAssignment(*declaration.StringAssignment)
+			continue
 		}
 	}
 
-	byteCode.Push(NeverScript.EndOfFileToken)
+	this.byteCode.Push(NeverScript.EndOfFileToken)
 
-	return byteCode, nil
+	return this.byteCode, nil
+}
+
+func (this *service) processBooleanAssignment(assignment booleanAssignment) {
+	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+	value := convertBooleanTextToByte(assignment.Value)
+
+	this.byteCode.Push(NeverScript.NameToken)
+	this.byteCode.Push(nameBytes...)
+	this.byteCode.Push(NeverScript.EqualsToken)
+
+	// The QB format has no Boolean type.
+	// Instead, we use Ints with a value of 0 or 1.
+	this.byteCode.Push(NeverScript.IntToken, value, 0, 0, 0)
+}
+
+func (this *service) processIntegerAssignment(assignment integerAssignment) error {
+	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+
+	value, err := convertIntegerNodeToUint32(*assignment.Value)
+	if err != nil {
+		return errors.Wrap(err, "Failed to convert integer node to uint32")
+	}
+	valueBytes := convertUint32ToLittleEndian(value)
+
+	this.byteCode.Push(NeverScript.NameToken)
+	this.byteCode.Push(nameBytes...)
+	this.byteCode.Push(NeverScript.EqualsToken)
+	this.byteCode.Push(NeverScript.IntToken)
+	this.byteCode.Push(valueBytes...)
+
+	return nil
+}
+
+func (this *service) processStringAssignment(assignment stringAssignment) {
+	nameBytes := []byte{junkByte, junkByte, junkByte, junkByte}
+
+	quotedString := assignment.Value
+	unquotedString := unquote(quotedString)
+
+	lengthBytes := convertUint32ToLittleEndian(uint32(len(unquotedString)))
+	stringBytes := []byte(unquotedString)
+	nullTerminator := byte(0x00)
+
+	this.byteCode.Push(NeverScript.NameToken)
+	this.byteCode.Push(nameBytes...)
+	this.byteCode.Push(NeverScript.EqualsToken)
+	this.byteCode.Push(NeverScript.StringToken)
+	this.byteCode.Push(lengthBytes...)
+	this.byteCode.Push(stringBytes...)
+	this.byteCode.Push(nullTerminator)
 }
 
 func convertBooleanTextToByte(text string) byte {
