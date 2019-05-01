@@ -57,14 +57,6 @@ func (this ByteCode) IsLongerThan(other ByteCode) bool {
 	return this.length > other.length
 }
 
-func (this ByteCode) IsShorterThan(other ByteCode) bool {
-	return this.length < other.length
-}
-
-func (this ByteCode) IsSameLengthAs(other ByteCode) bool {
-	return this.length == other.length
-}
-
 func (this ByteCode) IsEqualTo(other ByteCode) bool {
 	return bytes.Equal(this.content, other.content)
 }
@@ -88,11 +80,6 @@ func (this ByteCode) Contains(other ByteCode) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func (this ByteCode) IsEqualTo_IgnoreByte(other ByteCode, byteToIgnore byte) bool {
-	forceFutureComparisonsToPass(&this, other, byteToIgnore)
-	return this.IsEqualTo(other)
 }
 
 func (this ByteCode) Contains_IgnoreByte(other ByteCode, byteToIgnore byte) (bool, error) {

@@ -20,12 +20,13 @@ func TestChecksums(t *testing.T) {
 			{"offmetertop", 0xD77B6FF9},
 			{"SetTrickScore", 0xCB3A8FD2},
 			{"OneFootDarkSlide_range", 0x0750B702},
+			{"One/Two/Three", 0x174F8484},
 		}
 		for _, entry := range data {
 			actualChecksum := checksumService.GenerateFrom(entry.identifier)
 			expectedChecksum := NeverScript.NewChecksum(entry.expectedChecksumContents)
 
-			So(actualChecksum.IsEqualTo(expectedChecksum), ShouldBeTrue)
+			So(actualChecksum, ShouldResemble, expectedChecksum)
 		}
 	})
 }

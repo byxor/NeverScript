@@ -2,3 +2,4 @@ NeverScript
 ns
 .coveralls.yml
 *.out
+coverage.txt
