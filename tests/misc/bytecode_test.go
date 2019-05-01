@@ -32,4 +32,13 @@ func TestByteCode(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("When checking if some ByteCode contains ByteCode", t, func() {
+		Convey("It returns false if the subsequence is too large", func() {
+			largerByteCode := NeverScript.NewByteCode([]byte{0x00, 0x01, 0x02, 0x03, 0x04})
+			containsSubsequence, err := byteCode.Contains(largerByteCode)
+			So(err, ShouldBeNil)
+			So(containsSubsequence, ShouldBeFalse)
+		})
+	})
 }
