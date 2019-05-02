@@ -49,12 +49,17 @@ nested1 = {
 
 nameless_struct = {10 minutes};
 
+// Raw 32-bit checksums can be used instead of variable names, although it's not recommended to do this unless you really need to.
+SoundClip = @FF821337@;
+@11223344@ = "Foo, bar, baz";
+
 // Functions are also defined at the top level.
 //
 // Inside functions, slightly more complex language features are enabled.
 // e.g.
 //
 // -    `<` and `>` can be used to reference local memory (local variables & parameters).
+// -     Example:    <my_local_variable>
 //
 // -    `(` and `)` can be used to perform calculations and to control the precedence of operations.
 // -    `+`   does subtraction.
@@ -93,6 +98,25 @@ func change_global_string {
     change my_string="Oh no... Global state has been modified!";
 }
 
+func main {
+    print text="Hello"
+
+    // Add two numbers and print the return value
+    add first=10 second=20;
+    print text=<add_result>;
+
+    // Call a function across multiple lines (style 1)
+    kick_player name="byxor"
+                reason="using techs during game of koth";
+
+    // Call a function across multiple lines (style 2):
+    kick_player
+        name = "byxor"
+        reason = "using techs during game of koth";
+
+    print text="Goodbye";
+}
+
 func doArbitraryStuff {
     variable = 10;
     if (<variable> < 5) {
@@ -113,23 +137,4 @@ func doArbitraryStuff {
             vel_y = 0.0
             vel_z = <vel_z>
     }
-}
-
-func main {
-    print text="Hello"
-
-    // Add two numbers and print the return value
-    add first=10 second=20;
-    print text=<add_result>;
-
-    // Call a function across multiple lines (style 1)
-    kick_player name="byxor"
-                reason="using techs during game of koth";
-
-    // Call a function across multiple lines (style 2):
-    kick_player
-        name = "byxor"
-        reason = "using techs during game of koth";
-
-    print text="Goodbye";
 }
