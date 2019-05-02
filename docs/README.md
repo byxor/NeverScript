@@ -2,8 +2,8 @@
 [![codecov](https://codecov.io/gh/byxor/NeverScript/branch/master/graph/badge.svg)](https://codecov.io/gh/byxor/NeverScript)
 [![Go Report Card](https://goreportcard.com/badge/github.com/byxor/NeverScript)](https://goreportcard.com/report/github.com/byxor/NeverScript)
 
-[![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/19a181d0df0a4eb5a24b1de49c042919)](https://app.codacy.com/app/byxor/NeverScript?utm_source=github.com&utm_medium=referral&utm_content=byxor/NeverScript&utm_campaign=Badge_Grade_Dashboard)
+[![BCH compliance](https://bettercodehub.com/edge/badge/byxor/NeverScript?branch=master)](https://bettercodehub.com/)
 
 ```ascii
      __                    __           _       _   
