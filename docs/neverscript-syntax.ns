@@ -57,25 +57,33 @@ nameless_struct = {10 minutes};
 // -    `<` and `>` can be used to reference local memory (local variables & parameters).
 //
 // -    `(` and `)` can be used to perform calculations and to control the precedence of operations.
-// -    `+` does subtraction.
-// -    `-` does subtraction.
-// -    `*` does multiplication.
-// -    `/` does division.
+// -    `+`   does subtraction.
+// -    `-`   does subtraction.
+// -    `*`   does multiplication.
+// -    `/`   does division.
+// -    `==`  checks if two values are equal.
+// -    `>`   checks if a value is greater than another value.
+// -    `<`   checks if a value is less than another value.
+// -    `>=`  checks if a value is greater than or equal to another value.
+// -    `<=`  checks if a value is less than or equal to another value.
+// -    `and` checks if two conditions are both true.
+// -    `or`  checks if at least one of two conditions is true.
+// -    `xor` checks if one of two conditions is true, but disallows both to be true.
 //
 // -    Example:        (((5 + 5) * 10) / 4)
 //      Evaluates to:   25
 //
 // -    Calculations can contain variables.
-//      Example:        (<score> * 250)
-//      Evaluates to:   ?
+//      Example:   (<score> * 250)
+// -    Example:   (<IsFalling> and (Score > 10))
 //
 // -    `return` can be used to store variables into the caller's local memory.
-//      Example:        return foo=10;
+//      Example:   return foo=10;
 //
 // -    Multiple values can be returned.
 //      Example:        return foo=10 bar=20;
-//
 //      See the `add` function (which is called in `main`) for an example of how to use this feature.
+//
 
 func add {
     return add_result=(<first> + <second>);
