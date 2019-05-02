@@ -135,6 +135,6 @@ func doArbitraryStuff {
         SetSkaterVelocity
             vel_x = <vel_x>
             vel_y = 0.0
-            vel_z = <vel_z>
+            vel_z = <vel_z>;
     }
 }
