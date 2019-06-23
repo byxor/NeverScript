@@ -38,7 +38,7 @@ Want to try the language? We advise that you browse some documentation first.
 
 ### Where to learn NeverScript:
 
-*  **NeverScript syntax guide:** [docs/neverscript-syntax.ns](neverscript-syntax.ns)
+*  **NeverScript syntax guide:** [neverscript-syntax.ns](docs/neverscript-syntax.ns)
 
 ### Other useful resources:
 
