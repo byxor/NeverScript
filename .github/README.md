@@ -73,7 +73,7 @@ You can track our progress [here](https://github.com/byxor/NeverScript/projects/
 
 *  **Gone, Morten, Sk8ace** - For sharing their comprehensive knowledge of the QB format.
 *  **Source, Edem** - For contributing to NeverScript's development, via code and innovative ideas.
-*  **Biz**, **IronHawk**, **darkdks** - For their encouragement.
+*  **Biz**, **IronHawk**, **darkdks**, **bergy** - For their encouragement.
 *  **CHC**, **Skater1014** - For inspiring us with their fascinating modding projects.
 
 If you're on this list, you've been a valuable member in making this project possible. Thank you.
