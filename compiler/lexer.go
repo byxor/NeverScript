@@ -20,5 +20,7 @@ var nsLexer = lexer.Must(lexer.Regexp(
 		`` +
 		`|(?P<Semicolon>;)` +
 		`|(?P<Equals>=)` +
+		`|(?P<LessThan>\<)` +
+		`|(?P<GreaterThan>\>)` +
 		``,
 ))

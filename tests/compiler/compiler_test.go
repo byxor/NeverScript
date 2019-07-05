@@ -136,6 +136,10 @@ func TestCompilation(t *testing.T) {
 				"EML", 0x00,
 				0x01, 0x00)},
 		})
+
+		testThat("Local memory can be accessed", []testEntry{
+			{`<var>`, []byte{0x2D, 0x16, any, any, any, any}},
+		})
 	})
 
 	Convey("Invalid NeverScript does not compile", t, func() {
