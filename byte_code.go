@@ -21,6 +21,12 @@ func NewEmptyByteCode() ByteCode {
 	return NewByteCode([]byte{})
 }
 
+func (this ByteCode) Copy() ByteCode {
+	newContent := make([]byte, this.length)
+	copy(newContent, this.content)
+	return NewByteCode(newContent)
+}
+
 func (this *ByteCode) Clear() {
 	this.content = []byte{}
 	this.length = 0
@@ -80,8 +86,16 @@ func (this ByteCode) Contains(other ByteCode) (bool, error) {
 }
 
 func (this ByteCode) Contains_IgnoreByte(other ByteCode, byteToIgnore byte) (bool, error) {
-	forceFutureComparisonsToPass(&this, other, byteToIgnore)
-	return this.Contains(other)
+	upperLimit := this.length - other.length + 1
+	for i := 0; i < upperLimit; i++ {
+		thisCopy := this.Copy()
+		forceFutureComparisonsToPass(&thisCopy, other, byteToIgnore)
+		contains, _ := this.Contains(other)
+		if contains {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func forceFutureComparisonsToPass(byteCodeToModify *ByteCode, byteCodeToCheck ByteCode, byteToIgnore byte) {

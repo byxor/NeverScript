@@ -70,6 +70,11 @@ func (this *service) processDeclaration(declaration declaration) error {
 		return nil
 	}
 
+	if declaration.FunctionDeclaration != nil {
+		this.processFunctionDeclaration(*declaration.FunctionDeclaration)
+		return nil
+	}
+
 	return nil
 }
 
@@ -126,6 +131,27 @@ func (this *service) processStringAssignment(assignment stringAssignment) {
 	this.byteCode.Push(lengthBytes...)
 	this.byteCode.Push(stringBytes...)
 	this.byteCode.Push(nullTerminator)
+}
+
+func (this *service) processFunctionDeclaration(declaration functionDeclaration) {
+	nameBytes := getArbitraryNameBytes()
+
+	this.byteCode.Push(NeverScript.EndOfLineToken)
+	this.byteCode.Push(NeverScript.ScriptToken)
+	this.byteCode.Push(NeverScript.NameToken)
+	this.byteCode.Push(nameBytes...)
+
+	if len(declaration.Statements) != 0 {
+		this.byteCode.Push(NeverScript.EndOfLineToken)
+		this.byteCode.Push(NeverScript.NameToken)
+		this.byteCode.Push(nameBytes...)
+		this.byteCode.Push(NeverScript.EqualsToken)
+		this.byteCode.Push(NeverScript.IntToken)
+		this.byteCode.Push(0x0A, 0x00, 0x00, 0x00)
+	}
+
+	this.byteCode.Push(NeverScript.EndOfLineToken)
+	this.byteCode.Push(NeverScript.EndScriptToken)
 }
 
 func convertBooleanTextToByte(text string) (byte, error) {

@@ -136,6 +136,16 @@ func TestCompilation(t *testing.T) {
 				"EML", 0x00,
 				0x01, 0x00)},
 		})
+
+		testThat("Functions can be declared", []testEntry{
+			{`func foo {}`, []byte{0x01, 0x23, 0x16, any, any, any, any, 0x01, 0x24}},
+			{`func bar {
+                 variable = 10;
+             }`, []byte{0x01, 0x23, 0x16, any, any, any, any,
+				 0x01, 0x16, any, any, any, any,
+				 0x07, 0x17, 0x0A, 0x00, 0x00, 0x00,
+				 0x01, 0x24}},
+		})
 	})
 
 	Convey("Invalid NeverScript does not compile", t, func() {

@@ -8,6 +8,8 @@ var nsLexer = lexer.Must(lexer.Regexp(
 	`(?m)` +
 		`(\s+)` +
 		`` +
+		`|(?P<FunctionKeyword>func)` +
+		`` +
 		`|(?P<Boolean>true|false)` +
 		`|(?P<String>"(?:\\.|[^"])*")` +
 		`` +
@@ -18,6 +20,8 @@ var nsLexer = lexer.Must(lexer.Regexp(
 		`` +
 		`|(?P<Identifier>[a-zA-Z][a-zA-Z_\d]*)` +
 		`` +
+		`|(?P<OpenCurlyBrace>\{)` +
+		`|(?P<CloseCurlyBrace>\})` +
 		`|(?P<Semicolon>;)` +
 		`|(?P<Equals>=)` +
 		``,

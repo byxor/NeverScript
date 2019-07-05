@@ -9,6 +9,7 @@ type declaration struct {
 	BooleanAssignment *booleanAssignment `| @@`
 	IntegerAssignment *integerAssignment `| @@`
 	StringAssignment  *stringAssignment  `| @@`
+	FunctionDeclaration *functionDeclaration `| @@`
 }
 
 type booleanAssignment struct {
@@ -27,6 +28,14 @@ type stringAssignment struct {
 	Name   string `@Identifier`
 	Equals string `@Equals`
 	Value  string `@String`
+}
+
+type functionDeclaration struct {
+	Function string `@FunctionKeyword`
+	Name string `@Identifier`
+	OpenCurlyBrace string `@OpenCurlyBrace`
+	Statements []*declaration `@@*`
+	CloseCurlyBrace string `@CloseCurlyBrace`
 }
 
 type integer struct {
