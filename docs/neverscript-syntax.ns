@@ -62,7 +62,7 @@ SoundClip = @FF821337@;
 // -     Example:    <my_local_variable>
 //
 // -    `(` and `)` can be used to perform calculations and to control the precedence of operations.
-// -    `+`   does subtraction.
+// -    `+`   does addition.
 // -    `-`   does subtraction.
 // -    `*`   does multiplication.
 // -    `/`   does division.
