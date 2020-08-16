@@ -2,6 +2,8 @@
 [![codecov](https://codecov.io/gh/byxor/NeverScript/branch/master/graph/badge.svg)](https://codecov.io/gh/byxor/NeverScript)
 [![Go Report Card](https://goreportcard.com/badge/github.com/byxor/NeverScript)](https://goreportcard.com/report/github.com/byxor/NeverScript)
 
+![Screenshot of the compiler being used](./docs/neverscript.png)
+
 ```ascii
      __                    __           _       _   
   /\ \ \_____   _____ _ __/ _\ ___ _ __(_)_ __ | |_ 
