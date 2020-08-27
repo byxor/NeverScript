@@ -1,27 +1,62 @@
-// At the top level, we can define global variables.
+/*
+==============================
+    GLOBAL VARIABLES
+==============================
+*/
 
-// Integers
-my_number = 256            // Decimal     (Base 10)
-my_number = 0x1234D00D     // Hexadecimal (Base 16)
-my_number = 0b10100111001  // Binary      (Base 2)
-my_number = 0o1234567      // Octal       (Base 8)
+// Ints
+my_int = 256            // decimal     (base 10)
+my_int = 0x1234D00D     // hexadecimal (base 16)
+my_int = 0b10100111001  // binary      (base 2)
+my_int = 0o1234567      // octal       (base 8)
+my_int = -32
+my_int = -0x20
+my_int = -0b100000
+my_int = -0o40
 
 // Floats
 my_float = 123.45
-my_float = 18.0            // .0 required to avoid ambiguity with integers
-
-// Booleans
-neverscript_rocks = true
-neverscript_sucks = false
+my_float = 18.0         // .0 required to avoid ambiguity with integers
 
 // Strings
 my_string = "Hello, I contain text!"
 my_string = ""
 
+// {
+//     Checksums
+
+//     All variable names are converted to 32-bit checksums by the compiler.
+//     The next 4 lines of code are semantically identical:
+my_variable = my_variable
+my_variable = #01E0ED3D
+#01E0ED3D = my_variable
+#01E0ED3D = #01E0ED3D
+
+//     Different variable names will produce different checksums:
+foo = 10 // #738C9ADE = 10
+bar = 10 // #89007355 = 10
+baz = 10 // #87DBFB67 = 10
+
+//     Variable names are case-insensitive.
+//     The next 3 lines of code are semantically indentical:
+foo = 10 // #738C9ADE = 10
+Foo = 10 // #738C9ADE = 10
+FOO = 10 // #738C9ADE = 10
+
+//     Checksums will usually only be seen in decompiled code when a checksum lookup was unsuccessful.
+// }
+
 // Arrays
 my_array = [1 2 3 4]
 my_array = ["Foo" "Bar" "Baz"]
 my_array = [[1 2] [3 4]]
+my_array = [foo, bar, baz] // Sometimes arrays have commas to disambiguate separate checksum elements from script invocations.
+my_array = [
+    "first element (index 0)"  // Arrays
+    "second element (index 1)" // can
+    "third element (index 2)"  // contain
+    "fourth element (index 3)" // line-breaks.
+]
 
 // Pairs (2 floats packed together as a unit)
 my_pair = (0.2, 0.3)
@@ -32,69 +67,45 @@ vector_1 = (0.0, 0.0, 0.0)
 vector_2 = (0.1, 0.2, 0.3)
 
 // Structs
-language = {
+language_struct = {
     name = "NeverScript"
-    is_fun = true
-};
-
+    is_fun
+    rewrites = 5 // probably
+}
 nested1 = {
     nested2 = {
         foo = 10
         bar = 20
         nested3 = {
             baz = [1 2 3 4]
-        };
-    };
-};
+        }
+    }
+}
+time_struct = {10 minutes}
+my_struct = { CapitalizeName name = "tony hawk", year = 2020 } // Structs can also have commas to separate elements (see commas in arrays ^^^).
 
-nameless_struct = {10 minutes}
-
-// Raw 32-bit checksums can be used instead of variable names, although it's not recommended to do this unless you really need to.
-SoundClip = #FF821337
-#11223344 = "Foo, bar, baz"
 
 /*
-  Scripts are also defined at the top level.
-  Inside scripts, slightly more complex language features are enabled.
-  e.g.
-   -    `<` and `>` can be used to reference local memory (local variables & parameters).
-   -     Example:    <my_local_variable>
-  
-   -    `(` and `)` can be used to perform calculations and to control the precedence of operations.
-   -    `+`   does addition.
-   -    `-`   does subtraction.
-   -    `*`   does multiplication.
-   -    `/`   does division.
-   -    `=`   checks if two values are equal.
-   -    `>`   checks if a value is greater than another value.
-   -    `<`   checks if a value is less than another value.
-   -    `>=`  checks if a value is greater than or equal to another value.
-   -    `<=`  checks if a value is less than or equal to another value.
-   -    `and` checks if two conditions are both true.
-   -    `or`  checks if at least one of two conditions is true.
-   -    `xor` checks if one of two conditions is true, but disallows both to be true.
-  
-   -    Example:        (((5 + 5) * 10) / 4)
-        Evaluates to:   25
-  
-   -    Calculations can contain variables.
-        Example:   (<score> * 250)
-   -    Example:   (<IsFalling> and (Score > 10))
-  
-   -    `return` can be used to store variables into the caller's local memory.
-        Example:   return foo=10;
-  
-   -    Multiple values can be returned.
-        Example:        return foo=10 bar=20;
-        See the `add` function (which is called in `main`) for an example of how to use this feature.
+==============================
+    SCRIPTS
+==============================
 */
 
+/*
+ * Script name: "add"
+ * Parameters: "first", "second"
+ * Returns: "add_result"
+ */
 script add {
     return add_result=(<first> + <second>)
+    // Use <> to reference local variables and parameters.
+    // Use () to perform calculations.
 }
 
-script change_global_string {
-    change my_string="Oh no... Global state has been modified!"
+script UpdateGlobalState {
+    Change my_string="Oh no... Global state has been modified!"
+    // Call the "Change" script to update global variables.
+    // This script is implemented in C++ and accessible at runtime through the scripting engine.
 }
 
 script main {
@@ -104,16 +115,33 @@ script main {
     add first=10 second=20
     print text=<add_result>
 
-    // Call a function across multiple lines (style 1)
-    kick_player name="byxor" \
-                reason="using techs during game of koth"
-
-    // Call a function across multiple lines (style 2):
+    // Call a function across multiple lines (example style 1):
     kick_player \
         name = "byxor" \
         reason = "using techs during game of koth"
 
+    // Call a function across multiple lines (example style 2):
+    kick_player name="byxor" \
+                reason="using techs during game of koth"
+
+    // Use a `\` at the end of a line to prevent the compiler from inserting a line-break.
+
     print text="Goodbye"
+}
+
+script FizzBuzz {
+    if ! ((GotParam Fizz) or (GotParam Buzz)) {
+      result = "..."
+    } else if (GotParam Fizz) and (GotParam Buzz) {
+        result = "FizzBuzz"
+    } else if GotParam Fizz {
+        result = "Fizz"
+    } else {
+        result = "Buzz"
+    }
+    return YourFizzBuzzResult = (<result>)
+    // I don't think it's necessary, but I often parenthesize checksum expressions out of paranoia.
+    // By doing this, you can have more confidence that the expression evaluates to a more """primitive""" type, if such an explanation makes any sense.
 }
 
 script doArbitraryStuff {
@@ -127,13 +155,20 @@ script doArbitraryStuff {
     }
     
     // Returns <vel_x> <vel_y> <vel_z> into local memory.
-    GetSkaterVelocity;
+    GetSkaterVelocity
     
-    IsFalling = (<vel_y> < 0.0);
+    IsFalling = (<vel_y> < 0.0)
     if (<IsFalling>) {
-        SetSkaterVelocity
-            vel_x = <vel_x>
-            vel_y = 0.0
-            vel_z = <vel_z>;
+        SetSkaterVelocity \
+            vel_x = <vel_x> \
+            vel_y = 0.0 \
+            vel_z = <vel_z>
+    }
+
+    if ! (<IsFalling>) {
+        SetSkaterVelocity \
+            vel_x = (<vel_x> - 0.01) \
+            vel_y = (<vel_y>) \
+            vel_z = (<vel_z> - 0.01)
     }
 }
