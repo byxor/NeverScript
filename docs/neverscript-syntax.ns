@@ -102,6 +102,10 @@ script add {
     // Use () to perform calculations.
 }
 
+script Print_Something text=default_text {
+    print text=(<text>)
+}
+
 script UpdateGlobalState {
     Change my_string="Oh no... Global state has been modified!"
     // Call the "Change" script to update global variables.
@@ -153,10 +157,10 @@ script doArbitraryStuff {
     } else {
         print text="Variable is 10 or more"
     }
-    
+
     // Returns <vel_x> <vel_y> <vel_z> into local memory.
     GetSkaterVelocity
-    
+
     IsFalling = (<vel_y> < 0.0)
     if (<IsFalling>) {
         SetSkaterVelocity \
@@ -171,4 +175,39 @@ script doArbitraryStuff {
             vel_y = (<vel_y>) \
             vel_z = (<vel_z> - 0.01)
     }
+
+    #11223344 param=1 \
+              #23232323=2
+
+    // `random` is a keyword to enable random branching at runtime.
+    // Each branch has a weight integer, and a corresponding snippet of code associated with it.
+    print \
+        message = random {
+            100 {"Highly probable"}
+            60 {"Somewhat probable"}
+            20 {"Unlikely"}
+            1 {"Very unlikely"}
+        }
+    }
+
+    (x < 2)
+    (x > 2)
+    if (x = 2) {}
+
+    random {
+        1 {
+            Bark
+            print "you're a dog bro"
+        }
+        1 {
+            Meow
+            print "you're a cat bro"
+        }
+        1 {
+            Hiss
+            print "you're a snake bro"
+        }
+    }
+
+    Foo <...>
 }

@@ -1,26 +1,8 @@
-package checksums
+package compiler
 
-import (
-	"github.com/byxor/NeverScript"
-)
-
-type Service interface {
-	// The GenerateFrom function takes a name (an identifier)
-	// and converts it into a 32-bit checksum.
-	//
-	// Uses the same CRC Algorithm as THUG1.
-	GenerateFrom(identifier string) NeverScript.Checksum
-}
-
-type service struct{}
-
-func NewService() Service {
-	return &service{}
-}
-
-func (this service) GenerateFrom(identifier string) NeverScript.Checksum {
+func StringToChecksum(identifier string) uint32 {
 	if identifier == "" {
-		return NeverScript.NewChecksum(0)
+		return 0
 	}
 
 	var rc uint32 = 0xffffffff
@@ -39,7 +21,7 @@ func (this service) GenerateFrom(identifier string) NeverScript.Checksum {
 		rc = crcTable[(rc^uint32(ch))&0xff] ^ ((rc >> 8) & 0x00ffffff)
 	}
 
-	return NeverScript.NewChecksum(rc)
+	return rc
 }
 
 var crcTable = [256]uint32{
