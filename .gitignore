@@ -3,3 +3,7 @@ ns
 .coveralls.yml
 *.out
 coverage.txt
+*.exe
+*.qbi
+*.qb
+.idea/
