@@ -27,10 +27,9 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 *  Tony Hawk's Underground 2 (THUG2)
 *  Tony Hawk's Underground Pro (THUG Pro)
 
-All of these games use variations of Neversoft's scripting engine. We are primarily targetting THUG2, but we aim to create a language that is somewhat compatible with multiple games.
+All of these games use variations of Neversoft's scripting engine. We're primarily targetting THUG2 here, but I'm sure compatibility with other games can be worked in later based on user needs.
 
 ## Getting started
-
 
 *  **Download:** [latest release](https://github.com/byxor/NeverScript/releases)
 *  **Syntax guide:** [neverscript-syntax.ns](../docs/neverscript-syntax.ns)
