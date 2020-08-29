@@ -1,5 +1,3 @@
-![Screenshot of the compiler being used](neverscript.png)
-
 ```ascii
      __                    __           _       _   
   /\ \ \_____   _____ _ __/ _\ ___ _ __(_)_ __ | |_ 
@@ -11,6 +9,10 @@
 ----------------------------------------------------
 ```
 
+
+![Screenshot of the compiler being used](neverscript.png)
+```
+```
 NeverScript is a programming language that targets Neversoft's custom scripting engine (QB).
 
 **This project contains:**
