@@ -1,4 +1,4 @@
-![Screenshot of the compiler being used](neverscript.png)
+![Screenshot of the compiler being used](neverscript2.png)
 
 ```ascii
      __                    __           _       _   
