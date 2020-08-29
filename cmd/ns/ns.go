@@ -23,19 +23,19 @@ const (
 )
 
 func main() {
-	fileToCompile := "C:\\Users\\Brandon\\go\\src\\github.com\\byxor\\NeverScript\\docs\\neverscript-syntax.ns"
-	fileToDecompile := ""
-	outputFileName := ""
-	showHexDump := true
-	decompileWithRoq := true
-	arguments := commandLineArguments{
-		FileToCompile:    &fileToCompile,
-		FileToDecompile:  &fileToDecompile,
-		OutputFileName:   &outputFileName,
-		ShowHexDump:      &showHexDump,
-		DecompileWithRoq: &decompileWithRoq,
-	}
-	// arguments := parseCommandLineArguments()
+	//fileToCompile := "C:\\Users\\Brandon\\go\\src\\github.com\\byxor\\NeverScript\\docs\\neverscript-syntax.ns"
+	//fileToDecompile := ""
+	//outputFileName := ""
+	//showHexDump := true
+	//decompileWithRoq := true
+	//arguments := commandLineArguments{
+	//	FileToCompile:    &fileToCompile,
+	//	FileToDecompile:  &fileToDecompile,
+	//	OutputFileName:   &outputFileName,
+	//	ShowHexDump:      &showHexDump,
+	//	DecompileWithRoq: &decompileWithRoq,
+	//}
+	arguments := parseCommandLineArguments()
 	argumentsWereSupplied := false
 
 	if *arguments.FileToCompile != "" {
