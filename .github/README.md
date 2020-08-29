@@ -31,7 +31,7 @@ All of these games use variations of Neversoft's scripting engine. We are primar
 ## Getting started
 
 
-*  **Download:** [latest release](../releases)
+*  **Download:** [latest release](https://github.com/byxor/NeverScript/releases)
 *  **Syntax guide:** [neverscript-syntax.ns](../docs/neverscript-syntax.ns)
 
 ### Other useful resources:
