@@ -11,8 +11,7 @@
 
 
 ![Screenshot of the compiler being used](neverscript.png)
-```
-```
+
 NeverScript is a programming language that targets Neversoft's custom scripting engine (QB).
 
 **This project contains:**
