@@ -56,32 +56,31 @@ func main() {
 		var newParser compiler.NewParser
 		var bytecodeCompiler compiler.BytecodeCompiler
 		compiler.Compile(inputFileName, outputFilename, &lexer, &newParser, &bytecodeCompiler)
-		fmt.Printf("  Created '%s'.\n", outputFilename)
+		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {
-			fmt.Printf("\nHex dump:\n%s", outputFilename, hex.Dump(bytecodeCompiler.Bytes))
+			fmt.Printf("Hex dump:\n%s", outputFilename, hex.Dump(bytecodeCompiler.Bytes))
 		}
 
 		if *arguments.DecompileWithRoq {
-			fmt.Println("\nRoq decompiler output (may freeze):")
+			fmt.Println("Roq decompiler output (may freeze):")
 			roqCmd := exec.Command(".\\roq.exe", "-d", outputFilename)
 			decompiledCode, _ := roqCmd.Output()
 			fmt.Println(string(decompiledCode))
 		}
 
-		fmt.Println()
 		fmt.Println("done.")
 	}
 
-	if *arguments.FileToDecompile != "" {
-		argumentsWereSupplied = true
-
-		fmt.Printf("Decompiling '%s'...\n", *arguments.FileToDecompile)
-		fmt.Println("This is not implemented yet, sorry.")
-
-		fmt.Println()
-		fmt.Println("done.")
-	}
+	//if *arguments.FileToDecompile != "" {
+	//	argumentsWereSupplied = true
+	//
+	//	fmt.Printf("Decompiling '%s'...\n", *arguments.FileToDecompile)
+	//	fmt.Println("This is not implemented yet, sorry.")
+	//
+	//	fmt.Println()
+	//	fmt.Println("done.")
+	//}
 
 	if !argumentsWereSupplied {
 		fmt.Println(banner[1:])
@@ -92,7 +91,7 @@ func main() {
 
 type commandLineArguments struct {
 	FileToCompile    *string
-	FileToDecompile  *string
+	// FileToDecompile  *string
 	OutputFileName   *string
 	ShowHexDump      *bool
 	DecompileWithRoq *bool
@@ -101,7 +100,7 @@ type commandLineArguments struct {
 func parseCommandLineArguments() commandLineArguments {
 	args := commandLineArguments{
 		FileToCompile:   flag.String("c", "", "Specify a file to compile (.ns)."),
-		FileToDecompile: flag.String("d", "", "Specify a file to decompile (.qb)."),
+		// FileToDecompile: flag.String("d", "", "Specify a file to decompile (.qb)."),
 		OutputFileName:  flag.String("o", "", "Specify the output file name."),
 		ShowHexDump:      flag.Bool("showHexDump", false, "Display the compiled bytecode in hex format"),
 		DecompileWithRoq: flag.Bool("decompileWithRoq", false, "Display output from roq decompiler (roq.exe must be in your PATH)"),
