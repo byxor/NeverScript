@@ -84,7 +84,7 @@ func main() {
 
 	if !argumentsWereSupplied {
 		fmt.Println(banner[1:])
-		fmt.Printf("Release %s", version)
+		fmt.Printf("Release %s\n\n", version)
 		flag.Usage()
 	}
 }
