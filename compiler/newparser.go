@@ -259,7 +259,6 @@ func BuildAbstractSyntaxTree(newParser *NewParser) {
 			if parseResult := ParseRandom(index); parseResult.WasSuccessful {
 				return parseResult
 			}
-
 			if GetKind(index) == TokenKind_Identifier || GetKind(index) == TokenKind_RawChecksum {
 				return ParseChecksumOrInvocation(index, allowInvocations)
 			}
@@ -288,6 +287,26 @@ func BuildAbstractSyntaxTree(newParser *NewParser) {
 			return ParseResult{
 				WasSuccessful: false,
 				Reason:        fmt.Sprintf("Token stream was not recognised as an expression [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2)),
+			}
+		}
+
+		inPlaceMathOperationParseResult := func(index int, leftParseResult ParseResult, rightParseResult ParseResult, expressionKind AstKind) ParseResult {
+			return ParseResult{
+				WasSuccessful: true,
+				Node: AstNode{
+					Kind: AstKind_Assignment,
+					Data: AstData_Assignment{
+						NameNode: leftParseResult.Node,
+						ValueNode: AstNode{
+							Kind: expressionKind,
+							Data: AstData_BinaryExpression{
+								LeftNode:  leftParseResult.Node,
+								RightNode: rightParseResult.Node,
+							},
+						},
+					},
+				},
+				TokensConsumed: leftParseResult.TokensConsumed + 2 + rightParseResult.TokensConsumed,
 			}
 		}
 
@@ -344,6 +363,34 @@ func BuildAbstractSyntaxTree(newParser *NewParser) {
 						},
 						TokensConsumed: expressionParseResult.TokensConsumed + 1 + secondExpressionParseResult.TokensConsumed,
 					}
+				}
+			} else if GetKind(index) == TokenKind_Plus && GetKind(index + 1) == TokenKind_Equals {
+				index += 2
+				secondExpressionParseResult := ParseExpression(index, false)
+				if secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_AdditionExpression)
+				}
+			} else if GetKind(index) == TokenKind_Minus && GetKind(index + 1) == TokenKind_Equals {
+				index += 2
+				secondExpressionParseResult := ParseExpression(index, false)
+				if secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_SubtractionExpression)
+				}
+			} else if GetKind(index) == TokenKind_Asterisk && GetKind(index + 1) == TokenKind_Equals {
+				index += 2
+				secondExpressionParseResult := ParseExpression(index, false)
+				if secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_MultiplicationExpression)
+				}
+			} else if GetKind(index) == TokenKind_ForwardSlash && GetKind(index + 1) == TokenKind_Equals {
+				index += 2
+				secondExpressionParseResult := ParseExpression(index, false)
+				if secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_DivisionExpression)
 				}
 			}
 		}

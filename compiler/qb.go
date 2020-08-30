@@ -396,7 +396,18 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			write(0x21)
 		case AstKind_Return:
 			data := node.Data.(AstData_UnaryExpression)
-			invocationData := data.Node.Data.(AstData_Invocation)
+
+			var invocationData AstData_Invocation
+			if data.Node.Kind == AstKind_Checksum {
+				invocationData = AstData_Invocation{
+					ScriptIdentifierNode: data.Node,
+					ParameterNodes: []AstNode{},
+					TokensConsumedByEachParameterNode: []int{},
+				}
+			} else {
+				invocationData = data.Node.Data.(AstData_Invocation)
+			}
+
 			write(0x29)
 			for _, parameterNode := range invocationData.ParameterNodes {
 				writeBytecodeForNode(parameterNode)
