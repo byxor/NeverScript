@@ -20,6 +20,7 @@ const (
            The QB programming language.
 ----------------------------------------------------
 `
+	version = "0.2"
 )
 
 func main() {
@@ -84,6 +85,7 @@ func main() {
 
 	if !argumentsWereSupplied {
 		fmt.Println(banner[1:])
+		fmt.Printf("Release %s", version)
 		flag.Usage()
 	}
 }
