@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
-	"os"
 	"os/exec"
 )
 
@@ -24,38 +23,28 @@ const (
 )
 
 func main() {
-	//fileToCompile := "C:\\Users\\Brandon\\go\\src\\github.com\\byxor\\NeverScript\\docs\\neverscript-syntax.ns"
-	//fileToDecompile := ""
-	//outputFileName := ""
-	//showHexDump := true
-	//decompileWithRoq := true
-	//arguments := commandLineArguments{
-	//	FileToCompile:    &fileToCompile,
-	//	FileToDecompile:  &fileToDecompile,
-	//	OutputFileName:   &outputFileName,
-	//	ShowHexDump:      &showHexDump,
-	//	DecompileWithRoq: &decompileWithRoq,
-	//}
-	arguments := parseCommandLineArguments()
+	arguments := ParseCommandLineArguments()
+	RunNeverscript(arguments)
+}
+
+func RunNeverscript(arguments CommandLineArguments) {
 	argumentsWereSupplied := false
 
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
 
-		inputFileName := *arguments.FileToCompile
-
 		var outputFilename string
 		if *arguments.OutputFileName != "" {
 			outputFilename = *arguments.OutputFileName
 		} else {
-			outputFilename = NsToQb(inputFileName)
+			outputFilename = NsToQb(*arguments.FileToCompile)
 		}
 
-		fmt.Printf("\nCompiling '%s' (may freeze)...\n", inputFileName)
+		fmt.Printf("\nCompiling '%s' (may freeze)...\n", *arguments.FileToCompile)
 		var lexer compiler.Lexer
 		var newParser compiler.NewParser
 		var bytecodeCompiler compiler.BytecodeCompiler
-		compiler.Compile(inputFileName, outputFilename, &lexer, &newParser, &bytecodeCompiler)
+		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &newParser, &bytecodeCompiler)
 		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {
@@ -72,16 +61,6 @@ func main() {
 		fmt.Println("done.")
 	}
 
-	//if *arguments.FileToDecompile != "" {
-	//	argumentsWereSupplied = true
-	//
-	//	fmt.Printf("Decompiling '%s'...\n", *arguments.FileToDecompile)
-	//	fmt.Println("This is not implemented yet, sorry.")
-	//
-	//	fmt.Println()
-	//	fmt.Println("done.")
-	//}
-
 	if !argumentsWereSupplied {
 		fmt.Println(banner[1:])
 		fmt.Printf("Release %s\n\n", version)
@@ -89,34 +68,22 @@ func main() {
 	}
 }
 
-type commandLineArguments struct {
+type CommandLineArguments struct {
 	FileToCompile    *string
-	// FileToDecompile  *string
 	OutputFileName   *string
 	ShowHexDump      *bool
 	DecompileWithRoq *bool
 }
 
-func parseCommandLineArguments() commandLineArguments {
-	args := commandLineArguments{
+func ParseCommandLineArguments() CommandLineArguments {
+	args := CommandLineArguments{
 		FileToCompile:   flag.String("c", "", "Specify a file to compile (.ns)."),
-		// FileToDecompile: flag.String("d", "", "Specify a file to decompile (.qb)."),
 		OutputFileName:  flag.String("o", "", "Specify the output file name."),
-		ShowHexDump:      flag.Bool("showHexDump", false, "Display the compiled bytecode in hex format"),
-		DecompileWithRoq: flag.Bool("decompileWithRoq", false, "Display output from roq decompiler (roq.exe must be in your PATH)"),
+		ShowHexDump:      flag.Bool("showHexDump", false, "Display the compiled bytecode in hex format."),
+		DecompileWithRoq: flag.Bool("decompileWithRoq", false, "Display output from roq decompiler (roq.exe must be in your PATH)."),
 	}
 	flag.Parse()
 	return args
-}
-
-func check(err error) {
-	if err != nil {
-		fmt.Println()
-		fmt.Println()
-		fmt.Println("SOMETHING WENT WRONG:")
-		fmt.Println(err)
-		os.Exit(1)
-	}
 }
 
 func QbToNs(filename string) string {

@@ -214,6 +214,11 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			writeBytecodeForNode(data.LeftNode)
 			write(8)
 			writeBytecodeForNode(data.RightNode)
+		case AstKind_ColonExpression:
+			data := node.Data.(AstData_BinaryExpression)
+			writeBytecodeForNode(data.LeftNode)
+			write(0x42)
+			writeBytecodeForNode(data.RightNode)
 		case AstKind_LogicalNot:
 			write(0x39)
 			writeBytecodeForNode(node.Data.(AstData_UnaryExpression).Node)

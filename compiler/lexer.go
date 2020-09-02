@@ -349,6 +349,9 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 				case '!':
 					SaveToken(lexer, TokenKind_Bang, "!")
 					lexer.Index++
+				case ':':
+					SaveToken(lexer, TokenKind_Colon, ":")
+					lexer.Index++
 				default:
 					// Check for multi-character tokens
 					if CanFindKeyword("or") {

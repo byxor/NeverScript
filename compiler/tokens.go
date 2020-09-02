@@ -17,6 +17,7 @@ const (
 	TokenKind_RightSquareBracket
 	TokenKind_Comma
 	TokenKind_NewLine
+	TokenKind_Colon
 	TokenKind_LeftCurlyBrace
 	TokenKind_RightCurlyBrace
 	TokenKind_LeftParenthesis
@@ -56,6 +57,7 @@ func (tokenKind TokenKind) String() string {
 		"TokenKind_RightSquareBracket",
 		"TokenKind_Comma",
 		"TokenKind_NewLine",
+		"TokenKind_Colon",
 		"TokenKind_LeftCurlyBrace",
 		"TokenKind_RightCurlyBrace",
 		"TokenKind_LeftParenthesis",

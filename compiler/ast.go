@@ -37,6 +37,7 @@ const (
 	AstKind_LessThanEqualsExpression
 	AstKind_EqualsExpression
 	AstKind_DotExpression
+	AstKind_ColonExpression
 	AstKind_UnaryExpression
 	AstKind_Pair
 	AstKind_Vector
@@ -77,6 +78,7 @@ func (astKind AstKind) String() string {
 		"AstKind_LessThanEqualsExpression",
 		"AstKind_EqualsExpression",
 		"AstKind_DotExpression",
+		"AstKind_ColonExpression",
 		"AstKind_UnaryExpression",
 		"AstKind_Pair",
 		"AstKind_Vector",

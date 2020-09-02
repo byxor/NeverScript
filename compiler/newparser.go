@@ -315,13 +315,30 @@ func BuildAbstractSyntaxTree(newParser *NewParser) {
 			index += expressionParseResult.TokensConsumed
 			if GetKind(index) == TokenKind_Dot {
 				index += 1
-				secondExpressionParseResult := ParseExpression(index, false)
+				secondExpressionParseResult := ParseExpression(index, true)
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
 					return ParseResult{
 						WasSuccessful: true,
 						Node: AstNode{
 							Kind: AstKind_DotExpression,
+							Data: AstData_BinaryExpression{
+								LeftNode:  expressionParseResult.Node,
+								RightNode: secondExpressionParseResult.Node,
+							},
+						},
+						TokensConsumed: expressionParseResult.TokensConsumed + 1 + secondExpressionParseResult.TokensConsumed,
+					}
+				}
+			} else if GetKind(index) == TokenKind_Colon {
+				index += 1
+				secondExpressionParseResult := ParseExpression(index, true)
+				if secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					return ParseResult{
+						WasSuccessful: true,
+						Node: AstNode{
+							Kind: AstKind_ColonExpression,
 							Data: AstData_BinaryExpression{
 								LeftNode:  expressionParseResult.Node,
 								RightNode: secondExpressionParseResult.Node,
