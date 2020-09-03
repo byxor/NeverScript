@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Compile(nsFilePath, qbFilePath string, lexer *Lexer, newParser *NewParser, bytecodeCompiler *BytecodeCompiler) {
+func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, bytecodeCompiler *BytecodeCompiler) {
 	{ // read source code into memory & store it in lexer
 		bytes, err := ioutil.ReadFile(nsFilePath)
 		if err != nil {
@@ -22,13 +22,13 @@ func Compile(nsFilePath, qbFilePath string, lexer *Lexer, newParser *NewParser, 
 
 	LexSourceCode(lexer)
 
-	newParser.Tokens = lexer.Tokens
-	BuildAbstractSyntaxTree(newParser)
-	if !newParser.Result.WasSuccessful {
-		log.Fatal(newParser.Result.Reason)
+	parser.Tokens = lexer.Tokens
+	BuildAbstractSyntaxTree(parser)
+	if !parser.Result.WasSuccessful {
+		log.Fatal(parser.Result.Reason)
 	}
 
-	bytecodeCompiler.RootAstNode = newParser.Result.Node
+	bytecodeCompiler.RootAstNode = parser.Result.Node
 	GenerateBytecode(bytecodeCompiler)
 
 	ioutil.WriteFile(qbFilePath, bytecodeCompiler.Bytes, 0644)

@@ -16,17 +16,10 @@ type Lexer struct {
 	Tokens    []Token
 	NumTokens int
 
-	ScanMode          ScanMode
 	StartOfIdentifier int
 	StartOfInteger    int
 	StartOfString     int
 }
-
-type ScanMode int
-
-const (
-	ScanMode_Default ScanMode = iota
-)
 
 func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tokens)
 
@@ -259,7 +252,6 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 
 	lexer.Tokens = make([]Token, 6500)
 	lexer.LineNumber = 1
-	lexer.ScanMode = ScanMode_Default
 	for {
 		if lexer.Index >= lexer.SourceCodeSize {
 			break
@@ -284,114 +276,112 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 			SaveToken(lexer, TokenKind_RawChecksum, data)
 			lexer.Index += len(data)
 		} else {
-			switch lexer.ScanMode {
-			case ScanMode_Default:
-				// Check for single-character tokens
-				switch lexer.SourceCode[lexer.Index] {
-				case '\t':
-					fallthrough
-				case ' ':
-					lexer.Index++
-				case '\r':
-					fallthrough
-				case '\n':
-					lexer.LineNumber++
-					SaveToken(lexer, TokenKind_NewLine, "\\n")
-					lexer.Index++
-				case '=':
-					SaveToken(lexer, TokenKind_Equals, "=")
-					lexer.Index++
-				case '[':
-					SaveToken(lexer, TokenKind_LeftSquareBracket, "[")
-					lexer.Index++
-				case ']':
-					SaveToken(lexer, TokenKind_RightSquareBracket, "]")
-					lexer.Index++
-				case '{':
-					SaveToken(lexer, TokenKind_LeftCurlyBrace, "{")
-					lexer.Index++
-				case '}':
-					SaveToken(lexer, TokenKind_RightCurlyBrace, "}")
-					lexer.Index++
-				case '(':
-					SaveToken(lexer, TokenKind_LeftParenthesis, "(")
-					lexer.Index++
-				case ')':
-					SaveToken(lexer, TokenKind_RightParenthesis, ")")
-					lexer.Index++
-				case '<':
-					SaveToken(lexer, TokenKind_LeftAngleBracket, "<")
-					lexer.Index++
-				case '>':
-					SaveToken(lexer, TokenKind_RightAngleBracket, ">")
-					lexer.Index++
-				case '+':
-					SaveToken(lexer, TokenKind_Plus, "+")
-					lexer.Index++
-				case '-':
-					SaveToken(lexer, TokenKind_Minus, "-")
-					lexer.Index++
-				case '*':
-					SaveToken(lexer, TokenKind_Asterisk, "*")
-					lexer.Index++
-				case '/':
-					SaveToken(lexer, TokenKind_ForwardSlash, "/")
-					lexer.Index++
-				case '\\':
-					SaveToken(lexer, TokenKind_BackwardSlash, "\\")
-					lexer.Index++
-				case ',':
-					SaveToken(lexer, TokenKind_Comma, ",")
-					lexer.Index++
-				case '.':
-					SaveToken(lexer, TokenKind_Dot, ".")
-					lexer.Index++
-				case '!':
-					SaveToken(lexer, TokenKind_Bang, "!")
-					lexer.Index++
-				case ':':
-					SaveToken(lexer, TokenKind_Colon, ":")
-					lexer.Index++
-				default:
-					// Check for multi-character tokens
-					if CanFindKeyword("or") {
-						SaveToken(lexer, TokenKind_Or, "or")
-						lexer.Index += 2
-					} else if CanFindKeyword("if") {
-						SaveToken(lexer, TokenKind_If, "if")
-						lexer.Index += 2
-					} else if CanFindKeyword("and") {
-						SaveToken(lexer, TokenKind_And, "and")
-						lexer.Index += 3
-					} else if CanFindKeyword("else") {
-						SaveToken(lexer, TokenKind_Else, "else")
-						lexer.Index += 4
-					} else if CanFindKeyword("while") {
-						SaveToken(lexer, TokenKind_While, "while")
-						lexer.Index += 5
-					} else if CanFindKeyword("break") {
-						SaveToken(lexer, TokenKind_Break, "break")
-					} else if CanFindKeyword("script") {
-						SaveToken(lexer, TokenKind_Script, "script")
-						lexer.Index += 6
-					} else if CanFindKeyword("random") {
-						SaveToken(lexer, TokenKind_Random, "random")
-						lexer.Index += 6
-					} else if CanFindKeyword("return") {
-						SaveToken(lexer, TokenKind_Return, "return")
-						lexer.Index += 6
-					} else if identifier, found := CanFindIdentifier(); found {
-						SaveToken(lexer, TokenKind_Identifier, identifier)
-						lexer.Index += len(identifier)
-					} else {
-						fmt.Println("Lexer failed")
-						fmt.Println("'" + string(lexer.SourceCode[lexer.Index:lexer.Index+10]) + "'...")
-						for i, token := range lexer.Tokens {
-							if i >= lexer.NumTokens {
-								break
-							}
-							fmt.Printf("%+v\n", token)
+			// Check for single-character tokens
+			switch lexer.SourceCode[lexer.Index] {
+			case '\t':
+				fallthrough
+			case ' ':
+				lexer.Index++
+			case '\r':
+				fallthrough
+			case '\n':
+				lexer.LineNumber++
+				SaveToken(lexer, TokenKind_NewLine, "\\n")
+				lexer.Index++
+			case '=':
+				SaveToken(lexer, TokenKind_Equals, "=")
+				lexer.Index++
+			case '[':
+				SaveToken(lexer, TokenKind_LeftSquareBracket, "[")
+				lexer.Index++
+			case ']':
+				SaveToken(lexer, TokenKind_RightSquareBracket, "]")
+				lexer.Index++
+			case '{':
+				SaveToken(lexer, TokenKind_LeftCurlyBrace, "{")
+				lexer.Index++
+			case '}':
+				SaveToken(lexer, TokenKind_RightCurlyBrace, "}")
+				lexer.Index++
+			case '(':
+				SaveToken(lexer, TokenKind_LeftParenthesis, "(")
+				lexer.Index++
+			case ')':
+				SaveToken(lexer, TokenKind_RightParenthesis, ")")
+				lexer.Index++
+			case '<':
+				SaveToken(lexer, TokenKind_LeftAngleBracket, "<")
+				lexer.Index++
+			case '>':
+				SaveToken(lexer, TokenKind_RightAngleBracket, ">")
+				lexer.Index++
+			case '+':
+				SaveToken(lexer, TokenKind_Plus, "+")
+				lexer.Index++
+			case '-':
+				SaveToken(lexer, TokenKind_Minus, "-")
+				lexer.Index++
+			case '*':
+				SaveToken(lexer, TokenKind_Asterisk, "*")
+				lexer.Index++
+			case '/':
+				SaveToken(lexer, TokenKind_ForwardSlash, "/")
+				lexer.Index++
+			case '\\':
+				SaveToken(lexer, TokenKind_BackwardSlash, "\\")
+				lexer.Index++
+			case ',':
+				SaveToken(lexer, TokenKind_Comma, ",")
+				lexer.Index++
+			case '.':
+				SaveToken(lexer, TokenKind_Dot, ".")
+				lexer.Index++
+			case '!':
+				SaveToken(lexer, TokenKind_Bang, "!")
+				lexer.Index++
+			case ':':
+				SaveToken(lexer, TokenKind_Colon, ":")
+				lexer.Index++
+			default:
+				// Check for multi-character tokens
+				if CanFindKeyword("or") {
+					SaveToken(lexer, TokenKind_Or, "or")
+					lexer.Index += 2
+				} else if CanFindKeyword("if") {
+					SaveToken(lexer, TokenKind_If, "if")
+					lexer.Index += 2
+				} else if CanFindKeyword("and") {
+					SaveToken(lexer, TokenKind_And, "and")
+					lexer.Index += 3
+				} else if CanFindKeyword("else") {
+					SaveToken(lexer, TokenKind_Else, "else")
+					lexer.Index += 4
+				} else if CanFindKeyword("while") {
+					SaveToken(lexer, TokenKind_While, "while")
+					lexer.Index += 5
+				} else if CanFindKeyword("break") {
+					SaveToken(lexer, TokenKind_Break, "break")
+					lexer.Index += 5
+				} else if CanFindKeyword("script") {
+					SaveToken(lexer, TokenKind_Script, "script")
+					lexer.Index += 6
+				} else if CanFindKeyword("random") {
+					SaveToken(lexer, TokenKind_Random, "random")
+					lexer.Index += 6
+				} else if CanFindKeyword("return") {
+					SaveToken(lexer, TokenKind_Return, "return")
+					lexer.Index += 6
+				} else if identifier, found := CanFindIdentifier(); found {
+					SaveToken(lexer, TokenKind_Identifier, identifier)
+					lexer.Index += len(identifier)
+				} else {
+					fmt.Println("Lexer failed")
+					fmt.Println("'" + string(lexer.SourceCode[lexer.Index:lexer.Index+10]) + "'...")
+					for i, token := range lexer.Tokens {
+						if i >= lexer.NumTokens {
+							break
 						}
+						fmt.Printf("%+v\n", token)
 					}
 				}
 			}

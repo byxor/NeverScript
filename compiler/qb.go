@@ -17,7 +17,6 @@ type BytecodeCompiler struct {
 }
 
 func GenerateBytecode(compiler *BytecodeCompiler) {
-
 	write := func(bytes ...byte) {
 		compiler.Bytes = append(compiler.Bytes, bytes...)
 	}
@@ -64,12 +63,18 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 	var writeBytecodeForNode func(node AstNode)
 	var writeBytecodeForIf func(node AstNode)
 	var writeBytecodeForIfElse func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool)
+	var writeBytecodeForBinaryExpression func(node AstNode, operator byte)
+	var writeBytecodeForBinaryExpressionWithParentheses func(node AstNode, operator byte)
+	var writeBytecodeForChecksum func(node AstNode)
+	var writeBytecodeForPair func(node AstNode)
+	var writeBytecodeForVector func(node AstNode)
+	var writeBytecodeForInteger func(node AstNode)
+	var writeBytecodeForFloat func(node AstNode)
 
 	writeBytecodeForNode = func(node AstNode) {
 		switch node.Kind {
 		case AstKind_Root:
-			data := node.Data.(AstData_Root)
-			for _, rootNode := range data.BodyNodes {
+			for _, rootNode := range node.Data.(AstData_Root).BodyNodes {
 				writeBytecodeForNode(rootNode)
 			}
 		case AstKind_NewLine:
@@ -84,30 +89,11 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			write(0x2D)
 			writeBytecodeForNode(node.Data.(AstData_LocalReference).Node)
 		case AstKind_Checksum:
-			write(0x16)
-			data := node.Data.(AstData_Checksum)
-
-			var checksum uint32
-			if data.IsRawChecksum {
-				temp, _ := strconv.ParseInt(data.ChecksumToken.Data[1:], 16, 32)
-				checksum = uint32(temp)
-			} else {
-				name := data.ChecksumToken.Data
-				checksum = StringToChecksum(name)
-				nameTable[name] = checksum
-			}
-
-			writeLittleUint32(checksum)
+			writeBytecodeForChecksum(node)
 		case AstKind_Integer:
-			write(0x17)
-			intValue, _ := strconv.ParseInt(node.Data.(AstData_Integer).IntegerToken.Data, 10, 32)
-			writeLittleUint32(uint32(intValue))
+			writeBytecodeForInteger(node)
 		case AstKind_Float:
-			write(0x1A)
-			floatValue, _ := strconv.ParseFloat(node.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValue [4]byte
-			binary.LittleEndian.PutUint32(bytesValue[:], math.Float32bits(float32(floatValue)))
-			write(bytesValue[:]...)
+			writeBytecodeForFloat(node)
 		case AstKind_String:
 			write(0x1B)
 			stringData := node.Data.(AstData_String).StringToken.Data
@@ -116,122 +102,68 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			write([]byte(stringData)...)
 			write(0)
 		case AstKind_Pair:
-			write(0x1F)
-			floatValueA, _ := strconv.ParseFloat(node.Data.(AstData_Pair).FloatNodeA.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValueA [4]byte
-			binary.LittleEndian.PutUint32(bytesValueA[:], math.Float32bits(float32(floatValueA)))
-			write(bytesValueA[:]...)
-			floatValueB, _ := strconv.ParseFloat(node.Data.(AstData_Pair).FloatNodeB.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValueB [4]byte
-			binary.LittleEndian.PutUint32(bytesValueB[:], math.Float32bits(float32(floatValueB)))
-			write(bytesValueB[:]...)
+			writeBytecodeForPair(node)
 		case AstKind_Vector:
-			write(0x1E)
-			floatValueA, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeA.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValueA [4]byte
-			binary.LittleEndian.PutUint32(bytesValueA[:], math.Float32bits(float32(floatValueA)))
-			write(bytesValueA[:]...)
-			floatValueB, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeB.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValueB [4]byte
-			binary.LittleEndian.PutUint32(bytesValueB[:], math.Float32bits(float32(floatValueB)))
-			write(bytesValueB[:]...)
-			floatValueC, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeC.Data.(AstData_Float).FloatToken.Data, 32)
-			var bytesValueC [4]byte
-			binary.LittleEndian.PutUint32(bytesValueC[:], math.Float32bits(float32(floatValueC)))
-			write(bytesValueC[:]...)
+			writeBytecodeForVector(node)
 		case AstKind_UnaryExpression:
 			write(0xE)
 			writeBytecodeForNode(node.Data.(AstData_UnaryExpression).Node)
 			write(0xF)
-		case AstKind_AdditionExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0xB)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
 		case AstKind_SubtractionExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0xA)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
-		case AstKind_MultiplicationExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0xD)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0xA)
+		case AstKind_AdditionExpression:
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0xB)
 		case AstKind_DivisionExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0xC)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
-		case AstKind_GreaterThanExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x14)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0xC)
+		case AstKind_MultiplicationExpression:
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0xD)
 		case AstKind_LessThanExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x12)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0x12)
 		case AstKind_LessThanEqualsExpression:
-			fmt.Println("Warning: <= does not work in THUG Pro")
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x13)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForNode(AstNode{
+				Kind: AstKind_LogicalNot,
+				Data: AstData_UnaryExpression{
+					Node: AstNode{
+						Kind: AstKind_GreaterThanExpression,
+						Data: node.Data,
+					},
+				},
+			})
+		case AstKind_GreaterThanExpression:
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0x14)
 		case AstKind_GreaterThanEqualsExpression:
-			fmt.Println("Warning: >= does not work in THUG Pro")
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x15)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForNode(AstNode{
+				Kind: AstKind_LogicalNot,
+				Data: AstData_UnaryExpression{
+					Node: AstNode{
+						Kind: AstKind_LessThanExpression,
+						Data: node.Data,
+					},
+				},
+			})
 		case AstKind_EqualsExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			write(0xE)
-			writeBytecodeForNode(data.LeftNode)
-			write(7)
-			// write(0x11)
-			writeBytecodeForNode(data.RightNode)
-			write(0xF)
+			writeBytecodeForBinaryExpressionWithParentheses(node, 0x7)
+		case AstKind_NotEqualExpression:
+			writeBytecodeForNode(AstNode{
+				Kind: AstKind_LogicalNot,
+				Data: AstData_UnaryExpression{
+					Node: AstNode{
+						Kind: AstKind_EqualsExpression,
+						Data: node.Data,
+					},
+				},
+			})
 		case AstKind_DotExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			writeBytecodeForNode(data.LeftNode)
-			write(8)
-			writeBytecodeForNode(data.RightNode)
+			writeBytecodeForBinaryExpression(node, 0x8)
 		case AstKind_ColonExpression:
-			data := node.Data.(AstData_BinaryExpression)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x42)
-			writeBytecodeForNode(data.RightNode)
+			writeBytecodeForBinaryExpression(node, 0x42)
 		case AstKind_LogicalNot:
 			write(0x39)
 			writeBytecodeForNode(node.Data.(AstData_UnaryExpression).Node)
 		case AstKind_LogicalAnd:
-			data := node.Data.(AstData_BinaryExpression)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x33)
-			writeBytecodeForNode(data.RightNode)
+			writeBytecodeForBinaryExpression(node, 0x33)
 		case AstKind_LogicalOr:
-			data := node.Data.(AstData_BinaryExpression)
-			writeBytecodeForNode(data.LeftNode)
-			write(0x32)
-			writeBytecodeForNode(data.RightNode)
+			writeBytecodeForBinaryExpression(node, 0x32)
 		case AstKind_Comment:
 			//writeBytecodeForNode(AstNode{
 			//	Kind: AstKind_String,
@@ -323,15 +255,6 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			}
 
 		case AstKind_WhileLoop:
-			//writeBytecodeForNode(AstNode{
-			//	Kind: AstKind_String,
-			//	Data: AstData_String{
-			//		StringToken: Token{
-			//			Kind: TokenKind_String,
-			//			Data: "\"le while loop\"",
-			//		},
-			//	},
-			//})
 			compilerGeneratedChecksum := AstNode{
 				Kind: AstKind_Checksum,
 				Data: AstData_Checksum{
@@ -405,8 +328,8 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			var invocationData AstData_Invocation
 			if data.Node.Kind == AstKind_Checksum {
 				invocationData = AstData_Invocation{
-					ScriptIdentifierNode: data.Node,
-					ParameterNodes: []AstNode{},
+					ScriptIdentifierNode:              data.Node,
+					ParameterNodes:                    []AstNode{},
 					TokensConsumedByEachParameterNode: []int{},
 				}
 			} else {
@@ -506,6 +429,78 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 		)
 	}
 
+	writeBytecodeForBinaryExpressionWithParentheses = func(node AstNode, operator byte) {
+		write(0xE)
+		writeBytecodeForBinaryExpression(node, operator)
+		write(0xF)
+	}
+
+	writeBytecodeForBinaryExpression = func(node AstNode, operator byte) {
+		data := node.Data.(AstData_BinaryExpression)
+		writeBytecodeForNode(data.LeftNode)
+		write(operator)
+		writeBytecodeForNode(data.RightNode)
+	}
+
+	writeBytecodeForChecksum = func(node AstNode) {
+		write(0x16)
+		data := node.Data.(AstData_Checksum)
+
+		var checksum uint32
+		if data.IsRawChecksum {
+			temp, _ := strconv.ParseInt(data.ChecksumToken.Data[1:], 16, 32)
+			checksum = uint32(temp)
+		} else {
+			name := data.ChecksumToken.Data
+			checksum = StringToChecksum(name)
+			nameTable[name] = checksum
+		}
+
+		writeLittleUint32(checksum)
+	}
+
+	writeBytecodeForInteger = func(node AstNode) {
+		write(0x17)
+		intValue, _ := strconv.ParseInt(node.Data.(AstData_Integer).IntegerToken.Data, 10, 32)
+		writeLittleUint32(uint32(intValue))
+	}
+
+	writeBytecodeForFloat = func(node AstNode) {
+		write(0x1A)
+		floatValue, _ := strconv.ParseFloat(node.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValue [4]byte
+		binary.LittleEndian.PutUint32(bytesValue[:], math.Float32bits(float32(floatValue)))
+		write(bytesValue[:]...)
+	}
+
+	writeBytecodeForPair = func(node AstNode) {
+		write(0x1F)
+		floatValueA, _ := strconv.ParseFloat(node.Data.(AstData_Pair).FloatNodeA.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValueA [4]byte
+		binary.LittleEndian.PutUint32(bytesValueA[:], math.Float32bits(float32(floatValueA)))
+		write(bytesValueA[:]...)
+		floatValueB, _ := strconv.ParseFloat(node.Data.(AstData_Pair).FloatNodeB.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValueB [4]byte
+		binary.LittleEndian.PutUint32(bytesValueB[:], math.Float32bits(float32(floatValueB)))
+		write(bytesValueB[:]...)
+	}
+
+	writeBytecodeForVector = func(node AstNode) {
+		write(0x1E)
+		floatValueA, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeA.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValueA [4]byte
+		binary.LittleEndian.PutUint32(bytesValueA[:], math.Float32bits(float32(floatValueA)))
+		write(bytesValueA[:]...)
+		floatValueB, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeB.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValueB [4]byte
+		binary.LittleEndian.PutUint32(bytesValueB[:], math.Float32bits(float32(floatValueB)))
+		write(bytesValueB[:]...)
+		floatValueC, _ := strconv.ParseFloat(node.Data.(AstData_Vector).FloatNodeC.Data.(AstData_Float).FloatToken.Data, 32)
+		var bytesValueC [4]byte
+		binary.LittleEndian.PutUint32(bytesValueC[:], math.Float32bits(float32(floatValueC)))
+		write(bytesValueC[:]...)
+	}
+
 	writeBytecodeForIfElse = func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool) {
 		{
 			start := len(compiler.Bytes)
@@ -537,14 +532,16 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 		write(0x28)
 	}
 
-	writeBytecodeForNode(compiler.RootAstNode)
-
 	writeNameTableEntry := func(checksum uint32, name string) {
 		write(0x2B)
 		writeLittleUint32(checksum)
 		write([]byte(name)...)
 		write(0)
 	}
+
+	// -----------
+
+	writeBytecodeForNode(compiler.RootAstNode)
 
 	for name, checksum := range nameTable {
 		writeNameTableEntry(checksum, name)

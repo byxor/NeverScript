@@ -19,7 +19,7 @@ const (
            The QB programming language.
 ----------------------------------------------------
 `
-	version = "0.2"
+	version = "0.3"
 )
 
 func main() {
@@ -42,9 +42,9 @@ func RunNeverscript(arguments CommandLineArguments) {
 
 		fmt.Printf("\nCompiling '%s' (may freeze)...\n", *arguments.FileToCompile)
 		var lexer compiler.Lexer
-		var newParser compiler.NewParser
+		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
-		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &newParser, &bytecodeCompiler)
+		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
 		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {
