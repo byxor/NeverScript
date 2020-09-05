@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
 	"os/exec"
+	"path/filepath"
 )
 
 const (
@@ -86,14 +87,16 @@ func ParseCommandLineArguments() CommandLineArguments {
 	return args
 }
 
-func QbToNs(filename string) string {
-	return withoutExtension(filename) + ".ns"
+func QbToNs(fileName string) string {
+	return withoutExtension(fileName) + ".ns"
 }
 
-func NsToQb(filename string) string {
-	return withoutExtension(filename) + ".qb"
+func NsToQb(fileName string) string {
+	return withoutExtension(fileName) + ".qb"
 }
 
-func withoutExtension(filename string) string {
-	return filename[:len(filename)-3]
+func withoutExtension(fileName string) string {
+	fileExtension := filepath.Ext(fileName)
+	end := len(fileName)-len(fileExtension)
+	return fileName[:end]
 }
