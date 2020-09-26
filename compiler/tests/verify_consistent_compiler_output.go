@@ -127,6 +127,11 @@ script 7 2 1 1 2 3 4
 zzzz = - ~ ¬!!()&&&^^{}{ { { (<{ / / / *
 */
 
+/* multiline
+/* with */
+/* /* nested */ */
+/* comments */ */
+
 script TestBasicExpressions {
     x = 1
 	x = (1)
