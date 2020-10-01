@@ -48,16 +48,21 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 	}
 
 	CanFindMultiLineComment := func() (string, bool) {
-		// TODO(brandon): Support nested multi-line comments
 		if CanFindKeyword("/*") {
 			start := lexer.Index
 			end := start + 2
+			nesting := 1
 			for {
 				if end >= len(lexer.SourceCode) {
 					return lexer.SourceCode[start:end], true
 				} else if CanFindKeywordAtIndex("*/", end) {
-					end += 2
-					return lexer.SourceCode[start:end], true
+					nesting--
+					if nesting <= 0 {
+						end += 2
+						return lexer.SourceCode[start:end], true
+					}
+				} else if CanFindKeywordAtIndex("/*", end) {
+					nesting++
 				}
 				if lexer.SourceCode[end] == '\n' {
 					lexer.LineNumber++
