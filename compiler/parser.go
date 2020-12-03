@@ -551,7 +551,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 			if expressionParseResult := ParseExpression(index+extraTokens+1, allowInvocations); expressionParseResult.WasSuccessful {
 				invocation := ParseInvocation(index)
-				// invocation.TokensConsumed += extraTokens
 				return invocation
 			}
 		}
@@ -1026,28 +1025,28 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 
-		if GetToken(index).LineNumber == 118 {
-			index += 0
-		}
-
 		index += 1
 
+		booleanInvocationData := make([]bool, 6500)
 		conditions := make([]AstNode, 6500)
 		numConditions := 0
-		//tokensConsumedByConditions := 0
-		saveCondition := func(conditionParseResult ParseResult) {
+		saveCondition := func(conditionParseResult ParseResult, isBooleanInvocation bool) {
+			booleanInvocationData[numConditions] = isBooleanInvocation
 			conditions[numConditions] = conditionParseResult.Node
 			numConditions++
-			//tokensConsumedByConditions += conditionParseResult.TokensConsumed
 		}
 
 		bodies := make([][]AstNode, 6500)
 		numBodies := 0
-		//tokensConsumedByBodies := 0
 		saveBody := func(bodyParseResult ParseResult, bodyNodes []AstNode) {
 			bodies[numBodies] = bodyNodes
 			numBodies++
-			//tokensConsumedByBodies += bodyParseResult.TokensConsumed
+		}
+
+		conditionIsBooleanInvocation := false
+		if GetKind(index) == TokenKind_AtSymbol {
+			conditionIsBooleanInvocation = true
+			index++
 		}
 
 		conditionParseResult := ParseExpression(index, true)
@@ -1059,17 +1058,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 		index += conditionParseResult.TokensConsumed
 		pruneStructIfInvoked(&conditionParseResult, &index)
-		saveCondition(conditionParseResult)
-
-		//consumeNewLines := func() {
-		//	for {
-		//		if GetKind(index) == TokenKind_NewLine {
-		//			index += 1
-		//		} else {
-		//			break
-		//		}
-		//	}
-		//}
+		saveCondition(conditionParseResult, conditionIsBooleanInvocation)
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
 		if !bodyParseResult.WasSuccessful {
@@ -1086,11 +1075,18 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				index += 1
 				if GetKind(index) == TokenKind_If {
 					index += 1
+
+					nextConditionIsBooleanInvocation := false
+					if GetKind(index) == TokenKind_AtSymbol {
+						index += 1
+						nextConditionIsBooleanInvocation = true
+					}
+
 					anotherConditionParseResult := ParseExpression(index, true)
 					if anotherConditionParseResult.WasSuccessful {
 						index += anotherConditionParseResult.TokensConsumed
 						pruneStructIfInvoked(&anotherConditionParseResult, &index)
-						saveCondition(anotherConditionParseResult)
+						saveCondition(anotherConditionParseResult, nextConditionIsBooleanInvocation)
 						if GetKind(index) != TokenKind_LeftCurlyBrace {
 							return ParseResult{
 								WasSuccessful: false,
@@ -1132,14 +1128,13 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			Node: AstNode{
 				Kind: AstKind_IfStatement,
 				Data: AstData_IfStatement{
-					Conditions: conditions[:numConditions],
-					Bodies:     bodies[:numBodies],
+					BooleanInvocationData: booleanInvocationData[:numConditions],
+					Conditions:            conditions[:numConditions],
+					Bodies:                bodies[:numBodies],
 				},
 			},
 			TokensConsumed: index - oldIndex,
-			//TokensConsumed: 1 + tokensConsumedByConditions + tokensConsumedByBodies + extraTokensConsumed,
 		}
-
 	}
 
 	ParseBodyOfCode = func(index int) (ParseResult, []AstNode) {
@@ -1182,8 +1177,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		for {
-			GetToken(index) // index += 0
-
 			if GetKind(index) == TokenKind_OutOfRange {
 				break
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {

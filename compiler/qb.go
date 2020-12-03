@@ -62,7 +62,7 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 
 	var writeBytecodeForNode func(node AstNode)
 	var writeBytecodeForIf func(node AstNode)
-	var writeBytecodeForIfElse func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool)
+	var writeBytecodeForIfElse func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool, isBooleanInvocation bool)
 	var writeBytecodeForBinaryExpression func(node AstNode, operator byte)
 	var writeBytecodeForBinaryExpressionWithParentheses func(node AstNode, operator byte)
 	var writeBytecodeForChecksum func(node AstNode)
@@ -338,6 +338,43 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 
 			write(0x29)
 			for _, parameterNode := range invocationData.ParameterNodes {
+
+				// Replace 'true' and 'false' with __boolean_result__ parameter
+				if parameterNode.Kind == AstKind_Checksum {
+					checksumData := parameterNode.Data.(AstData_Checksum)
+					name := checksumData.ChecksumToken.Data
+					booleanParameterNode := func(integerToken string) AstNode {
+						return AstNode{
+							Kind: AstKind_Assignment,
+							Data: AstData_Assignment{
+								NameNode: AstNode{
+									Kind: AstKind_Checksum,
+									Data: AstData_Checksum{
+										IsRawChecksum: false,
+										ChecksumToken: Token{
+											Kind: TokenKind_Identifier,
+											Data: "__boolean_result__",
+										},
+									},
+								},
+								ValueNode: AstNode{
+									Kind: AstKind_Integer,
+									Data: AstData_Integer{
+										IntegerToken: Token{
+											Kind: TokenKind_Integer,
+											Data: integerToken,
+										},
+									},
+								},
+							},
+						}
+					}
+					if name == "true" {
+						parameterNode = booleanParameterNode("1")
+					} else if name == "false" {
+						parameterNode = booleanParameterNode("0")
+					}
+				}
 				writeBytecodeForNode(parameterNode)
 			}
 		case AstKind_Invocation:
@@ -390,6 +427,7 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 					transformIfElseIf(AstNode{
 						Kind: AstKind_IfStatement,
 						Data: AstData_IfStatement{
+							BooleanInvocationData: ifElseIfData.BooleanInvocationData[1:],
 							Conditions: ifElseIfData.Conditions[1:],
 							Bodies:     ifElseIfData.Bodies[1:],
 						},
@@ -405,6 +443,9 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 		return AstNode{
 			Kind: AstKind_IfStatement,
 			Data: AstData_IfStatement{
+				BooleanInvocationData: []bool{
+					ifElseIfData.BooleanInvocationData[0],
+				},
 				Conditions: []AstNode{
 					ifElseIfData.Conditions[0],
 				},
@@ -421,11 +462,19 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 		if hasElse {
 			elseNodes = transformedIfData.Bodies[1]
 		}
+
+		// hack
+		isBooleanInvocation := false
+		if len(transformedIfData.BooleanInvocationData) > 0 {
+			isBooleanInvocation = transformedIfData.BooleanInvocationData[0]
+		}
+
 		writeBytecodeForIfElse(
 			transformedIfData.Conditions[0],
 			transformedIfData.Bodies[0],
 			elseNodes,
 			hasElse,
+			isBooleanInvocation,
 		)
 	}
 
@@ -501,22 +550,58 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 		write(bytesValueC[:]...)
 	}
 
-	writeBytecodeForIfElse = func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool) {
+	writeBytecodeForIfElse = func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool, isBooleanInvocation bool) {
 		{
-			start := len(compiler.Bytes)
+			updatedConditionNode := conditionNode
+			if isBooleanInvocation {
+				writeBytecodeForNode(conditionNode)
+				updatedConditionNode = AstNode{
+					Kind: AstKind_EqualsExpression,
+					Data: AstData_BinaryExpression{
+						LeftNode: AstNode{
+							Kind: AstKind_LocalReference,
+							Data: AstData_LocalReference{
+								Node: AstNode{
+									Kind: AstKind_Checksum,
+									Data: AstData_Checksum{
+										IsRawChecksum: false,
+										ChecksumToken: Token{
+											Kind: TokenKind_Identifier,
+											Data: "__boolean_result__",
+										},
+									},
+								},
+							},
+						},
+						RightNode: AstNode{
+							Kind: AstKind_Integer,
+							Data: AstData_Integer{
+								IntegerToken: Token{
+									Kind: TokenKind_Integer,
+									Data: "1",
+								},
+							},
+						},
+
+					},
+				}
+				write(1)
+			}
+			conditionStart := len(compiler.Bytes)
+
 			write(0x47)
 			write(0x00) // 2 temporary bytes for branch size
 			write(0x00)
-			writeBytecodeForNode(conditionNode)
+			writeBytecodeForNode(updatedConditionNode)
 			for _, bodyNode := range bodyNodes {
 				writeBytecodeForNode(bodyNode)
 			}
 			end := len(compiler.Bytes)
-			size := end - start
+			size := end - conditionStart
 			if hasElse {
 				size += 2
 			}
-			writeLittleUint16Index(uint16(size), start+1)
+			writeLittleUint16Index(uint16(size), conditionStart+1)
 		}
 		if hasElse {
 			start := len(compiler.Bytes)

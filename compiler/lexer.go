@@ -296,6 +296,9 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 			case '=':
 				SaveToken(lexer, TokenKind_Equals, "=")
 				lexer.Index++
+			case '@':
+				SaveToken(lexer, TokenKind_AtSymbol, "@")
+				lexer.Index++
 			case '[':
 				SaveToken(lexer, TokenKind_LeftSquareBracket, "[")
 				lexer.Index++

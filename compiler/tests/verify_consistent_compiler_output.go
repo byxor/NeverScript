@@ -79,6 +79,8 @@ func main() {
 		fmt.Println(banner)
 		fmt.Println("Hooray! Still working!")
 	}
+
+	// fmt.Printf("Hex dump:\n%s", qbPath, hex.Dump(bytecodeCompiler.Bytes))
 }
 
 
@@ -94,8 +96,7 @@ func main() {
 
 
 
-
-// Code is on line 101 so the line numbers are easy to see when debugging
+// 'code' is on line 101 so the line numbers are easy to see when debugging
 // (just add 100 to the line number shown by the debugger/compiler)
 const code = `
 my_int = 10
@@ -278,6 +279,46 @@ script TestRandom {
 		2 { "What's up?" }
 	}
 }
+
+script TestShorthandScriptInvocationAsCondition {
+	// Experimental syntax
+	if @(is_eating_pasta) {
+		printf "script returned __boolean_result__=1"
+	} else {
+		printf "script returned __boolean_result__=0"
+	}
+}
+
+script TestShorthandScriptInvocationAsElseIfCondition {
+	// Experimental syntax
+	if @(is_north) {
+		printf "north"
+	} else if @(is_east) {
+		printf "east"
+	} else if @(is_south) {
+		printf "south"
+	} else if @(is_west) {
+		printf "west"
+	}
+}
+
+script TestShorthandBooleanReturnTrue {
+	return true
+}
+
+script TestShorthandBooleanReturnFalse {
+	return false
+}
+
+script TestShorthandBooleanReturnMultipleArguments {
+	return true \
+		x = 10 \
+		y = 20 \
+		z = 30
+}
+
+// TODO(brandon): Add test for scripts that start with the name 'script'. This confuses the lexer.
+// TODO(brandon): Also include other keywords in these tests (if/else/and/or etc)
 `
 
 const expectedDecompiledRoq = `
@@ -416,6 +457,47 @@ const expectedDecompiledRoq = `
 		 :POS(5) %s(2,"Yo")
 	:BREAKTO(7)
 		 :POS(6) %s(10,"What's up?") :POS(7) 
+	:i endfunction
+	:i function $TestShorthandScriptInvocationAsCondition$
+		:i  ($is_eating_pasta$) 
+		:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+			:i $printf$%s(36,"script returned __boolean_result__=1")
+		:i else 
+			:i $printf$%s(36,"script returned __boolean_result__=0")
+		:i endif
+	:i endfunction
+	:i function $TestShorthandScriptInvocationAsElseIfCondition$
+		:i  ($is_north$) 
+		:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+			:i $printf$%s(5,"north")
+		:i else 
+			:i  ($is_east$) 
+			:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+				:i $printf$%s(4,"east")
+			:i else 
+				:i  ($is_south$) 
+				:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+					:i $printf$%s(5,"south")
+				:i else 
+					:i  ($is_west$) 
+					:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+						:i $printf$%s(4,"west")
+					:i endif
+				:i endif
+			:i endif
+		:i endif
+	:i endfunction
+	:i function $TestShorthandBooleanReturnTrue$
+		:i return
+		$__boolean_result__$ = %i(1,00000001)
+	:i endfunction
+	:i function $TestShorthandBooleanReturnFalse$
+		:i return
+		$__boolean_result__$ = %i(0,00000000)
+	:i endfunction
+	:i function $TestShorthandBooleanReturnMultipleArguments$
+		:i return
+		$__boolean_result__$ = %i(1,00000001)$x$ = %i(10,0000000a)$y$ = %i(20,00000014)$z$ = %i(30,0000001e)
 	:i endfunction
 	:i :end
 `
