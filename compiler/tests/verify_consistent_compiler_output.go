@@ -302,15 +302,25 @@ script TestShorthandScriptInvocationAsElseIfCondition {
 	}
 }
 
+script TestShortHandScriptInvocationWithParametersAsCondition {
+	// Experimental syntax
+	if @(is_cardinal_direction direction="north") {
+		printf "north"
+	}
+}
+
 script TestShorthandBooleanReturnTrue {
+	// Experimental syntax
 	return true
 }
 
 script TestShorthandBooleanReturnFalse {
+	// Experimental syntax
 	return false
 }
 
-script TestShorthandBooleanReturnMultipleArguments {
+script TestShorthandBooleanReturnWithMultipleArguments {
+	// Experimental syntax
 	return true \
 		x = 10 \
 		y = 20 \
@@ -487,6 +497,12 @@ const expectedDecompiledRoq = `
 			:i endif
 		:i endif
 	:i endfunction
+	:i function $TestShortHandScriptInvocationWithParametersAsCondition$
+		:i  ($is_cardinal_direction$$direction$ = %s(5,"north")) 
+		:i if  (%GLOBAL%$__boolean_result__$ = %i(1,00000001)) 
+			:i $printf$%s(5,"north")
+		:i endif
+	:i endfunction
 	:i function $TestShorthandBooleanReturnTrue$
 		:i return
 		$__boolean_result__$ = %i(1,00000001)
@@ -495,7 +511,7 @@ const expectedDecompiledRoq = `
 		:i return
 		$__boolean_result__$ = %i(0,00000000)
 	:i endfunction
-	:i function $TestShorthandBooleanReturnMultipleArguments$
+	:i function $TestShorthandBooleanReturnWithMultipleArguments$
 		:i return
 		$__boolean_result__$ = %i(1,00000001)$x$ = %i(10,0000000a)$y$ = %i(20,00000014)$z$ = %i(30,0000001e)
 	:i endfunction
