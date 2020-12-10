@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"log"
 	"strings"
 )
 
@@ -19,9 +18,6 @@ type Parser struct {
 }
 
 func BuildAbstractSyntaxTree(parser *Parser) {
-
-	// funcs
-	var StartParsing func()
 	var ParseRoot func(/*index is always 0*/) ParseResult
 	var ParseRootBodyNode func(index int) ParseResult
 	var ParseExpression func(index int, allowInvocations bool) ParseResult
@@ -47,51 +43,15 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	var ParseBreak func(index int) ParseResult
 	var ParseReturn func(index int) ParseResult
 	var ParseComma func(index int) ParseResult
+	// TODO(brandon): var SkipOverCommentsAndEscapedNewlines func(index int) int
 	var GetKind func(index int) TokenKind
 	var GetToken func(index int) Token
 
-	WrapStr := func(outer, inner string) string {
-		return fmt.Sprintf("<%s: %s>", outer, inner)
-	}
-
-	StartParsing = func() {
-		parser.Result = ParseRoot()
-	}
-
 	ParseRoot = func() ParseResult {
-		bodyNodes := make([]AstNode, 6500)
-		numBodyNodes := 0
-		tokensConsumedByBodyNodes := 0
-		index := 0
+		var bodyNodes AstNodeBuffer
 
-		saveAnotherBodyNodeForParseResult := func(parseResult ParseResult) {
-			tokensConsumedByBodyNodes += parseResult.TokensConsumed
-
-			// Don't store consecutive newlines; they will break the roq decompiler.
-			if parseResult.Node.Kind == AstKind_NewLine {
-				i := numBodyNodes - 1
-				for {
-					if i < 0 {
-						break
-					}
-					earlierNode := bodyNodes[i]
-					if earlierNode.Kind == AstKind_Comment {
-						// If there are new-line characters before comments, they will also break roq (if the comments don't produce any bytecode)
-						i--
-					} else if earlierNode.Kind == AstKind_NewLine {
-						return
-					} else {
-						break
-					}
-				}
-			}
-
-			bodyNodes[numBodyNodes] = parseResult.Node
-			numBodyNodes++
-		}
-
-		// Ensure root starts with new line
-		saveAnotherBodyNodeForParseResult(ParseResult{
+		// Ensure root starts with new-line
+		bodyNodes.MaybeSave(ParseResult{
 			WasSuccessful: true,
 			Node: AstNode{
 				Kind: AstKind_NewLine,
@@ -101,25 +61,27 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		})
 
 		// Parse root body nodes until you can't anymore
-		var lastBodyNodeParseResult ParseResult
+		index := 0
+		var bodyNodeParseResult ParseResult
 		for {
-			lastBodyNodeParseResult = ParseRootBodyNode(index)
-			if lastBodyNodeParseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(lastBodyNodeParseResult)
-				index += lastBodyNodeParseResult.TokensConsumed
+			bodyNodeParseResult = ParseRootBodyNode(index)
+			if bodyNodeParseResult.WasSuccessful {
+				bodyNodes.MaybeSave(bodyNodeParseResult)
+				index += bodyNodeParseResult.TokensConsumed
 			} else {
 				break
 			}
 		}
 
-		if numOfTokens := len(parser.Tokens); tokensConsumedByBodyNodes < numOfTokens {
+		// Display
+		if numOfTokens := len(parser.Tokens); bodyNodes.TokensConsumed < numOfTokens {
 			var messageBuilder strings.Builder
-			messageBuilder.WriteString("Finished parsing but some tokens were left unread\n")
-			messageBuilder.WriteString(fmt.Sprintf("Read %d/%d tokens: %d left unread\n", tokensConsumedByBodyNodes, numOfTokens, numOfTokens-tokensConsumedByBodyNodes))
-			for _, unreadToken := range parser.Tokens[tokensConsumedByBodyNodes:numOfTokens] {
+			messageBuilder.WriteString("\n\nFinished parsing but didn't read all tokens.\n")
+			messageBuilder.WriteString(fmt.Sprintf("Read %d/%d (%d left unread).\n\n\n", bodyNodes.TokensConsumed, numOfTokens, numOfTokens-bodyNodes.TokensConsumed))
+			for _, unreadToken := range parser.Tokens[bodyNodes.TokensConsumed:numOfTokens] {
 				messageBuilder.WriteString(fmt.Sprintf("  %+v,\n", unreadToken))
 			}
-			messageBuilder.WriteString(fmt.Sprintf("Potential cause: %s", lastBodyNodeParseResult.Reason))
+			messageBuilder.WriteString(fmt.Sprintf("Potential cause: %s", bodyNodeParseResult.Reason))
 			return ParseResult{
 				WasSuccessful: false,
 				Reason:        messageBuilder.String(),
@@ -131,10 +93,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			Node: AstNode{
 				Kind: AstKind_Root,
 				Data: AstData_Root{
-					BodyNodes: bodyNodes[:numBodyNodes],
+					BodyNodes: bodyNodes.Nodes,
 				},
 			},
-			TokensConsumed: tokensConsumedByBodyNodes,
+			TokensConsumed: bodyNodes.TokensConsumed,
 		}
 	}
 
@@ -161,7 +123,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		return ParseResult{
 			WasSuccessful: false,
-			Reason:        fmt.Sprintf("Token stream was not recognised as a root body node [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2)),
+			Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a root body node"),
 		}
 	}
 
@@ -188,19 +150,18 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				}
 			}
 			if GetKind(index) == TokenKind_LeftAngleBracket {
-				temp := index
-				temp++
-				// parseResult := ParseChecksumOrInvocation(temp, allowInvocations)
+				futureIndex := index + 1
+				// parseResult := ParseChecksumOrInvocation(futureIndex, allowInvocations)
 				// BUG: ^ invocation comes after the local reference, not inside
-				parseResult := ParseChecksum(temp)
+				parseResult := ParseChecksum(futureIndex)
 				if !parseResult.WasSuccessful {
 					return ParseResult{
 						WasSuccessful: false,
 						Reason:        WrapStr("Failed to parse expression for local reference", parseResult.Reason),
 					}
 				}
-				temp++
-				if GetKind(temp) != TokenKind_RightAngleBracket {
+				futureIndex++
+				if GetKind(futureIndex) != TokenKind_RightAngleBracket {
 					return ParseResult{
 						WasSuccessful: false,
 						Reason:        WrapStr("Failed to local reference, no '>'", parseResult.Reason),
@@ -282,7 +243,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			GetToken(index)
 			return ParseResult{
 				WasSuccessful: false,
-				Reason:        fmt.Sprintf("Token stream was not recognised as an expression [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2)),
+				Reason:        TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
 			}
 		}
 
@@ -310,7 +271,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		if expressionParseResult.WasSuccessful {
 			index += expressionParseResult.TokensConsumed
 			if GetKind(index) == TokenKind_Dot {
-				index += 1
+				index++
 				secondExpressionParseResult := ParseExpression(index, true)
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
@@ -327,7 +288,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					}
 				}
 			} else if GetKind(index) == TokenKind_Colon {
-				index += 1
+				index++
 				secondExpressionParseResult := ParseExpression(index, true)
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
@@ -344,7 +305,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					}
 				}
 			} else if GetKind(index) == TokenKind_And {
-				index += 1
+				index++
 				secondExpressionParseResult := ParseExpression(index, false)
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
@@ -361,7 +322,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					}
 				}
 			} else if GetKind(index) == TokenKind_Or {
-				index += 1
+				index++
 				secondExpressionParseResult := ParseExpression(index, false)
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
@@ -413,7 +374,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 	ParseExpressionBeginningWithLeftParenthesis = func(index int) ParseResult {
 		oldIndex := index
-		index += 1
+		index++
 
 		firstParseResult := ParseExpression(index, true)
 		if firstParseResult.WasSuccessful {
@@ -432,7 +393,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 
 			if GetKind(index) == TokenKind_Comma {
-				index += 1
+				index++
 				if GetKind(index) == TokenKind_Float {
 					secondParseResult := ParseExpression(index, true)
 					if secondParseResult.WasSuccessful {
@@ -451,7 +412,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 							}
 						}
 						if GetKind(index) == TokenKind_Comma {
-							index += 1
+							index++
 							if GetKind(index) == TokenKind_Float {
 								thirdParseResult := ParseExpression(index, true)
 								if thirdParseResult.WasSuccessful {
@@ -535,7 +496,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		return ParseResult{
 			WasSuccessful: false,
-			Reason:        fmt.Sprintf("Token stream was not recognised as an expression beginning with a left parenthesis [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(oldIndex), GetToken(oldIndex+1), GetToken(oldIndex+2)),
+			Reason:        TokensNotRecognisedError(parser.Tokens[oldIndex:], "an expression beginning with a left parenthesis"),
 		}
 	}
 
@@ -613,46 +574,32 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseArray = func(index int) ParseResult {
-		index += 1
+		index++
 
-		elementNodes := make([]AstNode, 6500)
-		numElementNodes := 0
-		tokensConsumedByElementNodes := 0
-
-		saveAnotherArrayElementNodeForParseResult := func(parseResult ParseResult) {
-			tokensConsumedByElementNodes += parseResult.TokensConsumed
-			if parseResult.Node.Kind == AstKind_NewLine {
-				if numElementNodes > 0 &&
-					elementNodes[numElementNodes-1].Kind == AstKind_NewLine {
-					return
-				}
-			}
-			elementNodes[numElementNodes] = parseResult.Node
-			numElementNodes++
-		}
-
-		for { // gather array elements
+		// gather array elements
+		var elementNodes AstNodeBuffer
+		for {
 			if GetKind(index) == TokenKind_BackwardSlash && GetKind(index+1) == TokenKind_NewLine {
 				index += 2
-				tokensConsumedByElementNodes += 2
+				elementNodes.TokensConsumed += 2
 			}
 			if GetKind(index) == TokenKind_RightSquareBracket {
 				break
 			}
 			if GetKind(index) == TokenKind_SingleLineComment || GetKind(index) == TokenKind_MultiLineComment {
-				index += 1
-				tokensConsumedByElementNodes += 1
+				index++
+				elementNodes.TokensConsumed++
 			}
 			if newLineParseResult := ParseNewLine(index); newLineParseResult.WasSuccessful {
-				saveAnotherArrayElementNodeForParseResult(newLineParseResult)
+				elementNodes.MaybeSave(newLineParseResult)
 				index += newLineParseResult.TokensConsumed
 			}
 			if commaParseResult := ParseComma(index); commaParseResult.WasSuccessful {
-				saveAnotherArrayElementNodeForParseResult(commaParseResult)
+				elementNodes.MaybeSave(commaParseResult)
 				index += commaParseResult.TokensConsumed
 			}
 			if expressionParseResult := ParseExpression(index, true); expressionParseResult.WasSuccessful {
-				saveAnotherArrayElementNodeForParseResult(expressionParseResult)
+				elementNodes.MaybeSave(expressionParseResult)
 				index += expressionParseResult.TokensConsumed
 			}
 		}
@@ -662,41 +609,15 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			Node: AstNode{
 				Kind: AstKind_Array,
 				Data: AstData_Array{
-					ElementNodes: elementNodes[:numElementNodes],
+					ElementNodes: elementNodes.Nodes,
 				},
 			},
-			TokensConsumed: 2 + tokensConsumedByElementNodes,
+			TokensConsumed: 2 + elementNodes.TokensConsumed,
 		}
 	}
 
 	ParseStruct = func(index int) ParseResult {
-		elementNodes := make([]AstNode, 6500)
-		numElementNodes := 0
-		tokensConsumedByElementNodes := 0
-
-		saveAnotherStructElementNodeForParseResult := func(parseResult ParseResult) {
-			tokensConsumedByElementNodes += parseResult.TokensConsumed
-			if parseResult.Node.Kind == AstKind_NewLine {
-				i := numElementNodes - 1
-				for {
-					if i < 0 {
-						break
-					}
-
-					earlierNode := elementNodes[i]
-					if earlierNode.Kind == AstKind_Comment {
-						// If there are new-line characters before comments, they will also break roq (if the comments don't produce any bytecode)
-						i--
-					} else if earlierNode.Kind == AstKind_NewLine {
-						return
-					} else {
-						break
-					}
-				}
-			}
-			elementNodes[numElementNodes] = parseResult.Node
-			numElementNodes++
-		}
+		var elementNodes AstNodeBuffer
 
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
@@ -709,12 +630,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		indexAfterLastIteration := index
 		for { // gather struct elements
 			if GetKind(index) == TokenKind_BackwardSlash && GetKind(index+1) == TokenKind_NewLine {
-				tokensConsumedByElementNodes += 2
+				elementNodes.TokensConsumed += 2
 				index += 2
 			}
 			GetToken(index)
 			if parseResult := ParseNewLine(index); parseResult.WasSuccessful {
-				saveAnotherStructElementNodeForParseResult(parseResult)
+				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			}
 			if GetKind(index) == TokenKind_If {
@@ -733,25 +654,25 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				break
 			}
 			if parseResult := ParseComma(index); parseResult.WasSuccessful {
-				saveAnotherStructElementNodeForParseResult(parseResult)
+				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			}
 			if parseResult := ParseComment(index); parseResult.WasSuccessful {
-				saveAnotherStructElementNodeForParseResult(parseResult)
+				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			}
 			if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
-				saveAnotherStructElementNodeForParseResult(parseResult)
+				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			}
 			if parseResult := ParseExpression(index, true); parseResult.WasSuccessful {
-				saveAnotherStructElementNodeForParseResult(parseResult)
+				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			}
 			if index == indexAfterLastIteration {
 				return ParseResult{
 					WasSuccessful: false,
-					Reason:        fmt.Sprintf("Token stream was not recognised as a struct element [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2)),
+					Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a struct element"),
 				}
 			}
 			indexAfterLastIteration = index
@@ -762,10 +683,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			Node: AstNode{
 				Kind: AstKind_Struct,
 				Data: AstData_Struct{
-					ElementNodes: elementNodes[:numElementNodes],
+					ElementNodes: elementNodes.Nodes,
 				},
 			},
-			TokensConsumed: 2 + tokensConsumedByElementNodes,
+			TokensConsumed: 2 + elementNodes.TokensConsumed,
 		}
 	}
 
@@ -782,7 +703,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 		checksumToken := GetToken(index)
-		index += 1
+		index++
 
 		if GetKind(index) != TokenKind_Equals {
 			return ParseResult{
@@ -799,7 +720,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			},
 		}
 
-		index += 1
+		index++
 
 		valueParseResult := ParseExpression(index, allowInvocations)
 		if !valueParseResult.WasSuccessful {
@@ -829,15 +750,15 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			lastParameterIndex := len(invocationData.ParameterNodes) - 1
 			lastParameterNode := invocationData.ParameterNodes[lastParameterIndex]
 			if lastParameterNode.Kind == AstKind_Struct {
-				// skip backwards over the struct so it will be read as the if-statement body
-				*index -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
-
 				// remove struct from params
 				parseResult.Node.Data = AstData_Invocation{
 					ScriptIdentifierNode:              invocationData.ScriptIdentifierNode,
 					ParameterNodes:                    invocationData.ParameterNodes[:lastParameterIndex],
 					TokensConsumedByEachParameterNode: invocationData.TokensConsumedByEachParameterNode[:lastParameterIndex],
 				}
+
+				// skip backwards over the struct so it will be read as the if-statement body
+				*index -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
 
 				// reduce the number of tokens consumed by the condition
 				parseResult.TokensConsumed -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
@@ -901,16 +822,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "First token in script wasn't 'script'",
 			}
 		}
-		index += 1
+		index++
 
-		defaultParameters := make([]AstNode, 6500)
-		numDefaultParameters := 0
-		tokensConsumedByDefaultParameters := 0
-		saveDefaultParameter := func(parseResult ParseResult) {
-			defaultParameters[numDefaultParameters] = parseResult.Node
-			tokensConsumedByDefaultParameters += parseResult.TokensConsumed
-			numDefaultParameters += 1
-		}
+		var defaultParameters AstNodeBuffer
 
 		if GetKind(index) != TokenKind_Identifier && GetKind(index) != TokenKind_RawChecksum {
 			return ParseResult{
@@ -919,15 +833,15 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 		nameToken := GetToken(index)
-		index += 1
+		index++
 
 		for {
 			if GetKind(index) == TokenKind_NewLine {
-				index += 1
+				index++
 			} else if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
 				index += parseResult.TokensConsumed
 				pruneStructIfInvoked(&parseResult, &index)
-				saveDefaultParameter(parseResult)
+				defaultParameters.MaybeSave(parseResult)
 			} else {
 				break
 			}
@@ -952,11 +866,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 							ChecksumToken: nameToken,
 						},
 					},
-					DefaultParameterNodes: defaultParameters[:numDefaultParameters],
+					DefaultParameterNodes: defaultParameters.Nodes,
 					BodyNodes: bodyNodes,
 				},
 			},
-			TokensConsumed: 1 + tokensConsumedByDefaultParameters + bodyParseResult.TokensConsumed + 1,
+			TokensConsumed: 1 + defaultParameters.TokensConsumed + bodyParseResult.TokensConsumed + 1,
 		}
 	}
 
@@ -967,7 +881,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "First token in while loop wasn't 'while'",
 			}
 		}
-		index += 1
+		index++
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
 		if bodyParseResult.WasSuccessful {
@@ -996,7 +910,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "Logical not doesn't start with '!'",
 			}
 		}
-		index += 1
+		index++
 		expressionParseResult := ParseExpression(index, true)
 		if !expressionParseResult.WasSuccessful {
 			return ParseResult{
@@ -1025,7 +939,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 
-		index += 1
+		index++
 
 		booleanInvocationData := make([]bool, 6500)
 		conditions := make([]AstNode, 6500)
@@ -1072,13 +986,13 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		for {
 			if GetKind(index) == TokenKind_Else {
-				index += 1
+				index++
 				if GetKind(index) == TokenKind_If {
-					index += 1
+					index++
 
 					nextConditionIsBooleanInvocation := false
 					if GetKind(index) == TokenKind_AtSymbol {
-						index += 1
+						index++
 						nextConditionIsBooleanInvocation = true
 					}
 
@@ -1146,68 +1060,42 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "First token in body of code wasn't '{'",
 			}, []AstNode{}
 		}
-		index += 1
+		index++
 
-		bodyNodes := make([]AstNode, 6500)
-		numBodyNodes := 0
-		tokensConsumedByBodyNodes := 0
-
-		saveAnotherBodyNodeForParseResult := func(parseResult ParseResult) {
-			tokensConsumedByBodyNodes += parseResult.TokensConsumed
-			if parseResult.Node.Kind == AstKind_NewLine {
-				i := numBodyNodes - 1
-				// TODO(brandon): Remove duplication
-				for {
-					if i < 0 {
-						break
-					}
-					earlierNode := bodyNodes[i]
-					if earlierNode.Kind == AstKind_Comment {
-						// If there are new-line characters before comments, they will also break roq (if the comments don't produce any bytecode)
-						i--
-					} else if earlierNode.Kind == AstKind_NewLine {
-						return
-					} else {
-						break
-					}
-				}
-			}
-			bodyNodes[numBodyNodes] = parseResult.Node
-			numBodyNodes++
-		}
+		var bodyNodes AstNodeBuffer
 
 		for {
 			if GetKind(index) == TokenKind_OutOfRange {
 				break
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {
-				index += 1
+				index++
 				break
 			} else if parseResult := ParseNewLine(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseBreak(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseReturn(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseIfStatement(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseWhileLoop(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseComment(index); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if parseResult := ParseExpression(index, true); parseResult.WasSuccessful {
-				saveAnotherBodyNodeForParseResult(parseResult)
+				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else {
-				log.Fatalf("Token stream was not recognised as an element in a body of code [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2))
+				TokensNotRecognisedError(parser.Tokens[index:], "a script body node")
 			}
 		}
 
@@ -1220,8 +1108,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		return ParseResult{
 			WasSuccessful:  true,
-			TokensConsumed: 2 + tokensConsumedByBodyNodes,
-		}, bodyNodes[:numBodyNodes]
+			TokensConsumed: 2 + bodyNodes.TokensConsumed,
+		}, bodyNodes.Nodes
 	}
 
 	ParseRandom = func(index int) ParseResult {
@@ -1233,7 +1121,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "First token in 'random' wasn't 'random'",
 			}
 		}
-		index += 1
+		index++
 
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
@@ -1241,14 +1129,14 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:        "Second token in 'random' wasn't '{'",
 			}
 		}
-		index += 1
+		index++
 
-		branchWeights := make([]AstNode, 6500)
-		branches := make([][]AstNode, 6500)
+		var branchWeights []AstNode
+		var branches [][]AstNode
 		numBranches := 0
 		saveBranch := func(weight AstNode, branch []AstNode) {
-			branchWeights[numBranches] = weight
-			branches[numBranches] = branch
+			branchWeights = append(branchWeights, weight)
+			branches = append(branches, branch)
 			numBranches++
 		}
 
@@ -1257,14 +1145,14 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if GetKind(index) == TokenKind_NewLine ||
 					GetKind(index) == TokenKind_SingleLineComment ||
 					GetKind(index) == TokenKind_MultiLineComment {
-					index += 1
+					index++
 				} else {
 					break
 				}
 			}
 
 			if GetKind(index) == TokenKind_RightCurlyBrace {
-				index += 1
+				index++
 				break
 			}
 
@@ -1319,20 +1207,18 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			isRawChecksum = true
 		}
 
-		parameterNodes := make([]AstNode, 6500)
-		tokensConsumedByEachParameterNode := make([]int, 6500)
-		numParameterNodes := 0
+		var parameterNodes AstNodeBuffer
+		var tokensConsumedByEachParameterNode []int
 
-		index += 1
+		index++
 		for { // gather parameters
 			if GetKind(index) == TokenKind_BackwardSlash && GetKind(index+1) == TokenKind_NewLine {
 				index += 2
 			}
 			parameterParseResult := ParseInvocationParameter(index)
 			if parameterParseResult.WasSuccessful {
-				parameterNodes[numParameterNodes] = parameterParseResult.Node
-				tokensConsumedByEachParameterNode[numParameterNodes] = parameterParseResult.TokensConsumed
-				numParameterNodes++
+				parameterNodes.MaybeSave(parameterParseResult)
+				tokensConsumedByEachParameterNode = append(tokensConsumedByEachParameterNode, parameterParseResult.TokensConsumed)
 				index += parameterParseResult.TokensConsumed
 			} else {
 				break
@@ -1351,8 +1237,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 							IsRawChecksum: isRawChecksum,
 						},
 					},
-					ParameterNodes:                    parameterNodes[:numParameterNodes],
-					TokensConsumedByEachParameterNode: tokensConsumedByEachParameterNode[:numParameterNodes],
+					ParameterNodes:                    parameterNodes.Nodes,
+					TokensConsumedByEachParameterNode: tokensConsumedByEachParameterNode,
 				},
 			},
 			TokensConsumed: index - oldIndex,
@@ -1368,7 +1254,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 		return ParseResult{
 			WasSuccessful: false,
-			Reason:        fmt.Sprintf("Token stream was not recognised as a parameter [\n  %+v,\n  %+v,\n  %+v\n]...", GetToken(index), GetToken(index+1), GetToken(index+2)),
+			Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a parameter"),
 		}
 	}
 
@@ -1478,6 +1364,51 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		return parser.Tokens[index]
 	}
 
-	// execution
-	StartParsing()
+	parser.Result = ParseRoot()
+}
+
+type AstNodeBuffer struct {
+	Nodes          []AstNode
+	NumNodes       int
+	TokensConsumed int
+}
+
+func (this *AstNodeBuffer) MaybeSave(parseResult ParseResult) {
+	// Even if the node isn't appended, we need to count the number of tokens it consumed
+	this.TokensConsumed += parseResult.TokensConsumed
+
+	// Don't store consecutive newlines; they will break the roq decompiler.
+	if parseResult.Node.Kind == AstKind_NewLine {
+		i := this.NumNodes - 1
+		for {
+			if i < 0 {
+				break
+			}
+			earlierNode := this.Nodes[i]
+			if earlierNode.Kind == AstKind_Comment {
+				i--
+			} else if earlierNode.Kind == AstKind_NewLine {
+				return
+			} else {
+				break
+			}
+		}
+	}
+
+	this.Nodes = append(this.Nodes, parseResult.Node)
+	this.NumNodes++
+}
+
+func TokensNotRecognisedError(tokens []Token, notRecognisedAs string) string {
+	var messageBuilder strings.Builder
+	messageBuilder.WriteString(fmt.Sprintf("Token stream not recognised as %s: [\n", notRecognisedAs))
+	for _, token := range tokens {
+		messageBuilder.WriteString(fmt.Sprintf("  %+v,\n", token))
+	}
+	messageBuilder.WriteString("]")
+	return messageBuilder.String()
+}
+
+func WrapStr(outer, inner string) string {
+	return fmt.Sprintf("<%s: %s>", outer, inner)
 }
