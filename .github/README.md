@@ -16,7 +16,7 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 **This project contains:**
 
 *  A `NeverScript -> QB` compiler.
-*  A `QB -> NeverScript` decompiler.
+*  ~A `QB -> NeverScript` decompiler~.
 
 **These tools are intended to work with games such as:**
 
