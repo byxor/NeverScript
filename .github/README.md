@@ -62,7 +62,7 @@ Not implemented yet.
 You can generate a pre/prx file by providing a pre spec.
 
 ```bash
-$ ns -p MyPreSpec.ps -o bundle.pre
+$ ns -p myPreSpec.ps -o bundle.pre
 ```
 
 This will read the pre spec from `myPreSpec.ps` and create a new PRE file: `bundle.pre`
