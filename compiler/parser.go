@@ -1063,7 +1063,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		index++
 
 		var bodyNodes AstNodeBuffer
-
 		for {
 			if GetKind(index) == TokenKind_OutOfRange {
 				break

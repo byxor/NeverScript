@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"unicode"
 )
@@ -245,17 +244,14 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 	}
 
 	SaveToken := func(lexer *Lexer, kind TokenKind, data string) {
-		if lexer.NumTokens >= len(lexer.Tokens) {
-			log.Panic("Overflowed buffer when attempting to save lexical token")
-		} else {
-			lexer.Tokens[lexer.NumTokens].Kind = kind
-			lexer.Tokens[lexer.NumTokens].Data = data
-			lexer.Tokens[lexer.NumTokens].LineNumber = lexer.LineNumber
-			lexer.NumTokens++
-		}
+		lexer.Tokens = append(lexer.Tokens, Token{
+			Kind: kind,
+			Data: data,
+			LineNumber: lexer.LineNumber,
+		})
+		lexer.NumTokens++
 	}
 
-	lexer.Tokens = make([]Token, 6500)
 	lexer.LineNumber = 1
 	for {
 		if lexer.Index >= lexer.SourceCodeSize {

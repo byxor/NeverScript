@@ -16,7 +16,8 @@ You can find the old version here in a [previous commit](https://github.com/byxo
 
 ## What to expect
 
-A cleaner decompiler will be introduced soon. Perhaps parsed by an LL grammar, similarly to the compiler.
+Don't expect anything soon. The compiler is the main focus for now, since we can port decompiled roq to neverscript by hand.
+Personally, this is good enough for the majority of my usecases.
 
 Kind regards,
 Byxor.

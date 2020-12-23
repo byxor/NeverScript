@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
+	"github.com/byxor/NeverScript/pre_generator"
 	"os/exec"
 	"path/filepath"
 )
@@ -20,7 +21,7 @@ const (
            The QB programming language.
 ----------------------------------------------------
 `
-	version = "0.4"
+	version = "0.5"
 )
 
 func main() {
@@ -34,10 +35,8 @@ func RunNeverscript(arguments CommandLineArguments) {
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
 
-		var outputFilename string
-		if *arguments.OutputFileName != "" {
-			outputFilename = *arguments.OutputFileName
-		} else {
+		outputFilename := *arguments.OutputFileName
+		if outputFilename == "" {
 			outputFilename = NsToQb(*arguments.FileToCompile)
 		}
 
@@ -49,7 +48,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {
-			fmt.Printf("Hex dump:\n%s", outputFilename, hex.Dump(bytecodeCompiler.Bytes))
+			fmt.Printf("Hex dump:\n%s\n", hex.Dump(bytecodeCompiler.Bytes))
 		}
 
 		if *arguments.DecompileWithRoq {
@@ -57,6 +56,23 @@ func RunNeverscript(arguments CommandLineArguments) {
 			roqCmd := exec.Command(".\\roq.exe", "-d", outputFilename)
 			decompiledCode, _ := roqCmd.Output()
 			fmt.Println(string(decompiledCode))
+		}
+
+		fmt.Println("done.")
+	} else if *arguments.PreSpecFile != "" {
+		argumentsWereSupplied = true
+
+		outputFilename := *arguments.OutputFileName
+		if outputFilename == "" {
+			outputFilename = PsToPrx(*arguments.PreSpecFile)
+		}
+
+		fmt.Printf("\nGenerating pre file from spec '%s'...\n", *arguments.PreSpecFile)
+		pre := pre_generator.GeneratePreFile(*arguments.PreSpecFile, outputFilename)
+		fmt.Printf("  Created '%s'.\n\n", outputFilename)
+
+		if *arguments.ShowHexDump {
+			fmt.Printf("Hex dump:\n%s\n", hex.Dump(pre))
 		}
 
 		fmt.Println("done.")
@@ -71,6 +87,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 
 type CommandLineArguments struct {
 	FileToCompile    *string
+	PreSpecFile      *string
 	OutputFileName   *string
 	ShowHexDump      *bool
 	DecompileWithRoq *bool
@@ -78,25 +95,26 @@ type CommandLineArguments struct {
 
 func ParseCommandLineArguments() CommandLineArguments {
 	args := CommandLineArguments{
-		FileToCompile:   flag.String("c", "", "Specify a file to compile (.ns)."),
-		OutputFileName:  flag.String("o", "", "Specify the output file name."),
-		ShowHexDump:      flag.Bool("showHexDump", false, "Display the compiled bytecode in hex format."),
+		FileToCompile:    flag.String("c", "", "Specify a file to compile (.ns)."),
+		PreSpecFile: flag.String("p", "", "Specify a pre spec file (.ps)."),
+		OutputFileName:   flag.String("o", "", "Specify the output file name."),
+		ShowHexDump:      flag.Bool("showHexDump", false, "Display the output in hex format (e.g. compiled bytecode or raw pre file)."),
 		DecompileWithRoq: flag.Bool("decompileWithRoq", false, "Display output from roq decompiler (roq.exe must be in your PATH)."),
 	}
 	flag.Parse()
 	return args
 }
 
-func QbToNs(fileName string) string {
-	return withoutExtension(fileName) + ".ns"
-}
-
 func NsToQb(fileName string) string {
 	return withoutExtension(fileName) + ".qb"
 }
 
+func PsToPrx(fileName string) string {
+	return withoutExtension(fileName) + ".prx"
+}
+
 func withoutExtension(fileName string) string {
 	fileExtension := filepath.Ext(fileName)
-	end := len(fileName)-len(fileExtension)
+	end := len(fileName) - len(fileExtension)
 	return fileName[:end]
 }

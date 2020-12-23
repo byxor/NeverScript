@@ -17,6 +17,7 @@ NeverScript is a programming language that targets Neversoft's custom scripting 
 
 *  A `NeverScript -> QB` compiler.
 *  A `QB -> NeverScript` decompiler.
+*  A `PRE`/`PRX` generator (QB files are usually bundled into PRE/PRX files).
 
 **These tools are intended to work with games such as:**
 
@@ -55,6 +56,48 @@ This will create a new QB file: `path/to/code.qb`
 ### Decompiling a QB file:
 
 Not implemented yet.
+
+### Generating a PRE/PRX file:
+
+You can generate a pre/prx file by providing a pre spec.
+
+```bash
+$ ns -p MyPreSpec.ps -o bundle.pre
+```
+
+This will read the pre spec from `myPreSpec.ps` and create a new PRE file: `bundle.pre`
+
+* Use `-showHexDump` to see the bytes of the pre file.
+
+#### What's a pre spec?
+
+This is a text document containing many "items".
+
+Each "item" consists of:
+1. The source path (the file to bundle).
+2. The destination path (inside the pre file).
+
+Here's an example of a pre spec containing 4 items:
+
+```
+C:\mod\build\qb\_mods\byxor_debug.qb
+qb\_mods\byxor_debug.qb
+
+C:\mod\build\qb\_mods\byxor_menu.qb
+qb\_mods\byxor_menu.qb
+
+C:\mod\build\qb\_mods\byxor_math.qb
+qb\_mods\byxor_math.qb
+
+C:\mod\qdir.txt
+code\qb\qdir.txt
+```
+
+#### Note
+
+* Only pre version 3 is supported at the moment.
+* None of the items inside the pre file will be compressed.
+* You can use relative paths too.
 
 ## Special Thanks
 
