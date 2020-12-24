@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript/pre_generator"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 )
@@ -68,7 +69,9 @@ func RunNeverscript(arguments CommandLineArguments) {
 		}
 
 		fmt.Printf("\nGenerating pre file from spec '%s'...\n", *arguments.PreSpecFile)
-		pre := pre_generator.GeneratePreFile(*arguments.PreSpecFile, outputFilename)
+		preSpec := pre_generator.ParsePreSpec(*arguments.PreSpecFile)
+		pre := pre_generator.MakePre(preSpec)
+		ioutil.WriteFile(*arguments.PreSpecFile, pre, 0466)
 		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {

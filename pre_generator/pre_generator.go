@@ -14,13 +14,6 @@ type PreSpecItem struct {
 	PathInsidePre string
 }
 
-func GeneratePreFile(preSpecFilePath, preFilePath string) []byte {
-	preSpec := ParsePreSpec(preSpecFilePath)
-	pre := PreSpecToPreBytes(preSpec)
-	ioutil.WriteFile(preFilePath, pre, 0466)
-	return pre
-}
-
 func ParsePreSpec(preSpecPath string) (preSpec []PreSpecItem) {
 	fileBytes, err := ioutil.ReadFile(preSpecPath)
 	if err != nil {
@@ -61,7 +54,7 @@ func ParsePreSpec(preSpecPath string) (preSpec []PreSpecItem) {
 	return preSpec
 }
 
-func PreSpecToPreBytes(preSpec PreSpec) []byte {
+func MakePre(preSpec PreSpec) []byte {
 	pre := make([]byte, 25000000) // FIXME(Brandon): Arbitrarily-sized buffer, could crash if low on RAM or if Pre is too large.
 
 	var globalHeader struct {
