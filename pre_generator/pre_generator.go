@@ -55,7 +55,7 @@ func ParsePreSpec(preSpecPath string) (preSpec []PreSpecItem) {
 }
 
 func MakePre(preSpec PreSpec) []byte {
-	pre := make([]byte, 25000000) // FIXME(Brandon): Arbitrarily-sized buffer, could crash if low on RAM or if Pre is too large.
+	pre := make([]byte, 25000000) // FIXME(brandon): Arbitrarily-sized buffer, could crash if low on RAM or if Pre is too large.
 
 	var globalHeader struct {
 		Size          uint32

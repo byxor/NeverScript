@@ -78,8 +78,8 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) {
 	argumentsWereSupplied := false
 
-	//*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\build\\PRE3,thugpro_qb.prx\\qb\\game\\skater\\physics.qb"
-	//*arguments.ShowCode = true
+	*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\build\\PRE3,thugpro_qb.prx\\qb\\_mods\\byxor_debug.qb"
+	*arguments.ShowCode = true
 
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
