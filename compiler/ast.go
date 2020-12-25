@@ -46,6 +46,8 @@ const (
 	AstKind_Array
 	AstKind_Comma
 	AstKind_Random
+	AstKind_EndOfFile
+	AstKind_NameTableEntry
 )
 
 func (astKind AstKind) String() string {
@@ -88,6 +90,8 @@ func (astKind AstKind) String() string {
 		"AstKind_Array",
 		"AstKind_Comma",
 		"AstKind_Random",
+		"AstKind_EndOfFile",
+		"AstKind_NameTableEntry",
 	}[astKind]
 }
 
@@ -148,22 +152,25 @@ func (astData AstData_LocalReference) astData() {}
 type AstData_Checksum struct {
 	IsRawChecksum bool
 	ChecksumToken Token
-
+	ChecksumBytes []byte
 }
 func (astData AstData_Checksum) astData() {}
 
 type AstData_Float struct {
 	FloatToken Token
+	FloatBytes []byte
 }
 func (astData AstData_Float) astData() {}
 
 type AstData_Integer struct {
 	IntegerToken Token
+	IntegerBytes []byte
 }
 func (astData AstData_Integer) astData() {}
 
 type AstData_String struct {
 	StringToken Token
+	StringBytes []byte
 }
 func (astData AstData_String) astData() {}
 
@@ -206,3 +213,9 @@ type AstData_Random struct {
 	Branches [][]AstNode
 }
 func (astData AstData_Random) astData() {}
+
+type AstData_NameTableEntry struct {
+	ChecksumBytes []byte
+	Name string
+}
+func (astData AstData_NameTableEntry) astData() {}
