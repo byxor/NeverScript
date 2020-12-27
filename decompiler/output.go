@@ -18,7 +18,7 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 		for _, bodyNode := range data.BodyNodes {
 			decompiledBodyNode, err := DecompileAstNode(bodyNode, indentation, nameTable)
 			if err != nil {
-				return "", errors.New(fmt.Sprintf("Failed to decompile root body node: %+v", err))
+				return "", err
 			}
 			text += decompiledBodyNode
 		}
@@ -29,6 +29,14 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 		return "", nil
 	case compiler.AstKind_Comma:
 		return ",", nil
+	case compiler.AstKind_AllArguments:
+		return "<...>", nil
+	case compiler.AstKind_LocalReference:
+		expressionCode, err := DecompileAstNode(node.Data.(compiler.AstData_UnaryExpression).Node, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return "<" + expressionCode + ">", nil
 	case compiler.AstKind_Script:
 		data := node.Data.(compiler.AstData_Script)
 		var code strings.Builder
@@ -85,6 +93,11 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 		return code.String(), nil
 	case compiler.AstKind_Checksum:
 		data := node.Data.(compiler.AstData_Checksum)
+
+		if data.ChecksumToken.Data != "" {
+			return data.ChecksumToken.Data, nil
+		}
+
 		checksum := binary.LittleEndian.Uint32(data.ChecksumBytes)
 		if resolvedName, ok := nameTable[checksum]; ok {
 			return resolvedName, nil
@@ -116,6 +129,25 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			right = math.Float32frombits(bits)
 		}
 		return fmt.Sprintf("(%s, %s)", RenderFloat(left), RenderFloat(right)), nil
+	case compiler.AstKind_Vector:
+		data := node.Data.(compiler.AstData_Vector)
+		var left, middle, right float32
+		{
+			floatData := data.FloatNodeA.Data.(compiler.AstData_Float)
+			bits := binary.LittleEndian.Uint32(floatData.FloatBytes)
+			left = math.Float32frombits(bits)
+		}
+		{
+			floatData := data.FloatNodeB.Data.(compiler.AstData_Float)
+			bits := binary.LittleEndian.Uint32(floatData.FloatBytes)
+			middle = math.Float32frombits(bits)
+		}
+		{
+			floatData := data.FloatNodeC.Data.(compiler.AstData_Float)
+			bits := binary.LittleEndian.Uint32(floatData.FloatBytes)
+			right = math.Float32frombits(bits)
+		}
+		return fmt.Sprintf("(%s, %s, %s)", RenderFloat(left), RenderFloat(middle), RenderFloat(right)), nil
 	case compiler.AstKind_String:
 		data := node.Data.(compiler.AstData_String)
 		return fmt.Sprintf("\"%s\"", data.StringBytes), nil
@@ -205,10 +237,58 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			return "", err
 		}
 		return fmt.Sprintf("%s = %s", decompiledName, decompiledValue), nil
+	case compiler.AstKind_IfStatement:
+		data := node.Data.(compiler.AstData_IfStatement)
+		var code strings.Builder
+		code.WriteString("if ")
+		conditionCode, err := DecompileAstNode(data.Conditions[0], indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		code.WriteString(conditionCode)
+
+		renderBody := func(body []compiler.AstNode) (string, error) {
+			var bodyCode strings.Builder
+			bodyCode.WriteString(" {")
+			indentation++
+			for i, bodyNode := range body {
+				isFirstNode := i == 0
+				nodeCode, err := DecompileAstNode(bodyNode, indentation, nameTable)
+				if err != nil {
+					return "", err
+				}
+				if !isFirstNode && len(body) != 0 && body[len(body)-1].Kind == compiler.AstKind_NewLine {
+					bodyCode.WriteString(strings.Repeat("    ", indentation))
+				}
+				bodyCode.WriteString(nodeCode)
+			}
+			indentation--
+			if len(body) > 0 {
+				bodyCode.WriteString(strings.Repeat("    ", indentation))
+			}
+			bodyCode.WriteString("}")
+			return bodyCode.String(), nil
+		}
+
+		bodyCode, err := renderBody(data.Bodies[0])
+		if err != nil {
+			return "", err
+		}
+		code.WriteString(bodyCode)
+
+		if len(data.Bodies) > 1 { // has 'else'
+			code.WriteString(" else")
+			elseBodyCode, err := renderBody(data.Bodies[1])
+			if err != nil {
+				return "", err
+			}
+			code.WriteString(elseBodyCode)
+		}
+		return code.String(), nil
 	case compiler.AstKind_NameTableEntry:
 		return "", nil
 	}
-	return "code", errors.New(fmt.Sprintf("Failed to decompile ast node: %+v", node))
+	return "", errors.New(WrapLine("Don't know how to produce code for AST node", fmt.Sprintf("%+v", node)))
 }
 
 func RenderFloat(f float32) string {

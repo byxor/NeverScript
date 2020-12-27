@@ -33,7 +33,7 @@ func Decompile(arguments *Arguments) {
 
 	nsCode, err := DecompileAstNode(arguments.RootNode, 0, arguments.NameTable)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("\n%s", err)
 	}
 	arguments.SourceCode = nsCode
 }

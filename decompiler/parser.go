@@ -46,15 +46,18 @@ func ParseByteCode(arguments *Arguments) error {
 	var ParseIfStatement ParserFunction
 	var ParseExpression ParserFunction
 	var ParseInvocation ParserFunction
+	var ParseReturn ParserFunction
 	var ParseChecksum ParserFunction
 	var ParseFloat ParserFunction
 	var ParseInteger ParserFunction
 	var ParsePair ParserFunction
+	var ParseVector ParserFunction
 	var ParseString ParserFunction
 	var ParseStruct ParserFunction
 	var ParseArray ParserFunction
+	var ParseAllArgumentsSymbol ParserFunction
 	var ParseNameTableEntry ParserFunction
-	var ParseBodyOfCode func(index *int)[]compiler.AstNode
+	var ParseBodyOfCode func(index *int) []compiler.AstNode
 
 	bytes := arguments.ByteCode
 	numBytes := len(bytes)
@@ -76,7 +79,7 @@ func ParseByteCode(arguments *Arguments) error {
 			index += bodyNodeParseResult.BytesRead
 		}
 		if !hasReadAllBytes {
-			return ParserFailure(WrapIndex(index,"Some bytes left unread"))
+			return ParserFailure(WrapIndex(index, "Some bytes left unread"))
 		}
 		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_Root,
@@ -105,7 +108,7 @@ func ParseByteCode(arguments *Arguments) error {
 		{
 			var message strings.Builder
 			message.WriteString(WrapIndex(index, "Bytes not recognised as root body node.\n"))
-			message.WriteString(hex.Dump(bytes[index:index+32]))
+			message.WriteString(hex.Dump(bytes[index : index+32]))
 			message.WriteString("\nPOTENTIAL CAUSES.\n")
 			message.WriteString("-------------------------------------------------\n")
 			for _, parseResult := range parseResults {
@@ -189,7 +192,7 @@ func ParseByteCode(arguments *Arguments) error {
 		start := index
 
 		if bytes[index] != 0x23 {
-			return ParserFailure(WrapIndex(index,"Script doesn't start with 0x23"))
+			return ParserFailure(WrapIndex(index, "Script doesn't start with 0x23"))
 		}
 		index++
 
@@ -202,16 +205,16 @@ func ParseByteCode(arguments *Arguments) error {
 		bodyNodes := ParseBodyOfCode(&index)
 
 		if bytes[index] != 0x24 {
-			return ParserFailure(WrapLine(WrapIndex(index,"Script doesn't end with 0x24"), hex.Dump(bytes[index:index+64])))
+			return ParserFailure(WrapLine(WrapIndex(index, "Script doesn't end with 0x24"), hex.Dump(bytes[index:index+64])))
 		}
 		index++
 
-		return ParserSuccess(index - start, compiler.AstNode{
+		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_Script,
 			Data: compiler.AstData_Script{
-				NameNode: checksumParseResult.Node,
+				NameNode:              checksumParseResult.Node,
 				DefaultParameterNodes: []compiler.AstNode{},
-				BodyNodes: bodyNodes,
+				BodyNodes:             bodyNodes,
 			},
 		})
 	}
@@ -220,10 +223,9 @@ func ParseByteCode(arguments *Arguments) error {
 		start := index
 
 		if bytes[index] != 0x47 {
-			return ParserFailure(WrapIndex(index,"If statement doesn't start with 0x47"))
+			return ParserFailure(WrapIndex(index, "If statement doesn't start with 0x47"))
 		}
 		index++
-
 		if index+2 >= numBytes {
 			return ParserFailure(WrapIndex(index+2, "Reached EOF when scanning the jump offset"))
 		}
@@ -238,13 +240,22 @@ func ParseByteCode(arguments *Arguments) error {
 		index += conditionParseResult.BytesRead
 
 		bodyNodes := ParseBodyOfCode(&index)
+		bodies := [][]compiler.AstNode{bodyNodes}
 
+		if bytes[index] == 0x48 { // has 'else'
+			index++
+			index += 2
+			bodyNodes := ParseBodyOfCode(&index)
+			bodies = append(bodies, bodyNodes)
+		}
+
+		index++
 		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_IfStatement,
 			Data: compiler.AstData_IfStatement{
 				BooleanInvocationData: make([]bool, 1), // FIXME(brandon): Arbitrary data for now, will crash if number of branches exceeds the capacity
-				Conditions: []compiler.AstNode{conditionParseResult.Node},
-				Bodies: [][]compiler.AstNode{bodyNodes},
+				Conditions:            []compiler.AstNode{conditionParseResult.Node},
+				Bodies:                bodies,
 			},
 		})
 	}
@@ -252,9 +263,11 @@ func ParseByteCode(arguments *Arguments) error {
 	ParseExpression = func(index int) ParseResult {
 		ParseExpressionInner := func(index int) ParseResult {
 			parserFunctions := []ParserFunction{
+				ParseAllArgumentsSymbol,
 				ParseFloat,
 				ParseInteger,
 				ParsePair,
+				ParseVector,
 				ParseStruct,
 				ParseArray,
 				ParseInvocation,
@@ -317,25 +330,86 @@ func ParseByteCode(arguments *Arguments) error {
 			Kind: compiler.AstKind_Invocation,
 			Data: compiler.AstData_Invocation{
 				ScriptIdentifierNode: checksumParseResult.Node,
-				ParameterNodes: parameterNodes,
+				ParameterNodes:       parameterNodes,
+			},
+		})
+	}
+
+	ParseReturn = func(index int) ParseResult {
+		start := index
+		if bytes[index] != 0x29 {
+			return ParserFailure(WrapIndex(index, "Not a 'return' statement (expected 0x29)"))
+		}
+		index++
+		var parameterNodes []compiler.AstNode
+		parserFunctions := []ParserFunction{
+			ParseAssignment,
+			ParseExpression,
+		}
+		for {
+			foundParameter := false
+			for _, parserFunction := range parserFunctions {
+				parseResult := parserFunction(index)
+				if parseResult.WasSuccessful {
+					foundParameter = true
+					parameterNodes = append(parameterNodes, parseResult.Node)
+					index += parseResult.BytesRead
+					break
+				}
+			}
+			if !foundParameter {
+				break
+			}
+		}
+		// FIXME(brandon): I'm returning an "invocation" to save time because it uses the same syntax as 'return'.
+		return ParserSuccess(index-start, compiler.AstNode{
+			Kind: compiler.AstKind_Invocation,
+			Data: compiler.AstData_Invocation{
+				ScriptIdentifierNode: compiler.AstNode{
+					Kind: compiler.AstKind_Checksum,
+					Data: compiler.AstData_Checksum{
+						ChecksumToken: compiler.Token{
+							Kind: compiler.TokenKind_Identifier,
+							Data: "return",
+						},
+					},
+				},
+				ParameterNodes:       parameterNodes,
 			},
 		})
 	}
 
 	ParseChecksum = func(index int) ParseResult {
+		start := index
+		isLocalReference := false
+		if bytes[index] == 0x2D {
+			isLocalReference = true
+			index++
+		}
 		if bytes[index] != 0x16 {
-			return ParserFailure(WrapLine(WrapIndex(index,"Checksum doesn't start with 0x16"), hex.Dump(bytes[index:index+32])))
+			return ParserFailure(WrapLine(WrapIndex(index, "Checksum doesn't have 0x16"), hex.Dump(bytes[index:index+32])))
 		}
 		index++
 		if index+4 >= numBytes {
-			return ParserFailure(WrapIndex(index+4,"Reached EOF when scanning checksum bytes"))
+			return ParserFailure(WrapIndex(index+4, "Reached EOF when scanning checksum bytes"))
 		}
-		return ParserSuccess(5, compiler.AstNode{
+		checksumBytes := bytes[index : index+4]
+		index += 4
+		node := compiler.AstNode{
 			Kind: compiler.AstKind_Checksum,
 			Data: compiler.AstData_Checksum{
-				ChecksumBytes: bytes[index : index+4],
+				ChecksumBytes: checksumBytes,
 			},
-		})
+		}
+		if isLocalReference {
+			node = compiler.AstNode{
+				Kind: compiler.AstKind_LocalReference,
+				Data: compiler.AstData_UnaryExpression{
+					Node: node,
+				},
+			}
+		}
+		return ParserSuccess(index-start, node)
 	}
 
 	ParseFloat = func(index int) ParseResult {
@@ -376,7 +450,7 @@ func ParseByteCode(arguments *Arguments) error {
 		}
 		index++
 		if index+8 >= numBytes {
-			return ParserFailure(WrapIndex(index+8, "Reached EOF when scanning the integer's bytes"))
+			return ParserFailure(WrapIndex(index+8, "Reached EOF when scanning the pair's float values"))
 		}
 		return ParserSuccess(9, compiler.AstNode{
 			Kind: compiler.AstKind_Pair,
@@ -397,23 +471,56 @@ func ParseByteCode(arguments *Arguments) error {
 		})
 	}
 
+	ParseVector = func(index int) ParseResult {
+		if bytes[index] != 0x1E {
+			return ParserFailure(WrapLine(WrapIndex(index, "Vector doesn't start with 0x1E"), hex.Dump(bytes[index:index+32])))
+		}
+		index++
+		if index+12 >= numBytes {
+			return ParserFailure(WrapIndex(index+8, "Reached EOF when scanning the vector's float values"))
+		}
+		return ParserSuccess(13, compiler.AstNode{
+			Kind: compiler.AstKind_Vector,
+			Data: compiler.AstData_Vector{
+				FloatNodeA: compiler.AstNode{
+					Kind: compiler.AstKind_Float,
+					Data: compiler.AstData_Float{
+						FloatBytes: bytes[index : index+4],
+					},
+				},
+				FloatNodeB: compiler.AstNode{
+					Kind: compiler.AstKind_Float,
+					Data: compiler.AstData_Float{
+						FloatBytes: bytes[index+4 : index+8],
+					},
+				},
+				FloatNodeC: compiler.AstNode{
+					Kind: compiler.AstKind_Float,
+					Data: compiler.AstData_Float{
+						FloatBytes: bytes[index+8 : index+12],
+					},
+				},
+			},
+		})
+	}
+
 	ParseString = func(index int) ParseResult {
 		if bytes[index] != 0x1B {
 			return ParserFailure(WrapIndex(index, "String doesn't start with 0x1B"))
 		}
 		index++
-		if index + 4 >= numBytes {
-			return ParserFailure(WrapIndex(index + 4, "Reached EOF when scanning string size"))
+		if index+4 >= numBytes {
+			return ParserFailure(WrapIndex(index+4, "Reached EOF when scanning string size"))
 		}
-		stringSize := binary.LittleEndian.Uint32(bytes[index:index+4])
+		stringSize := binary.LittleEndian.Uint32(bytes[index : index+4])
 		index += 4
-		if index + int(stringSize) >= numBytes {
-			return ParserFailure(WrapIndex(index + 4, "Reached EOF when scanning string contents"))
+		if index+int(stringSize) >= numBytes {
+			return ParserFailure(WrapIndex(index+4, "Reached EOF when scanning string contents"))
 		}
-		return ParserSuccess(5 + int(stringSize), compiler.AstNode{
+		return ParserSuccess(5+int(stringSize), compiler.AstNode{
 			Kind: compiler.AstKind_String,
 			Data: compiler.AstData_String{
-				StringBytes: bytes[index:index+int(stringSize)],
+				StringBytes: bytes[index : index+int(stringSize)],
 			},
 		})
 	}
@@ -499,6 +606,16 @@ func ParseByteCode(arguments *Arguments) error {
 		})
 	}
 
+	ParseAllArgumentsSymbol = func(index int) ParseResult {
+		if bytes[index] != 0x2C {
+			return ParserFailure("Not an AllArgumentsSymbol (<...>) (0x2C)")
+		}
+		return ParserSuccess(1, compiler.AstNode{
+			Kind: compiler.AstKind_AllArguments,
+			Data: compiler.AstData_Empty{},
+		})
+	}
+
 	ParseNameTableEntry = func(index int) ParseResult {
 		start := index
 
@@ -507,10 +624,10 @@ func ParseByteCode(arguments *Arguments) error {
 		}
 		index++
 
-		if index + 4 >= numBytes {
-			return ParserFailure(WrapIndex(index + 4, "Reached EOF when reading checksum for name table entry"))
+		if index+4 >= numBytes {
+			return ParserFailure(WrapIndex(index+4, "Reached EOF when reading checksum for name table entry"))
 		}
-		checksumBytes := bytes[index:index+4]
+		checksumBytes := bytes[index : index+4]
 		index += 4
 
 		nameStart := index
@@ -518,17 +635,17 @@ func ParseByteCode(arguments *Arguments) error {
 		for {
 			if bytes[index] == 0 {
 				index++
-				name = string(bytes[nameStart:index-1])
+				name = string(bytes[nameStart : index-1])
 				break
 			}
 			index++
 		}
 
-		return ParserSuccess(index - start, compiler.AstNode{
+		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_NameTableEntry,
 			Data: compiler.AstData_NameTableEntry{
 				ChecksumBytes: checksumBytes,
-				Name: name,
+				Name:          name,
 			},
 		})
 	}
@@ -540,6 +657,7 @@ func ParseByteCode(arguments *Arguments) error {
 			ParseAssignment,
 			ParseIfStatement,
 			ParseExpression,
+			ParseReturn,
 		}
 		for {
 			foundSomething := false
