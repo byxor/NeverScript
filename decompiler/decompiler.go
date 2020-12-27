@@ -24,9 +24,9 @@ func Decompile(arguments *Arguments) {
 		rootData := arguments.RootNode.Data.(compiler.AstData_Root)
 		for _, bodyNode := range rootData.BodyNodes {
 			if bodyNode.Kind == compiler.AstKind_NameTableEntry {
-				bodyNodeData := bodyNode.Data.(compiler.AstData_NameTableEntry)
-				checksum := binary.LittleEndian.Uint32(bodyNodeData.ChecksumBytes)
-				arguments.NameTable[checksum] = bodyNodeData.Name
+				data := bodyNode.Data.(compiler.AstData_NameTableEntry)
+				checksum := binary.LittleEndian.Uint32(data.ChecksumBytes)
+				arguments.NameTable[checksum] = data.Name
 			}
 		}
 	}

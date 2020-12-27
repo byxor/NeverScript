@@ -379,14 +379,17 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 					SaveToken(lexer, TokenKind_Identifier, identifier)
 					lexer.Index += len(identifier)
 				} else {
-					fmt.Println("Lexer failed")
-					fmt.Println("'" + string(lexer.SourceCode[lexer.Index:lexer.Index+10]) + "'...")
+					character := lexer.SourceCode[lexer.Index]
+					fmt.Printf("\nLexer failed at character: '%c' (%#x)...\n", character, character)
+					fmt.Println("\nRegistered tokens:")
 					for i, token := range lexer.Tokens {
 						if i >= lexer.NumTokens {
 							break
 						}
 						fmt.Printf("%+v\n", token)
 					}
+					fmt.Println()
+					return
 				}
 			}
 		}

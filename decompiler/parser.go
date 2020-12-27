@@ -54,7 +54,7 @@ func ParseByteCode(arguments *Arguments) error {
 	var ParseStruct ParserFunction
 	var ParseArray ParserFunction
 	var ParseNameTableEntry ParserFunction
-	var ParseBodyOfCode func(index int)[]compiler.AstNode
+	var ParseBodyOfCode func(index *int)[]compiler.AstNode
 
 	bytes := arguments.ByteCode
 	numBytes := len(bytes)
@@ -199,7 +199,7 @@ func ParseByteCode(arguments *Arguments) error {
 		}
 		index += checksumParseResult.BytesRead
 
-		bodyNodes := ParseBodyOfCode(index)
+		bodyNodes := ParseBodyOfCode(&index)
 
 		if bytes[index] != 0x24 {
 			return ParserFailure(WrapLine(WrapIndex(index,"Script doesn't end with 0x24"), hex.Dump(bytes[index:index+64])))
@@ -237,7 +237,7 @@ func ParseByteCode(arguments *Arguments) error {
 		}
 		index += conditionParseResult.BytesRead
 
-		bodyNodes := ParseBodyOfCode(index)
+		bodyNodes := ParseBodyOfCode(&index)
 
 		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_IfStatement,
@@ -257,6 +257,7 @@ func ParseByteCode(arguments *Arguments) error {
 				ParsePair,
 				ParseStruct,
 				ParseArray,
+				ParseInvocation,
 				ParseChecksum,
 				ParseString,
 			}
@@ -283,6 +284,42 @@ func ParseByteCode(arguments *Arguments) error {
 		} else {
 			return ParseExpressionInner(index)
 		}
+	}
+
+	ParseInvocation = func(index int) ParseResult {
+		start := index
+		checksumParseResult := ParseChecksum(index)
+		if !checksumParseResult.WasSuccessful {
+			return ParserFailure(WrapLine(WrapIndex(index, "Invocation does not start with checksum"), checksumParseResult.Reason))
+		}
+		index += checksumParseResult.BytesRead
+		var parameterNodes []compiler.AstNode
+		parserFunctions := []ParserFunction{
+			ParseAssignment,
+			ParseExpression,
+		}
+		for {
+			foundParameter := false
+			for _, parserFunction := range parserFunctions {
+				parseResult := parserFunction(index)
+				if parseResult.WasSuccessful {
+					foundParameter = true
+					parameterNodes = append(parameterNodes, parseResult.Node)
+					index += parseResult.BytesRead
+					break
+				}
+			}
+			if !foundParameter {
+				break
+			}
+		}
+		return ParserSuccess(index-start, compiler.AstNode{
+			Kind: compiler.AstKind_Invocation,
+			Data: compiler.AstData_Invocation{
+				ScriptIdentifierNode: checksumParseResult.Node,
+				ParameterNodes: parameterNodes,
+			},
+		})
 	}
 
 	ParseChecksum = func(index int) ParseResult {
@@ -481,7 +518,7 @@ func ParseByteCode(arguments *Arguments) error {
 		for {
 			if bytes[index] == 0 {
 				index++
-				name = string(bytes[nameStart:index])
+				name = string(bytes[nameStart:index-1])
 				break
 			}
 			index++
@@ -496,7 +533,7 @@ func ParseByteCode(arguments *Arguments) error {
 		})
 	}
 
-	ParseBodyOfCode = func(index int) []compiler.AstNode {
+	ParseBodyOfCode = func(index *int) []compiler.AstNode {
 		var bodyNodes []compiler.AstNode
 		parserFunctions := []ParserFunction{
 			ParseNewLine,
@@ -507,11 +544,11 @@ func ParseByteCode(arguments *Arguments) error {
 		for {
 			foundSomething := false
 			for _, parserFunction := range parserFunctions {
-				parseResult := parserFunction(index)
+				parseResult := parserFunction(*index)
 				if parseResult.WasSuccessful {
 					foundSomething = true
 					bodyNodes = append(bodyNodes, parseResult.Node)
-					index += parseResult.BytesRead
+					*index += parseResult.BytesRead
 					break
 				}
 			}

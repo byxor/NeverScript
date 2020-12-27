@@ -29,6 +29,60 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 		return "", nil
 	case compiler.AstKind_Comma:
 		return ",", nil
+	case compiler.AstKind_Script:
+		data := node.Data.(compiler.AstData_Script)
+		var code strings.Builder
+		code.WriteString("script ")
+		name, err := DecompileAstNode(data.NameNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		code.WriteString(name)
+		code.WriteString(" {")
+		indentation++
+		for i, bodyNode := range data.BodyNodes {
+			isFirstNode := i == 0
+			decompiledNode, err := DecompileAstNode(bodyNode, indentation, nameTable)
+			if err != nil {
+				return "", err
+			}
+			if !isFirstNode && data.BodyNodes[i - 1].Kind == compiler.AstKind_NewLine {
+				code.WriteString(strings.Repeat("    ", indentation))
+			}
+			code.WriteString(decompiledNode)
+		}
+		indentation--
+		code.WriteString("}")
+		return code.String(), nil
+	case compiler.AstKind_Invocation:
+		data := node.Data.(compiler.AstData_Invocation)
+		var code strings.Builder
+		decompiledName, err := DecompileAstNode(data.ScriptIdentifierNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		code.WriteString(decompiledName)
+		for i, parameterNode := range data.ParameterNodes {
+			decompiledNode, err := DecompileAstNode(parameterNode, indentation, nameTable)
+			if err != nil {
+				return "", err
+			}
+			isFirstNode := i == 0
+			isLastNode := i == len(data.ParameterNodes) - 1
+			if isFirstNode {
+				if parameterNode.Kind != compiler.AstKind_NewLine {
+					code.WriteString(" ")
+				}
+			}
+			if parameterNode.Kind == compiler.AstKind_Assignment {
+				decompiledNode = strings.Replace(decompiledNode, " = ", "=", 1)
+			}
+			code.WriteString(decompiledNode)
+			if !isLastNode {
+				code.WriteString(" ")
+			}
+		}
+		return code.String(), nil
 	case compiler.AstKind_Checksum:
 		data := node.Data.(compiler.AstData_Checksum)
 		checksum := binary.LittleEndian.Uint32(data.ChecksumBytes)
@@ -96,8 +150,14 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 				}
 			}
 		}
-		code.WriteString("}")
 		indentation--
+		if len(data.ElementNodes) > 0 {
+			lastElement := data.ElementNodes[len(data.ElementNodes)-1]
+			if lastElement.Kind == compiler.AstKind_NewLine {
+				code.WriteString(strings.Repeat("    ", indentation))
+			}
+		}
+		code.WriteString("}")
 		return code.String(), nil
 	case compiler.AstKind_Array:
 		data := node.Data.(compiler.AstData_Array)
@@ -125,8 +185,14 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 				}
 			}
 		}
-		code.WriteString("]")
 		indentation--
+		if len(data.ElementNodes) > 0 {
+			lastElement := data.ElementNodes[len(data.ElementNodes)-1]
+			if lastElement.Kind == compiler.AstKind_NewLine {
+				code.WriteString(strings.Repeat("    ", indentation))
+			}
+		}
+		code.WriteString("]")
 		return code.String(), nil
 	case compiler.AstKind_Assignment:
 		data := node.Data.(compiler.AstData_Assignment)

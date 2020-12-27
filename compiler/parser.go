@@ -77,11 +77,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		if numOfTokens := len(parser.Tokens); bodyNodes.TokensConsumed < numOfTokens {
 			var messageBuilder strings.Builder
 			messageBuilder.WriteString("\n\nFinished parsing but didn't read all tokens.\n")
-			messageBuilder.WriteString(fmt.Sprintf("Read %d/%d (%d left unread).\n\n\n", bodyNodes.TokensConsumed, numOfTokens, numOfTokens-bodyNodes.TokensConsumed))
+			messageBuilder.WriteString(fmt.Sprintf("Read %d/%d (%d left unread).\n", bodyNodes.TokensConsumed, numOfTokens, numOfTokens-bodyNodes.TokensConsumed))
 			for _, unreadToken := range parser.Tokens[bodyNodes.TokensConsumed:numOfTokens] {
 				messageBuilder.WriteString(fmt.Sprintf("  %+v,\n", unreadToken))
 			}
-			messageBuilder.WriteString(fmt.Sprintf("Potential cause: %s", bodyNodeParseResult.Reason))
+			messageBuilder.WriteString(fmt.Sprintf("\nPotential cause: %s\n", bodyNodeParseResult.Reason))
 			return ParseResult{
 				WasSuccessful: false,
 				Reason:        messageBuilder.String(),

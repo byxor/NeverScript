@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -58,6 +59,16 @@ type CommandLineArguments struct {
 
 func main() {
 	arguments := ParseCommandLineArguments()
+	// Hardcoded arguments for testing:
+	if len(os.Args) == 1 {
+		*arguments.FileToCompile = "/home/brandon/thps_scripts_misc/foo.ns" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
+		*arguments.ShowCode = true
+		RunNeverscript(arguments)
+		*arguments.FileToCompile = ""
+		*arguments.FileToDecompile = "/home/brandon/thps_scripts_misc/foo.qb" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
+		*arguments.ShowCode = true
+		*arguments.OutputFileName = "/dev/null"
+	}
 	RunNeverscript(arguments)
 }
 
@@ -78,9 +89,6 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) {
 	argumentsWereSupplied := false
 
-	*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\build\\PRE3,thugpro_qb.prx\\qb\\_mods\\byxor_debug.qb"
-	*arguments.ShowCode = true
-
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
 
@@ -94,10 +102,12 @@ func RunNeverscript(arguments CommandLineArguments) {
 		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
 		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
-		fmt.Printf("  Created '%s'.\n\n", outputFilename)
+		fmt.Printf("  Created '%s'.\n", outputFilename)
 
 		if *arguments.ShowHexDump {
-			fmt.Printf("Hex dump:\n%s\n", hex.Dump(bytecodeCompiler.Bytes))
+			fmt.Printf("\n%s\n", hex.Dump(bytecodeCompiler.Bytes))
+		} else {
+			fmt.Println()
 		}
 
 		if *arguments.DecompileWithRoq {
@@ -106,8 +116,6 @@ func RunNeverscript(arguments CommandLineArguments) {
 			decompiledCode, _ := roqCmd.Output()
 			fmt.Println(string(decompiledCode))
 		}
-
-		fmt.Println("done.")
 	} else if *arguments.FileToDecompile != "" {
 		argumentsWereSupplied = true
 
@@ -126,14 +134,14 @@ func RunNeverscript(arguments CommandLineArguments) {
 			outputFilename = WithNsExtension(*arguments.FileToDecompile)
 		}
 
-		if *arguments.ShowCode {
-			fmt.Println(decompilerArguments.SourceCode)
-		}
-
 		ioutil.WriteFile(outputFilename, []byte(decompilerArguments.SourceCode), 0644)
-		fmt.Printf("  Created '%s'.\n\n", outputFilename)
+		fmt.Printf("    Created '%s'.\n", outputFilename)
 
-		fmt.Println("done.")
+		if *arguments.ShowCode {
+			fmt.Printf("\n```%s\n```\n", decompilerArguments.SourceCode)
+		} else {
+			fmt.Println()
+		}
 	} else if *arguments.PreSpecFile != "" {
 		argumentsWereSupplied = true
 
@@ -151,8 +159,6 @@ func RunNeverscript(arguments CommandLineArguments) {
 		if *arguments.ShowHexDump {
 			fmt.Printf("Hex dump:\n%s\n", hex.Dump(pre))
 		}
-
-		fmt.Println("done.")
 	}
 
 	if !argumentsWereSupplied {
@@ -160,6 +166,9 @@ func RunNeverscript(arguments CommandLineArguments) {
 		fmt.Printf("Release %s\n\n", version)
 		fmt.Printf("Usage of %s:\n", os.Args[0])
 		fmt.Printf(usage)
+	} else {
+		banner := strings.Repeat("-", 36)
+		fmt.Println(banner + " done " + banner)
 	}
 }
 
