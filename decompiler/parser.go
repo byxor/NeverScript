@@ -44,12 +44,12 @@ func ParseByteCode(arguments *Arguments) error {
 	var ParseAssignment ParserFunction
 	var ParseScript ParserFunction
 	var ParseIfStatement ParserFunction
-	var ParseExpression ParserFunction
 	var ParseInvocation ParserFunction
 	var ParseReturn ParserFunction
 	var ParseChecksum ParserFunction
 	var ParseFloat ParserFunction
 	var ParseInteger ParserFunction
+	var ParseUnaryExpression ParserFunction
 	var ParsePair ParserFunction
 	var ParseVector ParserFunction
 	var ParseString ParserFunction
@@ -57,6 +57,7 @@ func ParseByteCode(arguments *Arguments) error {
 	var ParseArray ParserFunction
 	var ParseAllArgumentsSymbol ParserFunction
 	var ParseNameTableEntry ParserFunction
+	var ParseExpression func(allowInvocations bool) ParserFunction
 	var ParseBodyOfCode func(index *int) []compiler.AstNode
 
 	bytes := arguments.ByteCode
@@ -173,7 +174,7 @@ func ParseByteCode(arguments *Arguments) error {
 			}
 		}
 
-		expressionParseResult := ParseExpression(index)
+		expressionParseResult := ParseExpression(false)(index)
 		if !expressionParseResult.WasSuccessful {
 			return ParserFailure(WrapLine(WrapIndex(index, "Expected expression at end of assignment"), expressionParseResult.Reason))
 		}
@@ -202,6 +203,21 @@ func ParseByteCode(arguments *Arguments) error {
 		}
 		index += checksumParseResult.BytesRead
 
+		var defaultParameters []compiler.AstNode
+		for {
+			if bytes[index] == 1 || bytes[index] == 0x24 {
+				break
+			}
+
+			defaultParameterParseResult := ParseAssignment(index)
+			if defaultParameterParseResult.WasSuccessful {
+				index += defaultParameterParseResult.BytesRead
+				defaultParameters = append(defaultParameters, defaultParameterParseResult.Node)
+			} else {
+				break
+			}
+		}
+
 		bodyNodes := ParseBodyOfCode(&index)
 
 		if bytes[index] != 0x24 {
@@ -213,7 +229,7 @@ func ParseByteCode(arguments *Arguments) error {
 			Kind: compiler.AstKind_Script,
 			Data: compiler.AstData_Script{
 				NameNode:              checksumParseResult.Node,
-				DefaultParameterNodes: []compiler.AstNode{},
+				DefaultParameterNodes: defaultParameters,
 				BodyNodes:             bodyNodes,
 			},
 		})
@@ -233,7 +249,7 @@ func ParseByteCode(arguments *Arguments) error {
 		//offsetSize := binary.LittleEndian.Uint16(offsetBytes)
 		index += 2
 
-		conditionParseResult := ParseExpression(index)
+		conditionParseResult := ParseExpression(true)(index)
 		if !conditionParseResult.WasSuccessful {
 			return ParserFailure(WrapIndex(index, WrapLine("Failed to parse if statement condition", conditionParseResult.Reason)))
 		}
@@ -260,42 +276,122 @@ func ParseByteCode(arguments *Arguments) error {
 		})
 	}
 
-	ParseExpression = func(index int) ParseResult {
-		ParseExpressionInner := func(index int) ParseResult {
-			parserFunctions := []ParserFunction{
-				ParseAllArgumentsSymbol,
-				ParseFloat,
-				ParseInteger,
-				ParsePair,
-				ParseVector,
-				ParseStruct,
-				ParseArray,
-				ParseInvocation,
-				ParseChecksum,
-				ParseString,
-			}
-			for _, parserFunction := range parserFunctions {
-				parseResult := parserFunction(index)
-				if parseResult.WasSuccessful {
-					return parseResult
+	ParseExpression = func(allowInvocations bool) ParserFunction {
+		return func(index int) ParseResult {
+			ParseExpressionInner := func(index int) ParseResult {
+				parserFunctions := []ParserFunction{
+					ParseAllArgumentsSymbol,
+					ParseFloat,
+					ParseInteger,
+					ParsePair,
+					ParseUnaryExpression,
+					ParseVector,
+					ParseStruct,
+					ParseArray,
 				}
+				if allowInvocations {
+					parserFunctions = append(parserFunctions, ParseInvocation)
+				}
+				parserFunctions = append(
+					parserFunctions,
+					ParseChecksum,
+					ParseString,
+				)
+				for _, parserFunction := range parserFunctions {
+					parseResult := parserFunction(index)
+					oldIndex := index
+					if parseResult.WasSuccessful {
+
+						// Check for binary operators
+						index += parseResult.BytesRead
+						if bytes[index] == 7 {
+							index++
+							rightSideParseResult := ParseExpression(false)(index)
+							if rightSideParseResult.WasSuccessful {
+								index += rightSideParseResult.BytesRead
+								return ParserSuccess(parseResult.BytesRead + 1 + rightSideParseResult.BytesRead, compiler.AstNode{
+									Kind: compiler.AstKind_EqualsExpression,
+									Data: compiler.AstData_BinaryExpression{
+										LeftNode: parseResult.Node,
+										RightNode: rightSideParseResult.Node,
+									},
+								})
+							}
+						} else if bytes[index] == 0x12 {
+							index++
+							rightSideParseResult := ParseExpression(false)(index)
+							if rightSideParseResult.WasSuccessful {
+								index += rightSideParseResult.BytesRead
+								return ParserSuccess(parseResult.BytesRead + 1 + rightSideParseResult.BytesRead, compiler.AstNode{
+									Kind: compiler.AstKind_LessThanExpression,
+									Data: compiler.AstData_BinaryExpression{
+										LeftNode: parseResult.Node,
+										RightNode: rightSideParseResult.Node,
+									},
+								})
+							}
+						} else if bytes[index] == 0x14 {
+							index++
+							rightSideParseResult := ParseExpression(false)(index)
+							if rightSideParseResult.WasSuccessful {
+								index += rightSideParseResult.BytesRead
+								return ParserSuccess(parseResult.BytesRead + 1 + rightSideParseResult.BytesRead, compiler.AstNode{
+									Kind: compiler.AstKind_GreaterThanExpression,
+									Data: compiler.AstData_BinaryExpression{
+										LeftNode: parseResult.Node,
+										RightNode: rightSideParseResult.Node,
+									},
+								})
+							}
+						} else if bytes[index] == 8 {
+							index++
+							rightSideParseResult := ParseExpression(false)(index)
+							if rightSideParseResult.WasSuccessful {
+								index += rightSideParseResult.BytesRead
+								return ParserSuccess(parseResult.BytesRead + 1 + rightSideParseResult.BytesRead, compiler.AstNode{
+									Kind: compiler.AstKind_DotExpression,
+									Data: compiler.AstData_BinaryExpression{
+										LeftNode: parseResult.Node,
+										RightNode: rightSideParseResult.Node,
+									},
+								})
+							}
+						} else if bytes[index] == 0x42 {
+							index++
+							rightSideParseResult := ParseExpression(false)(index)
+							if rightSideParseResult.WasSuccessful {
+								index += rightSideParseResult.BytesRead
+								return ParserSuccess(parseResult.BytesRead + 1 + rightSideParseResult.BytesRead, compiler.AstNode{
+									Kind: compiler.AstKind_ColonExpression,
+									Data: compiler.AstData_BinaryExpression{
+										LeftNode: parseResult.Node,
+										RightNode: rightSideParseResult.Node,
+									},
+								})
+							}
+						}
+
+						return parseResult
+					}
+					index = oldIndex
+				}
+				return ParserFailure(WrapLine(WrapIndex(index, "Bytes not recognised as an expression"), hex.Dump(bytes[index:index+64])))
 			}
-			return ParserFailure(WrapLine(WrapIndex(index, "Bytes not recognised as an expression"), hex.Dump(bytes[index:index+64])))
-		}
-		if bytes[index] == 0x39 {
-			index++
-			innerExpressionParseResult := ParseExpressionInner(index)
-			if !innerExpressionParseResult.WasSuccessful {
-				return ParserFailure(WrapIndex(index, "No expression after '!' (0x39)"))
+			if bytes[index] == 0x39 {
+				index++
+				innerExpressionParseResult := ParseExpressionInner(index)
+				if !innerExpressionParseResult.WasSuccessful {
+					return ParserFailure(WrapIndex(index, "No expression after '!' (0x39)"))
+				}
+				return ParserSuccess(1+innerExpressionParseResult.BytesRead, compiler.AstNode{
+					Kind: compiler.AstKind_LogicalNot,
+					Data: compiler.AstData_UnaryExpression{
+						Node: innerExpressionParseResult.Node,
+					},
+				})
+			} else {
+				return ParseExpressionInner(index)
 			}
-			return ParserSuccess(1+innerExpressionParseResult.BytesRead, compiler.AstNode{
-				Kind: compiler.AstKind_LogicalNot,
-				Data: compiler.AstData_UnaryExpression{
-					Node: innerExpressionParseResult.Node,
-				},
-			})
-		} else {
-			return ParseExpressionInner(index)
 		}
 	}
 
@@ -309,7 +405,7 @@ func ParseByteCode(arguments *Arguments) error {
 		var parameterNodes []compiler.AstNode
 		parserFunctions := []ParserFunction{
 			ParseAssignment,
-			ParseExpression,
+			ParseExpression(false),
 		}
 		for {
 			foundParameter := false
@@ -344,7 +440,7 @@ func ParseByteCode(arguments *Arguments) error {
 		var parameterNodes []compiler.AstNode
 		parserFunctions := []ParserFunction{
 			ParseAssignment,
-			ParseExpression,
+			ParseExpression(false),
 		}
 		for {
 			foundParameter := false
@@ -444,6 +540,31 @@ func ParseByteCode(arguments *Arguments) error {
 		})
 	}
 
+	ParseUnaryExpression = func(index int) ParseResult {
+		if bytes[index] != 0xE {
+			return ParserFailure("Unary expression doesn't begin with '(' (0xE)")
+		}
+		index++
+
+		expressionParseResult := ParseExpression(true)(index)
+		if !expressionParseResult.WasSuccessful {
+			return ParserFailure(WrapLine(WrapIndex(index, "Couldn't parser inner area of unary expression"), expressionParseResult.Reason))
+		}
+		index += expressionParseResult.BytesRead
+
+		if bytes[index] != 0xF {
+			return ParserFailure("Unary expression doesn't end with ')' (0xF)")
+		}
+		index++
+
+		return ParserSuccess(2 + expressionParseResult.BytesRead, compiler.AstNode{
+			Kind: compiler.AstKind_UnaryExpression,
+			Data: compiler.AstData_UnaryExpression{
+				Node: expressionParseResult.Node,
+			},
+		})
+	}
+
 	ParsePair = func(index int) ParseResult {
 		if bytes[index] != 0x1F {
 			return ParserFailure(WrapLine(WrapIndex(index, "Pair doesn't start with 0x1F"), hex.Dump(bytes[index:index+32])))
@@ -536,7 +657,7 @@ func ParseByteCode(arguments *Arguments) error {
 			ParseNewLine,
 			ParseComma,
 			ParseAssignment,
-			ParseExpression,
+			ParseExpression(true),
 		}
 		for {
 			if bytes[index] == 4 {
@@ -576,7 +697,7 @@ func ParseByteCode(arguments *Arguments) error {
 		elementParserFunctions := []ParserFunction{
 			ParseNewLine,
 			ParseComma,
-			ParseExpression,
+			ParseExpression(true),
 		}
 		for {
 			if bytes[index] == 6 {
@@ -656,7 +777,7 @@ func ParseByteCode(arguments *Arguments) error {
 			ParseNewLine,
 			ParseAssignment,
 			ParseIfStatement,
-			ParseExpression,
+			ParseExpression(true),
 			ParseReturn,
 		}
 		for {

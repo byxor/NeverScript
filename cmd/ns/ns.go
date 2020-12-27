@@ -61,13 +61,13 @@ func main() {
 	arguments := ParseCommandLineArguments()
 	// Hardcoded arguments for testing:
 	if len(os.Args) == 1 {
-		*arguments.FileToCompile = "/home/brandon/thps_scripts_misc/foo.ns" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
+		*arguments.FileToCompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.ns" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
 		*arguments.ShowCode = true
 		RunNeverscript(arguments)
 		*arguments.FileToCompile = ""
-		*arguments.FileToDecompile = "/home/brandon/thps_scripts_misc/foo.qb" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
+		*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.qb" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
 		*arguments.ShowCode = true
-		*arguments.OutputFileName = "/dev/null"
+		*arguments.OutputFileName = "nul"
 	}
 	RunNeverscript(arguments)
 }

@@ -31,6 +31,13 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 		return ",", nil
 	case compiler.AstKind_AllArguments:
 		return "<...>", nil
+	case compiler.AstKind_LogicalNot:
+		data := node.Data.(compiler.AstData_UnaryExpression)
+		expressionCode, err := DecompileAstNode(data.Node, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return "! " + expressionCode, nil
 	case compiler.AstKind_LocalReference:
 		expressionCode, err := DecompileAstNode(node.Data.(compiler.AstData_UnaryExpression).Node, indentation, nameTable)
 		if err != nil {
@@ -46,6 +53,15 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			return "", err
 		}
 		code.WriteString(name)
+		for _, defaultParameterNode := range data.DefaultParameterNodes {
+			code.WriteString(" ")
+			nodeCode, err := DecompileAstNode(defaultParameterNode, indentation, nameTable)
+			if err != nil {
+				return "", err
+			}
+			nodeCode = strings.Replace(nodeCode, " = ", "=", 1)
+			code.WriteString(nodeCode)
+		}
 		code.WriteString(" {")
 		indentation++
 		for i, bodyNode := range data.BodyNodes {
@@ -70,34 +86,53 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			return "", err
 		}
 		code.WriteString(decompiledName)
-		for i, parameterNode := range data.ParameterNodes {
-			decompiledNode, err := DecompileAstNode(parameterNode, indentation, nameTable)
-			if err != nil {
-				return "", err
-			}
-			isFirstNode := i == 0
-			isLastNode := i == len(data.ParameterNodes) - 1
-			if isFirstNode {
-				if parameterNode.Kind != compiler.AstKind_NewLine {
+		if len(data.ParameterNodes) <= 2 { // render params on 1 line
+			for i, parameterNode := range data.ParameterNodes {
+				decompiledNode, err := DecompileAstNode(parameterNode, indentation, nameTable)
+				if err != nil {
+					return "", err
+				}
+				isFirstNode := i == 0
+				isLastNode := i == len(data.ParameterNodes)-1
+				if isFirstNode {
+					if parameterNode.Kind != compiler.AstKind_NewLine {
+						code.WriteString(" ")
+					}
+				}
+				if parameterNode.Kind == compiler.AstKind_Assignment {
+					decompiledNode = strings.Replace(decompiledNode, " = ", "=", 1)
+				}
+				code.WriteString(decompiledNode)
+				if !isLastNode {
 					code.WriteString(" ")
 				}
 			}
-			if parameterNode.Kind == compiler.AstKind_Assignment {
-				decompiledNode = strings.Replace(decompiledNode, " = ", "=", 1)
+		} else { // render params across multiple lines
+			indentation++
+			for _, parameterNode := range data.ParameterNodes {
+				decompiledNode, err := DecompileAstNode(parameterNode, indentation, nameTable)
+				if err != nil {
+					return "", err
+				}
+				code.WriteString(" \\\n")
+				code.WriteString(strings.Repeat("    ", indentation))
+				code.WriteString(decompiledNode)
 			}
-			code.WriteString(decompiledNode)
-			if !isLastNode {
-				code.WriteString(" ")
-			}
+			indentation--
 		}
 		return code.String(), nil
+	case compiler.AstKind_UnaryExpression:
+		data := node.Data.(compiler.AstData_UnaryExpression)
+		nodeCode, err := DecompileAstNode(data.Node, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return "(" + nodeCode + ")", nil
 	case compiler.AstKind_Checksum:
 		data := node.Data.(compiler.AstData_Checksum)
-
 		if data.ChecksumToken.Data != "" {
 			return data.ChecksumToken.Data, nil
 		}
-
 		checksum := binary.LittleEndian.Uint32(data.ChecksumBytes)
 		if resolvedName, ok := nameTable[checksum]; ok {
 			return resolvedName, nil
@@ -237,6 +272,61 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			return "", err
 		}
 		return fmt.Sprintf("%s = %s", decompiledName, decompiledValue), nil
+	case compiler.AstKind_EqualsExpression:
+		data := node.Data.(compiler.AstData_BinaryExpression)
+		leftDecompiled, err := DecompileAstNode(data.LeftNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		rightDecompiled, err := DecompileAstNode(data.RightNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return leftDecompiled + " = " + rightDecompiled, nil
+	case compiler.AstKind_LessThanExpression:
+		data := node.Data.(compiler.AstData_BinaryExpression)
+		leftDecompiled, err := DecompileAstNode(data.LeftNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		rightDecompiled, err := DecompileAstNode(data.RightNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return leftDecompiled + " < " + rightDecompiled, nil
+	case compiler.AstKind_DotExpression:
+		data := node.Data.(compiler.AstData_BinaryExpression)
+		leftDecompiled, err := DecompileAstNode(data.LeftNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		rightDecompiled, err := DecompileAstNode(data.RightNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return leftDecompiled + "." + rightDecompiled, nil
+	case compiler.AstKind_ColonExpression:
+		data := node.Data.(compiler.AstData_BinaryExpression)
+		leftDecompiled, err := DecompileAstNode(data.LeftNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		rightDecompiled, err := DecompileAstNode(data.RightNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return leftDecompiled + ":" + rightDecompiled, nil
+	case compiler.AstKind_GreaterThanExpression:
+		data := node.Data.(compiler.AstData_BinaryExpression)
+		leftDecompiled, err := DecompileAstNode(data.LeftNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		rightDecompiled, err := DecompileAstNode(data.RightNode, indentation, nameTable)
+		if err != nil {
+			return "", err
+		}
+		return leftDecompiled + " > " + rightDecompiled, nil
 	case compiler.AstKind_IfStatement:
 		data := node.Data.(compiler.AstData_IfStatement)
 		var code strings.Builder
@@ -246,7 +336,6 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			return "", err
 		}
 		code.WriteString(conditionCode)
-
 		renderBody := func(body []compiler.AstNode) (string, error) {
 			var bodyCode strings.Builder
 			bodyCode.WriteString(" {")
@@ -269,13 +358,11 @@ func DecompileAstNode(node compiler.AstNode, indentation int, nameTable map[uint
 			bodyCode.WriteString("}")
 			return bodyCode.String(), nil
 		}
-
 		bodyCode, err := renderBody(data.Bodies[0])
 		if err != nil {
 			return "", err
 		}
 		code.WriteString(bodyCode)
-
 		if len(data.Bodies) > 1 { // has 'else'
 			code.WriteString(" else")
 			elseBodyCode, err := renderBody(data.Bodies[1])
