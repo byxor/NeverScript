@@ -112,7 +112,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 
 		if *arguments.DecompileWithRoq {
 			fmt.Println("Roq decompiler output (may freeze):")
-			roqCmd := exec.Command(".\\roq.exe", "-d", outputFilename)
+			roqCmd := exec.Command("roq.exe", "-d", outputFilename)
 			decompiledCode, _ := roqCmd.Output()
 			fmt.Println(string(decompiledCode))
 		}
