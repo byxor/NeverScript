@@ -44,6 +44,7 @@ const (
 	AstKind_Vector
 	AstKind_Struct
 	AstKind_Array
+	AstKind_ArrayAccess
 	AstKind_Comma
 	AstKind_Random
 	AstKind_EndOfFile
@@ -88,6 +89,7 @@ func (astKind AstKind) String() string {
 		"AstKind_Vector",
 		"AstKind_Struct",
 		"AstKind_Array",
+		"AstKind_ArrayAccess",
 		"AstKind_Comma",
 		"AstKind_Random",
 		"AstKind_EndOfFile",
@@ -207,6 +209,13 @@ type AstData_Array struct {
 	ElementNodes []AstNode
 }
 func (astData AstData_Array) astData() {}
+
+type AstData_ArrayAccess struct {
+	Array AstNode
+	Index AstNode
+}
+func (astData AstData_ArrayAccess) astData() {}
+
 
 type AstData_Random struct {
 	BranchWeights []AstNode

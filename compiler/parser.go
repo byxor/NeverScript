@@ -240,7 +240,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			if GetKind(index) == TokenKind_LeftCurlyBrace {
 				return ParseStruct(index)
 			}
-			GetToken(index)
 			return ParseResult{
 				WasSuccessful: false,
 				Reason:        TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
@@ -365,6 +364,25 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if secondExpressionParseResult.WasSuccessful {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_DivisionExpression)
+				}
+			} else if GetKind(index) == TokenKind_LeftSquareBracket {
+				index += 1
+				if secondExpressionParseResult := ParseExpression(index, allowInvocations); secondExpressionParseResult.WasSuccessful {
+					index += secondExpressionParseResult.TokensConsumed
+					if GetKind(index) == TokenKind_RightSquareBracket {
+						index += 1
+						return ParseResult{
+							WasSuccessful:  true,
+							Node:           AstNode{
+								Kind: AstKind_ArrayAccess,
+								Data: AstData_ArrayAccess{
+									Array: secondExpressionParseResult.Node,
+									Index: secondExpressionParseResult.Node,
+								},
+							},
+							TokensConsumed: expressionParseResult.TokensConsumed + 1 + secondExpressionParseResult.TokensConsumed + 1,
+						}
+					}
 				}
 			}
 		}
@@ -501,6 +519,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseChecksumOrInvocation = func(index int, allowInvocations bool) ParseResult {
+		var checksumOrInvocation ParseResult
+
 		if allowInvocations {
 			extraTokens := 0
 			for {
@@ -511,13 +531,22 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				}
 			}
 			if expressionParseResult := ParseExpression(index+extraTokens+1, allowInvocations); expressionParseResult.WasSuccessful {
-				invocation := ParseInvocation(index)
-				return invocation
+				checksumOrInvocation = ParseInvocation(index)
 			}
 		}
-		return ParseChecksum(index)
-		// TODO(brandon): Check for array access... e.g. identifier[int]
-		// edit ^ might not be necessary since it's just an array beside an identifier in the bytecode
+
+		if checksumOrInvocation.WasSuccessful == false {
+			checksumOrInvocation = ParseChecksum(index)
+		}
+
+		if checksumOrInvocation.WasSuccessful == false {
+			return ParseResult{
+				WasSuccessful: false,
+				Reason:        TokensNotRecognisedError(parser.Tokens[index:], "an invocation or checksum node"),
+			}
+		}
+
+		return checksumOrInvocation
 	}
 
 	ParseChecksum = func(index int) ParseResult {

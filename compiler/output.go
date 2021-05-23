@@ -400,6 +400,12 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 				writeBytecodeForNode(elementNode)
 			}
 			write(6)
+		case AstKind_ArrayAccess:
+			data := node.Data.(AstData_ArrayAccess)
+			writeBytecodeForNode(data.Array)
+			write(5)
+			writeBytecodeForNode(data.Index)
+			write(6)
 		default:
 			fmt.Printf("Warning: no bytecode generated for AstNode of type '%s'\n", node.Kind.String())
 		}
