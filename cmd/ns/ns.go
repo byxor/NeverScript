@@ -60,7 +60,7 @@ type CommandLineArguments struct {
 func main() {
 	arguments := ParseCommandLineArguments()
 	// Hardcoded arguments for testing:
-	if len(os.Args) == 1 {
+	/* if len(os.Args) == 1 {
 		*arguments.FileToCompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.ns" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
 		*arguments.ShowCode = true
 		RunNeverscript(arguments)
@@ -68,7 +68,7 @@ func main() {
 		*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.qb" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
 		*arguments.ShowCode = true
 		*arguments.OutputFileName = "nul"
-	}
+	} */
 	RunNeverscript(arguments)
 }
 
