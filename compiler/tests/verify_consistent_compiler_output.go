@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"github.com/byxor/NeverScript/compiler"
-	"github.com/pmezard/go-difflib/difflib"
-	"io/ioutil"
-	"log"
-	"os"
-	"os/exec"
-	"strings"
+    "fmt"
+    "github.com/byxor/NeverScript/compiler"
+    "github.com/pmezard/go-difflib/difflib"
+    "io/ioutil"
+    "log"
+    "os"
+    "os/exec"
+    "strings"
 )
 
 /*
@@ -21,66 +21,66 @@ import (
  */
 
 func main() {
-	tempDir, err := ioutil.TempDir(os.TempDir(), "neverscript-temporary-testing-tempDir")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(tempDir)
+    tempDir, err := ioutil.TempDir(os.TempDir(), "neverscript-temporary-testing-tempDir")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer os.RemoveAll(tempDir)
 
-	nsPath := tempDir + "/code.ns"
-	qbPath := tempDir + "/code.qb"
+    nsPath := tempDir + "/code.ns"
+    qbPath := tempDir + "/code.qb"
 
-	// Create neverscript file
-	ioutil.WriteFile(nsPath, []byte(code), 0644)
+    // Create neverscript file
+    ioutil.WriteFile(nsPath, []byte(code), 0644)
 
-	// Compile
-	fmt.Println("Compiling ns...")
-	var lexer compiler.Lexer
-	var parser compiler.Parser
-	var bytecodeCompiler compiler.BytecodeCompiler
-	compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
-	fmt.Println()
+    // Compile
+    fmt.Println("Compiling ns...")
+    var lexer compiler.Lexer
+    var parser compiler.Parser
+    var bytecodeCompiler compiler.BytecodeCompiler
+    compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
+    fmt.Println()
 
-	// Decompile
-	fmt.Println("Decompiling roq...")
-	roqCmd := exec.Command(".\\roq.exe", "-d", qbPath)
-	decompiledRoq, _ := roqCmd.Output()
-	fmt.Println()
+    // Decompile
+    fmt.Println("Decompiling roq...")
+    roqCmd := exec.Command(".\\roq.exe", "-d", qbPath)
+    decompiledRoq, _ := roqCmd.Output()
+    fmt.Println()
 
-	// Compare results (the stupid variable name aligns the output in the debugger)
-	__actual := strings.TrimSpace(strings.Replace(string(decompiledRoq), "\r", "", -1))
-	expected := strings.TrimSpace(strings.Replace(expectedDecompiledRoq, "\r", "", -1))
-	banner := "--------------------------------------------------------"
-	if __actual != expected {
-		fmt.Println(banner)
-		fmt.Println("WARNING: COMPILER OUTPUT CHANGED")
-		fmt.Println(banner)
-		fmt.Println("Expected:")
-		fmt.Println(banner)
-		fmt.Println(expected)
-		fmt.Println(banner)
-		fmt.Println("But got:")
-		fmt.Println(banner)
-		fmt.Println(__actual)
-		fmt.Println(banner)
-		fmt.Println("Diff:")
-		fmt.Println(banner)
+    // Compare results (the stupid variable name aligns the output in the debugger)
+    __actual := strings.TrimSpace(strings.Replace(string(decompiledRoq), "\r", "", -1))
+    expected := strings.TrimSpace(strings.Replace(expectedDecompiledRoq, "\r", "", -1))
+    banner := "--------------------------------------------------------"
+    if __actual != expected {
+        fmt.Println(banner)
+        fmt.Println("WARNING: COMPILER OUTPUT CHANGED")
+        fmt.Println(banner)
+        fmt.Println("Expected:")
+        fmt.Println(banner)
+        fmt.Println(expected)
+        fmt.Println(banner)
+        fmt.Println("But got:")
+        fmt.Println(banner)
+        fmt.Println(__actual)
+        fmt.Println(banner)
+        fmt.Println("Diff:")
+        fmt.Println(banner)
 
-		diff := difflib.UnifiedDiff{
-			A:        difflib.SplitLines(expected),
-			B:        difflib.SplitLines(__actual),
-			FromFile: "Expected",
-			ToFile:   "Actual",
-			Context:  3,
-		}
-		text, _ := difflib.GetUnifiedDiffString(diff)
-		fmt.Println(text)
-	} else {
-		fmt.Println(banner)
-		fmt.Println("Hooray! Still working!")
-	}
+        diff := difflib.UnifiedDiff{
+            A:        difflib.SplitLines(expected),
+            B:        difflib.SplitLines(__actual),
+            FromFile: "Expected",
+            ToFile:   "Actual",
+            Context:  3,
+        }
+        text, _ := difflib.GetUnifiedDiffString(diff)
+        fmt.Println(text)
+    } else {
+        fmt.Println(banner)
+        fmt.Println("Hooray! Still working!")
+    }
 
-	// fmt.Printf("Hex dump:\n%s", qbPath, hex.Dump(bytecodeCompiler.Bytes))
+    // fmt.Printf("Hex dump:\n%s", qbPath, hex.Dump(bytecodeCompiler.Bytes))
 }
 
 
@@ -113,9 +113,9 @@ my_struct = { x=1, y=2, z=3 }
 x = 10 // comment after assignment
 
 my_struct = {
-	1 // one
-	2 // two
-	3 /* three */
+    1 // one
+    2 // two
+    3 /* three */
 }
 
 /* my comment */
@@ -135,196 +135,205 @@ zzzz = - ~ ¬!!()&&&^^{}{ { { (<{ / / / *
 
 script TestBasicExpressions {
     x = 1
-	x = (1)
-	
-	description = "Positive ints:"
-	x = (1 + 2)
-	x = (1 - 2)
+    x = (1)
+    
+    description = "Positive ints:"
+    x = (1 + 2)
+    x = (1 - 2)
     x = (1 * 3)
     x = (1 / 2)
     
-	description = "Negative ints:"
-	x = (-1 + -2)
-	x = (-1 - -2)
+    description = "Negative ints:"
+    x = (-1 + -2)
+    x = (-1 - -2)
     x = (-1 * -3)
     x = (-1 / -2)
-	
-	description = "Positive floats:"
-	x = (1.0 + 2.0)
-	x = (1.0 - 2.0)
+    
+    description = "Positive floats:"
+    x = (1.0 + 2.0)
+    x = (1.0 - 2.0)
     x = (1.0 * 3.0)
     x = (1.0 / 2.0)
 
-	description = "Negative floats:"
-	x = (-1.0 + -2.0)
-	x = (-1.0 - -2.0)
+    description = "Negative floats:"
+    x = (-1.0 + -2.0)
+    x = (-1.0 - -2.0)
     x = (-1.0 * -3.0)
     x = (-1.0 / -2.0)
 }
 
 script TestShorthandMath {
-	description = "Global variables:"
-	Change x += 5
-	Change x -= 6
-	Change x *= 7
-	Change x *= 8
+    description = "Global variables:"
+    Change x += 5
+    Change x -= 6
+    Change x *= 7
+    Change x *= 8
 
-	description = "Local variables:"
-	<x> += 5
-	<x> -= 6
+    description = "Local variables:"
+    <x> += 5
+    <x> -= 6
     <x> *= 7
-	<x> /= 8
+    <x> /= 8
 }
 
 script TestInvocations {
-	description = "Invocation with checksum parameters:"
-	NameOfScript param1 param2 param3
+    description = "Invocation with checksum parameters:"
+    NameOfScript param1 param2 param3
 
-	description = "Invocation with assigned parameters:"
-	NameOfScript param1=1 param2=2.0 param3="3" param4=(4.0, 0.4) param5=[5 5.0 "5" five "five"] param6={six=6}
+    description = "Invocation with assigned parameters:"
+    NameOfScript param1=1 param2=2.0 param3="3" param4=(4.0, 0.4) param5=[5 5.0 "5" five "five"] param6={six=6}
 
-	description = "Invocation across multiple lines:"
-	NameOfScript param1 = 1 \
+    description = "Invocation across multiple lines:"
+    NameOfScript param1 = 1 \
                  param2 = 2.0 \
                  param3 = "3"
 
-	description = "Invocation across multiple lines (1st param on next line):"
-	NameOfScript \
-		param1 = 1 \
-		param2 = 2.0 \
-		param3 = "3"
+    description = "Invocation across multiple lines (1st param on next line):"
+    NameOfScript \
+        param1 = 1 \
+        param2 = 2.0 \
+        param3 = "3"
 }
 
 script TestIfStatements {
-	description = "Basic if:"
-	if something {}
+    description = "Basic if:"
+    if something {}
 
-	description = "Basic if/else:"
-	if something {} else {}
+    description = "Basic if/else:"
+    if something {} else {}
 
-	description = "Basic if/elseif/else:"
-	if c1 {} else if c2 {} else {}
+    description = "Basic if/elseif/else:"
+    if c1 {} else if c2 {} else {}
 
-	description = "Condition with logical not:"
-	if ! condition {}
+    description = "Condition with logical not:"
+    if ! condition {}
 
-	description = "Condition with logical and:"
-	if c1 and c2 {}
+    description = "Condition with logical and:"
+    if c1 and c2 {}
 
-	description = "Condition with invocation:"
-	if GotParam Foo {}
+    description = "Condition with invocation:"
+    if GotParam Foo {}
 
-	description = "Condition with invocation with struct parameter:"
-	if IsOld {name="byxor", age=23} {
-		MakeYounger
-	}
+    description = "Condition with invocation with struct parameter:"
+    if IsOld {name="byxor", age=23} {
+        MakeYounger
+    }
 
-	description = "Condition with logical not with invocation with struct parameter:"
-	if ! IsFinished {progress=10, finish=100} {
-		MakeProgress
-	}
+    description = "Condition with logical not with invocation with struct parameter:"
+    if ! IsFinished {progress=10, finish=100} {
+        MakeProgress
+    }
 
-	// TODO(brandon): Add more variations of invocations with final struct params here
-	// e.g. Object::MemberFunction {distance=15000000}
-	// e.g. ! Object::MemberFunction {distance=15000000}
-	// e.g. & struct.script {distance=15000000}
+    description = "Condition with member function invocation:"
+    if Object:GetCollision {
+        PlayCollisionSound
+    }
 
-	description = "Comparisons:"
-	if (c1 = c2) {}
-	if (c1 < c2) {}
-	if (c1 > c2) {}
-	if (c1 != c2) {}
-	if (c1 <= c2) {}
-	if (c1 >= c2) {}
+    description = "Condition with member function invocation with struct parameter:"
+    if Object:GetCollision { length=20 } {
+        PlayCollisionSound
+    }
+
+    // TODO(brandon): Add more variations of invocations with final struct params here
+    // e.g. ! Object:MemberFunction {distance=15000000}
+    // e.g. & struct.script {distance=15000000}
+
+    description = "Comparisons:"
+    if (c1 = c2) {}
+    if (c1 < c2) {}
+    if (c1 > c2) {}
+    if (c1 != c2) {}
+    if (c1 <= c2) {}
+    if (c1 >= c2) {}
 }
 
 script TestEmptyReturn {
-	return
+    return
 }
 
 script TestReturningMultipleParametersOnSingleLine {
-	return x=1 y=2 z=3 w={what="the", heckIsHeDoingHere}
+    return x=1 y=2 z=3 w={what="the", heckIsHeDoingHere}
 }
 
 script TestReturningMultipleParametersOnMultipleLines {
-	return \
-		x = 11 \
-		y = 22 \
-		z = 33
+    return \
+        x = 11 \
+        y = 22 \
+        z = 33
 }
 
 script TestWhile {
-	while {
-		Tick
-		Tock
-	}
+    while {
+        Tick
+        Tock
+    }
 }
 
 script TestRandom {
-	random {
-		10 {
-			print "this is gonna happen 10/15 times on average"
-			print "yo yo"
-		}
-		5 {
-			print "this is gonna happen 5/15 times on average"
-			print "skrrrrrt"
-		}
-	}
+    random {
+        10 {
+            print "this is gonna happen 10/15 times on average"
+            print "yo yo"
+        }
+        5 {
+            print "this is gonna happen 5/15 times on average"
+            print "skrrrrrt"
+        }
+    }
 
-	x = random {
-		9 { "Hey" }
-		4 { "Hello" }
-		10 { "Yo" }
-		2 { "What's up?" }
-	}
+    x = random {
+        9 { "Hey" }
+        4 { "Hello" }
+        10 { "Yo" }
+        2 { "What's up?" }
+    }
 }
 
 script TestShorthandScriptInvocationAsCondition {
-	// Experimental syntax
-	if @(is_eating_pasta) {
-		printf "script returned __boolean_result__=1"
-	} else {
-		printf "script returned __boolean_result__=0"
-	}
+    // Experimental syntax
+    if @(is_eating_pasta) {
+        printf "script returned __boolean_result__=1"
+    } else {
+        printf "script returned __boolean_result__=0"
+    }
 }
 
 script TestShorthandScriptInvocationAsElseIfCondition {
-	// Experimental syntax
-	if @(is_north) {
-		printf "north"
-	} else if @(is_east) {
-		printf "east"
-	} else if @(is_south) {
-		printf "south"
-	} else if @(is_west) {
-		printf "west"
-	}
+    // Experimental syntax
+    if @(is_north) {
+        printf "north"
+    } else if @(is_east) {
+        printf "east"
+    } else if @(is_south) {
+        printf "south"
+    } else if @(is_west) {
+        printf "west"
+    }
 }
 
 script TestShortHandScriptInvocationWithParametersAsCondition {
-	// Experimental syntax
-	if @(is_cardinal_direction direction="north") {
-		printf "north"
-	}
+    // Experimental syntax
+    if @(is_cardinal_direction direction="north") {
+        printf "north"
+    }
 }
 
 script TestShorthandBooleanReturnTrue {
-	// Experimental syntax
-	return true
+    // Experimental syntax
+    return true
 }
 
 script TestShorthandBooleanReturnFalse {
-	// Experimental syntax
-	return false
+    // Experimental syntax
+    return false
 }
 
 script TestShorthandBooleanReturnWithMultipleArguments {
-	// Experimental syntax
-	return true \
-		x = 10 \
-		y = 20 \
-		z = 30
+    // Experimental syntax
+    return true \
+        x = 10 \
+        y = 20 \
+        z = 30
 }
 
 // TODO(brandon): Add test for scripts that start with the name 'script'. This confuses the lexer.
@@ -416,6 +425,14 @@ const expectedDecompiledRoq = `
 	:i $description$ = %s(65,"Condition with logical not with invocation with struct parameter:")
 	:i if NOT $IsFinished$:s{$progress$ = %i(10,0000000a);$finish$ = %i(100,00000064):s}
 		:i $MakeProgress$
+	:i endif
+	:i $description$ = %s(42,"Condition with member function invocation:")
+	:i if $Object$.$GetCollision$
+		:i $PlayCollisionSound$
+	:i endif
+	:i $description$ = %s(64,"Condition with member function invocation with struct parameter:")
+	:i if $Object$.$GetCollision$:s{$length$ = %i(20,00000014):s}
+		:i $PlayCollisionSound$
 	:i endif
 	:i $description$ = %s(12,"Comparisons:")
 	:i if  ($c1$ = $c2$) endif

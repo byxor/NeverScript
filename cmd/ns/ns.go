@@ -29,8 +29,8 @@ const (
 
 	usage = `
 COMPILATION:
-	-c                 (required string)  Specify a file to compile (.ns).
-	-o                 (optional string)  Specify the output file name (.qb).
+    -c                 (required string)  Specify a file to compile (.ns).
+    -o                 (optional string)  Specify the output file name (.qb).
     -showHexDump       (optional flag)    Display the compiled bytecode in hex format.
     -decompileWithRoq  (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
 
@@ -39,8 +39,8 @@ PRE GENERATION:
     -showHexDump       (optional flag)    Display the pre bytes in hex format.
 
 DECOMPILATION (very incomplete):
-	-d                 (required string)  Specify a file to decompile (.qb).
-	-o                 (optional string)  Specify the output file name (.ns).
+    -d                 (required string)  Specify a file to decompile (.qb).
+    -o                 (optional string)  Specify the output file name (.ns).
     -showCode          (optional flag)    Display the decompiled code as text.
 `
 

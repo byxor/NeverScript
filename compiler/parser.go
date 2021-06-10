@@ -838,6 +838,32 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					parseResult.TokensConsumed -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
 				}
 			}
+		} else if parseResult.Node.Kind == AstKind_ColonExpression {
+			colonData := parseResult.Node.Data.(AstData_BinaryExpression)
+			if colonData.RightNode.Kind == AstKind_Invocation {
+				invocationData := colonData.RightNode.Data.(AstData_Invocation)
+				lastParameterIndex := len(invocationData.ParameterNodes) - 1
+				lastParameterNode := invocationData.ParameterNodes[lastParameterIndex]
+				if lastParameterNode.Kind == AstKind_Struct {
+					// remove struct from params
+					parseResult.Node.Data = AstData_BinaryExpression{
+						LeftNode: colonData.LeftNode,
+						RightNode: AstNode{
+							Kind: AstKind_Invocation,
+							Data: AstData_Invocation{
+								ScriptIdentifierNode:              invocationData.ScriptIdentifierNode,
+								ParameterNodes:                    invocationData.ParameterNodes[:lastParameterIndex],
+								TokensConsumedByEachParameterNode: invocationData.TokensConsumedByEachParameterNode[:lastParameterIndex],
+							},
+						},
+					}
+
+					// skip backwards over the struct so it will be read as the if-statement body
+					*index -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
+					// reduce the number of tokens consumed by the condition
+					parseResult.TokensConsumed -= invocationData.TokensConsumedByEachParameterNode[lastParameterIndex]
+				}
+			}
 		}
 	}
 
