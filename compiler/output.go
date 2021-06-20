@@ -14,6 +14,7 @@ type CustomByteBuffer struct {
 type BytecodeCompiler struct {
 	RootAstNode AstNode
 	Bytes       []byte
+	NextLoopBypasserId int
 }
 
 func GenerateBytecode(compiler *BytecodeCompiler) {
@@ -260,10 +261,11 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 				Data: AstData_Checksum{
 					ChecksumToken: Token{
 						Kind: TokenKind_Identifier,
-						Data: "__COMPILER__infinite_loop_bypasser",
+						Data: fmt.Sprintf("__COMPILER__infinite_loop_bypasser_%d", compiler.NextLoopBypasserId),
 					},
 				},
 			}
+			compiler.NextLoopBypasserId++
 			constantIntegerNode := AstNode{
 				Kind: AstKind_Integer,
 				Data: AstData_Integer{

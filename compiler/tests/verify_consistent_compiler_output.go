@@ -269,6 +269,14 @@ script TestWhile {
     }
 }
 
+script TestNestedWhile {
+    while {
+        while {
+            // should have different variable names when bypassing infinite loop checks.
+        }
+    }
+}
+
 script TestRandom {
     random {
         10 {
@@ -455,14 +463,30 @@ const expectedDecompiledRoq = `
 	$x$ = %i(11,0000000b)$y$ = %i(22,00000016)$z$ = %i(33,00000021)
 :i endfunction
 :i function $TestWhile$
-	:i $__COMPILER__infinite_loop_bypasser$ = %i(0,00000000)
+	:i $__COMPILER__infinite_loop_bypasser_0$ = %i(0,00000000)
 	:i while
-		if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser$ > %i(0,00000000)) 
+		if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_0$ > %i(0,00000000)) 
 			:i continue
 			
 		:i endif
 		:i $Tick$
 		:i $Tock$
+	:i loop_to 
+:i endfunction
+:i function $TestNestedWhile$
+	:i $__COMPILER__infinite_loop_bypasser_1$ = %i(0,00000000)
+	:i while
+		if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_1$ > %i(0,00000000)) 
+			:i continue
+			
+		:i endif
+		:i $__COMPILER__infinite_loop_bypasser_2$ = %i(0,00000000)
+		:i while
+			if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_2$ > %i(0,00000000)) 
+				:i continue
+				
+			:i endif
+		:i loop_to 
 	:i loop_to 
 :i endfunction
 :i function $TestRandom$
