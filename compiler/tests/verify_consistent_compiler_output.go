@@ -168,6 +168,17 @@ script TestBasicExpressions {
     x = (-1.0 / -2.0)
 }
 
+script TestStringEscaping {
+    description = "String containing a single backslash:"
+    s = "\\"
+
+    description = "String containing two backslashes:"
+    s = "\\\\"
+    
+    description = "String containing a quote:"
+    s = "\""
+}
+
 script TestShorthandMath {
     description = "Global variables:"
     Change x += 5
@@ -397,6 +408,14 @@ const expectedDecompiledRoq = `
 	:i $x$ =  (%f(-1.000000) - %f(-2.000000)) 
 	:i $x$ =  (%f(-1.000000) * %f(-3.000000)) 
 	:i $x$ =  (%f(-1.000000) / %f(-2.000000)) 
+:i endfunction
+:i function $TestStringEscaping$
+	:i $description$ = %s(37,"String containing a single backslash:")
+	:i $s$ = %s(1,"\")
+	:i $description$ = %s(34,"String containing two backslashes:")
+	:i $s$ = %s(2,"\\")
+	:i $description$ = %s(26,"String containing a quote:")
+	:i $s$ = %s(1,""")
 :i endfunction
 :i function $TestShorthandMath$
 	:i $description$ = %s(17,"Global variables:")

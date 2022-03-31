@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 )
 
 type CustomByteBuffer struct {
@@ -99,6 +100,8 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 			write(0x1B)
 			stringData := node.Data.(AstData_String).StringToken.Data
 			stringData = stringData[1 : len(stringData)-1]
+			stringData = strings.Replace(stringData, "\\\\", "\\",-1)
+			stringData = strings.Replace(stringData, "\\\"", "\"",-1)
 			writeLittleUint32(uint32(len(stringData) + 1))
 			write([]byte(stringData)...)
 			write(0)

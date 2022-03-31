@@ -160,6 +160,8 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 			case 1:
 				if end >= len(lexer.SourceCode) {
 					return lexer.SourceCode[start:], true
+				} else if lexer.SourceCode[end] == '\\' {
+					end++
 				} else if lexer.SourceCode[end] == '"' {
 					return lexer.SourceCode[start : end+1], true
 				}
