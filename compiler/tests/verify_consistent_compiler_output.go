@@ -314,8 +314,18 @@ script TestRandom {
     }
 }
 
-// TODO(brandon): Add test for scripts that start with the name 'script'. This confuses the lexer.
-// TODO(brandon): Also include other keywords in these tests (if/else/and/or etc)
+script TestIdentifiersWithKeywordPrefixes {
+    script_1 = ""
+    or_1 = ""
+    if_1 = ""
+    and_1 = ""
+    else_1 = ""
+    while_1 = ""
+    break_1 = ""
+    random_1 = ""
+    return_1 = ""
+    
+}
 `
 
 const expectedDecompiledRoq = `
@@ -492,6 +502,17 @@ const expectedDecompiledRoq = `
 		 :POS(5) %s(2,"Yo")
 	:BREAKTO(7)
 		 :POS(6) %s(10,"What's up?") :POS(7) 
+	:i endfunction
+	:i function $TestIdentifiersWithKeywordPrefixes$
+		:i $script_1$ = %s(0,"")
+		:i $or_1$ = %s(0,"")
+		:i $if_1$ = %s(0,"")
+		:i $and_1$ = %s(0,"")
+		:i $else_1$ = %s(0,"")
+		:i $while_1$ = %s(0,"")
+		:i $break_1$ = %s(0,"")
+		:i $random_1$ = %s(0,"")
+		:i $return_1$ = %s(0,"")
 	:i endfunction
 	:i :end
 `

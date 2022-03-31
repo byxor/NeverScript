@@ -22,16 +22,32 @@ type Lexer struct {
 
 func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tokens)
 
-	CanFindKeywordAtIndex := func(keyword string, index int) bool {
-		return strings.HasPrefix(lexer.SourceCode[index:], keyword)
+	CanFindKeywordAtIndex := func(keyword string, index int, rejectKeywordIfIdentifierPrefix bool) bool {
+		if rejectKeywordIfIdentifierPrefix {
+			nextPos := index+len(keyword)
+			if nextPos < len(lexer.SourceCode) {
+				// not an identifier, no need to reject
+				nextChar := lexer.SourceCode[nextPos]
+				if unicode.IsLetter(rune(nextChar)) ||
+									unicode.IsDigit(rune(nextChar)) ||
+									nextChar == '_' {
+					return false
+				}
+			}
+
+		}
+			return strings.HasPrefix(lexer.SourceCode[index:], keyword)
 	}
 
-	CanFindKeyword := func(keyword string) bool {
-		return CanFindKeywordAtIndex(keyword, lexer.Index)
+	CanFindKeyword := func(keyword string, rejectKeywordIfIdentifierPrefix bool) bool {
+
+
+
+		return CanFindKeywordAtIndex(keyword, lexer.Index, rejectKeywordIfIdentifierPrefix)
 	}
 
 	CanFindSingleLineComment := func() (string, bool) {
-		if CanFindKeyword("//") {
+		if CanFindKeyword("//", false) {
 			start := lexer.Index
 			end := start + 2
 			for {
@@ -47,20 +63,20 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 	}
 
 	CanFindMultiLineComment := func() (string, bool) {
-		if CanFindKeyword("/*") {
+		if CanFindKeyword("/*", false) {
 			start := lexer.Index
 			end := start + 2
 			nesting := 1
 			for {
 				if end >= len(lexer.SourceCode) {
 					return lexer.SourceCode[start:end], true
-				} else if CanFindKeywordAtIndex("*/", end) {
+				} else if CanFindKeywordAtIndex("*/", end, false) {
 					nesting--
 					if nesting <= 0 {
 						end += 2
 						return lexer.SourceCode[start:end], true
 					}
-				} else if CanFindKeywordAtIndex("/*", end) {
+				} else if CanFindKeywordAtIndex("/*", end, false) {
 					nesting++
 				}
 				if lexer.SourceCode[end] == '\n' {
@@ -367,31 +383,31 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 				lexer.Index++
 			default:
 				// Check for multi-character tokens
-				if CanFindKeyword("or") {
+				if CanFindKeyword("or", true) {
 					SaveToken(lexer, TokenKind_Or, "or")
 					lexer.Index += 2
-				} else if CanFindKeyword("if") {
+				} else if CanFindKeyword("if", true) {
 					SaveToken(lexer, TokenKind_If, "if")
 					lexer.Index += 2
-				} else if CanFindKeyword("and") {
+				} else if CanFindKeyword("and", true) {
 					SaveToken(lexer, TokenKind_And, "and")
 					lexer.Index += 3
-				} else if CanFindKeyword("else") {
+				} else if CanFindKeyword("else", true) {
 					SaveToken(lexer, TokenKind_Else, "else")
 					lexer.Index += 4
-				} else if CanFindKeyword("while") {
+				} else if CanFindKeyword("while", true) {
 					SaveToken(lexer, TokenKind_While, "while")
 					lexer.Index += 5
-				} else if CanFindKeyword("break") {
+				} else if CanFindKeyword("break", true) {
 					SaveToken(lexer, TokenKind_Break, "break")
 					lexer.Index += 5
-				} else if CanFindKeyword("script") {
+				} else if CanFindKeyword("script", true) {
 					SaveToken(lexer, TokenKind_Script, "script")
 					lexer.Index += 6
-				} else if CanFindKeyword("random") {
+				} else if CanFindKeyword("random", true) {
 					SaveToken(lexer, TokenKind_Random, "random")
 					lexer.Index += 6
-				} else if CanFindKeyword("return") {
+				} else if CanFindKeyword("return", true) {
 					SaveToken(lexer, TokenKind_Return, "return")
 					lexer.Index += 6
 				} else if identifier, found := CanFindIdentifier(); found {
