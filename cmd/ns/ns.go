@@ -31,8 +31,8 @@ const (
 COMPILATION:
     -c                 (required string)  Specify a file to compile (.ns).
     -o                 (optional string)  Specify the output file name (.qb).
-	-targetGame        (optional string)  Specify which game to target (defaults to "thug2").
-	-removeChecksums   (optional flag)    Removes checksum information from end of QB file.
+    -targetGame        (optional string)  Specify which game to target (defaults to "thug2").
+    -removeChecksums   (optional flag)    Removes checksum information from end of output.
     -showHexDump       (optional flag)    Display the compiled bytecode in hex format.
     -decompileWithRoq  (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
 
@@ -102,8 +102,6 @@ func RunNeverscript(arguments CommandLineArguments) {
 		if outputFilename == "" {
 			outputFilename = WithQbExtension(*arguments.FileToCompile)
 		}
-
-
 
 		fmt.Printf("\nCompiling '%s' (may freeze)...\n", *arguments.FileToCompile)
 		var lexer compiler.Lexer
