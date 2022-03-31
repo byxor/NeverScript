@@ -103,12 +103,22 @@ func RunNeverscript(arguments CommandLineArguments) {
 			outputFilename = WithQbExtension(*arguments.FileToCompile)
 		}
 
+
+
 		fmt.Printf("\nCompiling '%s' (may freeze)...\n", *arguments.FileToCompile)
 		var lexer compiler.Lexer
 		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
-		bytecodeCompiler.TargetGame = *arguments.TargetGame
+		bytecodeCompiler.TargetGame = strings.ToLower(*arguments.TargetGame)
 		bytecodeCompiler.RemoveChecksums = *arguments.RemoveChecksums
+
+		if bytecodeCompiler.TargetGame != "thps3" &&
+			bytecodeCompiler.TargetGame != "thps4" &&
+			bytecodeCompiler.TargetGame != "thug1" &&
+			bytecodeCompiler.TargetGame != "thug2" {
+			log.Fatal("Target game must be one of: ['thps3', 'thps4', 'thug1', 'thug2']")
+		}
+
 		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 
