@@ -32,9 +32,9 @@ COMPILATION:
     -c                 (required string)  Specify a file to compile (.ns).
     -o                 (optional string)  Specify the output file name (.qb).
 	-targetGame        (optional string)  Specify which game to target (defaults to "thug2").
+	-removeChecksums   (optional flag)    Removes checksum information from end of QB file.
     -showHexDump       (optional flag)    Display the compiled bytecode in hex format.
     -decompileWithRoq  (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
-
 
 PRE GENERATION:
     -p                 (required string)  Specify a pre spec file (.ps).
@@ -46,7 +46,7 @@ DECOMPILATION (very incomplete):
     -showCode          (optional flag)    Display the decompiled code as text.
 `
 
-	version = "0.6"
+	version = "0.7"
 )
 
 type CommandLineArguments struct {
@@ -57,6 +57,7 @@ type CommandLineArguments struct {
 	TargetGame       *string
 	ShowHexDump      *bool
 	ShowCode         *bool
+	RemoveChecksums  *bool
 	DecompileWithRoq *bool
 }
 
@@ -84,6 +85,7 @@ func ParseCommandLineArguments() CommandLineArguments {
 		TargetGame:       flag.String("targetGame", "thug2", ""),
 		ShowHexDump:      flag.Bool("showHexDump", false, ""),
 		ShowCode:         flag.Bool("showCode", false, ""),
+		RemoveChecksums:  flag.Bool("removeChecksums", false, ""),
 		DecompileWithRoq: flag.Bool("decompileWithRoq", false, ""),
 	}
 	flag.Parse()
@@ -105,7 +107,9 @@ func RunNeverscript(arguments CommandLineArguments) {
 		var lexer compiler.Lexer
 		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
-		compiler.Compile(*arguments.FileToCompile, outputFilename, *arguments.TargetGame, &lexer, &parser, &bytecodeCompiler)
+		bytecodeCompiler.TargetGame = *arguments.TargetGame
+		bytecodeCompiler.RemoveChecksums = *arguments.RemoveChecksums
+		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 
 		if *arguments.ShowHexDump {

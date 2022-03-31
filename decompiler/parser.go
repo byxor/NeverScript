@@ -269,7 +269,6 @@ func ParseByteCode(arguments *Arguments) error {
 		return ParserSuccess(index-start, compiler.AstNode{
 			Kind: compiler.AstKind_IfStatement,
 			Data: compiler.AstData_IfStatement{
-				BooleanInvocationData: make([]bool, 1), // FIXME(brandon): Arbitrary data for now, will crash if number of branches exceeds the capacity
 				Conditions:            []compiler.AstNode{conditionParseResult.Node},
 				Bodies:                bodies,
 			},

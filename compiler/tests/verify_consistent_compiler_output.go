@@ -38,7 +38,8 @@ func main() {
     var lexer compiler.Lexer
     var parser compiler.Parser
     var bytecodeCompiler compiler.BytecodeCompiler
-    compiler.Compile(nsPath, qbPath, "thug2", &lexer, &parser, &bytecodeCompiler)
+    bytecodeCompiler.TargetGame = "thug2"
+    compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
     fmt.Println()
 
     // Decompile
@@ -85,10 +86,6 @@ func main() {
 
     // fmt.Printf("Hex dump:\n%s", qbPath, hex.Dump(bytecodeCompiler.Bytes))
 }
-
-
-
-
 
 
 
@@ -324,8 +321,18 @@ script TestIdentifiersWithKeywordPrefixes {
     break_1 = ""
     random_1 = ""
     return_1 = ""
-    
 }
+
+/*
+TODO(brandon): Add tests for this, it won't compile
+script TestFloatsToVector {
+    return vector = (
+        ((1.0 * <x>) * (1.0, 0.0, 0.0)) +
+        ((1.0 * <y>) * (0.0, 1.0, 0.0)) +
+        ((1.0 * <z>) * (0.0, 0.0, 1.0))
+    )
+}
+*/
 `
 
 const expectedDecompiledRoq = `

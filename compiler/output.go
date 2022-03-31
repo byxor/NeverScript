@@ -13,12 +13,14 @@ type CustomByteBuffer struct {
 }
 
 type BytecodeCompiler struct {
-	RootAstNode AstNode
-	Bytes       []byte
+	RootAstNode        AstNode
+	Bytes              []byte
 	NextLoopBypasserId int
+	TargetGame         string
+	RemoveChecksums    bool
 }
 
-func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
+func GenerateBytecode(compiler *BytecodeCompiler) {
 	write := func(bytes ...byte) {
 		compiler.Bytes = append(compiler.Bytes, bytes...)
 	}
@@ -259,7 +261,7 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 			}
 
 		case AstKind_WhileLoop:
-			if targetGame == "thug2" {
+			if compiler.TargetGame == "thug2" {
 				compilerGeneratedChecksum := AstNode{
 					Kind: AstKind_Checksum,
 					Data: AstData_Checksum{
@@ -563,7 +565,7 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 			updatedConditionNode := conditionNode
 			conditionStart := len(compiler.Bytes)
 
-			if targetGame == "thug2" {
+			if compiler.TargetGame == "thug2" {
 				write(0x47)
 				write(0x00) // 2 temporary bytes for branch size
 				write(0x00)
@@ -580,13 +582,13 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 			if hasElse {
 				size += 2
 			}
-			if targetGame == "thug2" {
+			if compiler.TargetGame == "thug2" {
 				writeLittleUint16Index(uint16(size), conditionStart+1)
 			}
 		}
 		if hasElse {
 			start := len(compiler.Bytes)
-			if targetGame == "thug2" {
+			if compiler.TargetGame == "thug2" {
 				write(0x48)
 				write(0x00) // 2 temporary bytes for branch size
 				write(0x00)
@@ -597,7 +599,7 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 				writeBytecodeForNode(bodyNode)
 			}
 			end := len(compiler.Bytes)
-			if targetGame == "thug2" {
+			if compiler.TargetGame == "thug2" {
 				writeLittleUint16Index(uint16(end-start), start+1)
 			}
 		}
@@ -615,8 +617,10 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 
 	writeBytecodeForNode(compiler.RootAstNode)
 
-	for name, checksum := range nameTable {
-		writeNameTableEntry(checksum, name)
+	if !compiler.RemoveChecksums {
+		for name, checksum := range nameTable {
+			writeNameTableEntry(checksum, name)
+		}
 	}
 	write(0)
 }

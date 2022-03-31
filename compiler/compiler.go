@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Compile(nsFilePath, qbFilePath, targetGame string, lexer *Lexer, parser *Parser, bytecodeCompiler *BytecodeCompiler) {
+func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, bytecodeCompiler *BytecodeCompiler) {
 	{ // read source code into memory & store it in lexer
 		bytes, err := ioutil.ReadFile(nsFilePath)
 		if err != nil {
@@ -29,7 +29,7 @@ func Compile(nsFilePath, qbFilePath, targetGame string, lexer *Lexer, parser *Pa
 	}
 
 	bytecodeCompiler.RootAstNode = parser.Result.Node
-	GenerateBytecode(bytecodeCompiler, targetGame)
+	GenerateBytecode(bytecodeCompiler)
 
 	ioutil.WriteFile(qbFilePath, bytecodeCompiler.Bytes, 0644)
 }
