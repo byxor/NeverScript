@@ -38,7 +38,6 @@ All of these games use variations of Neversoft's scripting engine. **Personally 
 ### Other useful resources:
 
 *  **Blub scripting guide by Morten:** http://www.thps-mods.com/forum/viewtopic.php?t=806
-*  **Bytecode documentation by Gone:** http://thps-mods.com/forum/viewtopic.php?f=20&t=5656
 
 ## Usage
 
