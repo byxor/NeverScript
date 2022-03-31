@@ -228,19 +228,36 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 	CanFindIdentifier := func() (string, bool) {
 		start := lexer.Index
 		end := start
-		for {
-			if end >= len(lexer.SourceCode) {
-				break
-			}
-			if !(unicode.IsLetter(rune(lexer.SourceCode[end])) ||
-				unicode.IsDigit(rune(lexer.SourceCode[end])) ||
-				lexer.SourceCode[end] == '_') {
-				break
-			}
-			end++
-		}
 
-		return lexer.SourceCode[start:end], start != end
+		if lexer.SourceCode[start] == '`' {
+			end++
+			for {
+				if end >= len(lexer.SourceCode) {
+					break
+				}
+				if lexer.SourceCode[end] == '`' {
+					end++
+					break
+				}
+				end++
+			}
+
+			return lexer.SourceCode[start:end], end != start + 1
+		} else {
+			for {
+				if end >= len(lexer.SourceCode) {
+					break
+				}
+				if !(unicode.IsLetter(rune(lexer.SourceCode[end])) ||
+					unicode.IsDigit(rune(lexer.SourceCode[end])) ||
+					lexer.SourceCode[end] == '_') {
+					break
+				}
+				end++
+			}
+
+			return lexer.SourceCode[start:end], start != end
+		}
 	}
 
 	SaveToken := func(lexer *Lexer, kind TokenKind, data string) {
@@ -376,6 +393,10 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 					SaveToken(lexer, TokenKind_Return, "return")
 					lexer.Index += 6
 				} else if identifier, found := CanFindIdentifier(); found {
+					if identifier[0] == '`' && identifier[len(identifier)-1] == '`' {
+						identifier = identifier[1:len(identifier)-1]
+						lexer.Index += 2
+					}
 					SaveToken(lexer, TokenKind_Identifier, identifier)
 					lexer.Index += len(identifier)
 				} else {

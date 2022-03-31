@@ -31,8 +31,10 @@ const (
 COMPILATION:
     -c                 (required string)  Specify a file to compile (.ns).
     -o                 (optional string)  Specify the output file name (.qb).
+	-targetGame        (optional string)  Specify which game to target (defaults to "thug2").
     -showHexDump       (optional flag)    Display the compiled bytecode in hex format.
     -decompileWithRoq  (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
+
 
 PRE GENERATION:
     -p                 (required string)  Specify a pre spec file (.ps).
@@ -52,6 +54,7 @@ type CommandLineArguments struct {
 	FileToDecompile  *string
 	PreSpecFile      *string
 	OutputFileName   *string
+	TargetGame       *string
 	ShowHexDump      *bool
 	ShowCode         *bool
 	DecompileWithRoq *bool
@@ -78,8 +81,9 @@ func ParseCommandLineArguments() CommandLineArguments {
 		FileToDecompile:  flag.String("d", "", ""),
 		PreSpecFile:      flag.String("p", "", ""),
 		OutputFileName:   flag.String("o", "", ""),
+		TargetGame:       flag.String("targetGame", "thug2", ""),
 		ShowHexDump:      flag.Bool("showHexDump", false, ""),
-		ShowCode:      flag.Bool("showCode", false, ""),
+		ShowCode:         flag.Bool("showCode", false, ""),
 		DecompileWithRoq: flag.Bool("decompileWithRoq", false, ""),
 	}
 	flag.Parse()
@@ -101,7 +105,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 		var lexer compiler.Lexer
 		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
-		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+		compiler.Compile(*arguments.FileToCompile, outputFilename, *arguments.TargetGame, &lexer, &parser, &bytecodeCompiler)
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 
 		if *arguments.ShowHexDump {

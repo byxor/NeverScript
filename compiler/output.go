@@ -17,7 +17,7 @@ type BytecodeCompiler struct {
 	NextLoopBypasserId int
 }
 
-func GenerateBytecode(compiler *BytecodeCompiler) {
+func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 	write := func(bytes ...byte) {
 		compiler.Bytes = append(compiler.Bytes, bytes...)
 	}
@@ -256,69 +256,74 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			}
 
 		case AstKind_WhileLoop:
-			compilerGeneratedChecksum := AstNode{
-				Kind: AstKind_Checksum,
-				Data: AstData_Checksum{
-					ChecksumToken: Token{
-						Kind: TokenKind_Identifier,
-						Data: fmt.Sprintf("__COMPILER__infinite_loop_bypasser_%d", compiler.NextLoopBypasserId),
+			if targetGame == "thug2" {
+				compilerGeneratedChecksum := AstNode{
+					Kind: AstKind_Checksum,
+					Data: AstData_Checksum{
+						ChecksumToken: Token{
+							Kind: TokenKind_Identifier,
+							Data: fmt.Sprintf("__COMPILER__infinite_loop_bypasser_%d", compiler.NextLoopBypasserId),
+						},
 					},
-				},
-			}
-			compiler.NextLoopBypasserId++
-			constantIntegerNode := AstNode{
-				Kind: AstKind_Integer,
-				Data: AstData_Integer{
-					IntegerToken: Token{
-						Kind: TokenKind_Integer,
-						Data: "0",
+				}
+				compiler.NextLoopBypasserId++
+				constantIntegerNode := AstNode{
+					Kind: AstKind_Integer,
+					Data: AstData_Integer{
+						IntegerToken: Token{
+							Kind: TokenKind_Integer,
+							Data: "0",
+						},
 					},
-				},
-			}
-			writeBytecodeForNode(AstNode{
-				Kind: AstKind_Assignment,
-				Data: AstData_Assignment{
-					NameNode:  compilerGeneratedChecksum,
-					ValueNode: constantIntegerNode,
-				},
-			})
-			write(1)
-			write(0x20)
-			writeBytecodeForNode(AstNode{
-				Kind: AstKind_IfStatement,
-				Data: AstData_IfStatement{
-					Conditions: []AstNode{
-						{
-							Kind: AstKind_GreaterThanExpression,
-							Data: AstData_BinaryExpression{
-								LeftNode: AstNode{
-									Kind: AstKind_LocalReference,
-									Data: AstData_LocalReference{
-										Node: compilerGeneratedChecksum,
+				}
+				writeBytecodeForNode(AstNode{
+					Kind: AstKind_Assignment,
+					Data: AstData_Assignment{
+						NameNode:  compilerGeneratedChecksum,
+						ValueNode: constantIntegerNode,
+					},
+				})
+				write(1)
+				write(0x20)
+				write(1)
+				writeBytecodeForNode(AstNode{
+					Kind: AstKind_IfStatement,
+					Data: AstData_IfStatement{
+						Conditions: []AstNode{
+							{
+								Kind: AstKind_GreaterThanExpression,
+								Data: AstData_BinaryExpression{
+									LeftNode: AstNode{
+										Kind: AstKind_LocalReference,
+										Data: AstData_LocalReference{
+											Node: compilerGeneratedChecksum,
+										},
 									},
+									RightNode: constantIntegerNode,
 								},
-								RightNode: constantIntegerNode,
+							},
+						},
+						Bodies: [][]AstNode{
+							{
+								{
+									Kind: AstKind_NewLine,
+									Data: AstData_Empty{},
+								},
+								{
+									Kind: AstKind_Break,
+									Data: AstData_Empty{},
+								},
+								{
+									Kind: AstKind_NewLine,
+									Data: AstData_Empty{},
+								},
 							},
 						},
 					},
-					Bodies: [][]AstNode{
-						{
-							{
-								Kind: AstKind_NewLine,
-								Data: AstData_Empty{},
-							},
-							{
-								Kind: AstKind_Break,
-								Data: AstData_Empty{},
-							},
-							{
-								Kind: AstKind_NewLine,
-								Data: AstData_Empty{},
-							},
-						},
-					},
-				},
-			})
+				})
+			} else {
+				write(0x20)
+			}
 
 			for _, bodyNode := range node.Data.(AstData_WhileLoop).BodyNodes {
 				writeBytecodeForNode(bodyNode)
@@ -505,8 +510,11 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 
 		var checksum uint32
 		if data.IsRawChecksum {
-			temp, _ := strconv.ParseInt(data.ChecksumToken.Data[1:], 16, 32)
-			checksum = uint32(temp)
+			temp1 := data.ChecksumToken.Data[1:]
+			temp1 = temp1[6:8] + temp1[4:6] + temp1[2:4] + temp1[0:2]
+
+			temp2, _ := strconv.ParseInt(temp1, 16, 32)
+			checksum = uint32(temp2)
 		} else {
 			name := data.ChecksumToken.Data
 			checksum = StringToChecksum(name)
@@ -597,9 +605,14 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			}
 			conditionStart := len(compiler.Bytes)
 
-			write(0x47)
-			write(0x00) // 2 temporary bytes for branch size
-			write(0x00)
+			if targetGame == "thug2" {
+				write(0x47)
+				write(0x00) // 2 temporary bytes for branch size
+				write(0x00)
+			} else {
+				write(0x25) // use If1 instead of If2
+			}
+
 			writeBytecodeForNode(updatedConditionNode)
 			for _, bodyNode := range bodyNodes {
 				writeBytecodeForNode(bodyNode)
@@ -609,18 +622,26 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 			if hasElse {
 				size += 2
 			}
-			writeLittleUint16Index(uint16(size), conditionStart+1)
+			if targetGame == "thug2" {
+				writeLittleUint16Index(uint16(size), conditionStart+1)
+			}
 		}
 		if hasElse {
 			start := len(compiler.Bytes)
-			write(0x48)
-			write(0x00) // 2 temporary bytes for branch size
-			write(0x00)
+			if targetGame == "thug2" {
+				write(0x48)
+				write(0x00) // 2 temporary bytes for branch size
+				write(0x00)
+			} else {
+				write(0x25) // use If1 instead of If2
+			}
 			for _, bodyNode := range elseNodes {
 				writeBytecodeForNode(bodyNode)
 			}
 			end := len(compiler.Bytes)
-			writeLittleUint16Index(uint16(end-start), start+1)
+			if targetGame == "thug2" {
+				writeLittleUint16Index(uint16(end-start), start+1)
+			}
 		}
 		write(0x28)
 	}

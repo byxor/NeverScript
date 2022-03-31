@@ -38,13 +38,16 @@ func main() {
     var lexer compiler.Lexer
     var parser compiler.Parser
     var bytecodeCompiler compiler.BytecodeCompiler
-    compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
+    compiler.Compile(nsPath, qbPath, "thug2", &lexer, &parser, &bytecodeCompiler)
     fmt.Println()
 
     // Decompile
     fmt.Println("Decompiling roq...")
-    roqCmd := exec.Command(".\\roq.exe", "-d", qbPath)
-    decompiledRoq, _ := roqCmd.Output()
+    roqCmd := exec.Command("roq.exe", "-d", qbPath)
+    decompiledRoq, err := roqCmd.Output()
+    if err != nil {
+        log.Fatal(err)
+    }
     fmt.Println()
 
     // Compare results (the stupid variable name aligns the output in the debugger)
@@ -108,6 +111,9 @@ my_pair = (1.0, 2.0)
 my_vector = (100.0, 200.0, 300.0)
 my_array = [1, 2, 3]
 my_struct = { x=1, y=2, z=3 }
+my_checksum = #deadf00d
+my_checksum = identifiers_are_checksums_too
+my_checksum =`+" `checksums between backticks can have spaces` "+`
 
 // my comment
 x = 10 // comment after assignment
@@ -358,6 +364,9 @@ const expectedDecompiledRoq = `
 :i $my_vector$ = %vec3(100.000000,200.000000,300.000000)
 :i $my_array$ = :a{%i(1,00000001);%i(2,00000002);%i(3,00000003):a}
 :i $my_struct$ = :s{$x$ = %i(1,00000001);$y$ = %i(2,00000002);$z$ = %i(3,00000003):s}
+:i $my_checksum$ = $[0df0adde]$
+:i $my_checksum$ = $identifiers_are_checksums_too$
+:i $my_checksum$ = $checksums between backticks can have spaces$
 :i $x$ = %i(10,0000000a)
 :i $my_struct$ = :s{
 	:i %i(1,00000001)
@@ -465,7 +474,8 @@ const expectedDecompiledRoq = `
 :i function $TestWhile$
 	:i $__COMPILER__infinite_loop_bypasser_0$ = %i(0,00000000)
 	:i while
-		if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_0$ > %i(0,00000000)) 
+		
+		:i if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_0$ > %i(0,00000000)) 
 			:i continue
 			
 		:i endif
@@ -476,13 +486,15 @@ const expectedDecompiledRoq = `
 :i function $TestNestedWhile$
 	:i $__COMPILER__infinite_loop_bypasser_1$ = %i(0,00000000)
 	:i while
-		if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_1$ > %i(0,00000000)) 
+		
+		:i if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_1$ > %i(0,00000000)) 
 			:i continue
 			
 		:i endif
 		:i $__COMPILER__infinite_loop_bypasser_2$ = %i(0,00000000)
 		:i while
-			if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_2$ > %i(0,00000000)) 
+			
+			:i if  (%GLOBAL%$__COMPILER__infinite_loop_bypasser_2$ > %i(0,00000000)) 
 				:i continue
 				
 			:i endif
