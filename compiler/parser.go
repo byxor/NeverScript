@@ -993,11 +993,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		index++
 
-		booleanInvocationData := make([]bool, 6500)
 		conditions := make([]AstNode, 6500)
 		numConditions := 0
-		saveCondition := func(conditionParseResult ParseResult, isBooleanInvocation bool) {
-			booleanInvocationData[numConditions] = isBooleanInvocation
+		saveCondition := func(conditionParseResult ParseResult) {
 			conditions[numConditions] = conditionParseResult.Node
 			numConditions++
 		}
@@ -1009,12 +1007,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			numBodies++
 		}
 
-		conditionIsBooleanInvocation := false
-		if GetKind(index) == TokenKind_AtSymbol {
-			conditionIsBooleanInvocation = true
-			index++
-		}
-
 		conditionParseResult := ParseExpression(index, true)
 		if !conditionParseResult.WasSuccessful {
 			return ParseResult{
@@ -1024,7 +1016,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 		index += conditionParseResult.TokensConsumed
 		pruneStructIfInvoked(&conditionParseResult, &index)
-		saveCondition(conditionParseResult, conditionIsBooleanInvocation)
+		saveCondition(conditionParseResult)
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
 		if !bodyParseResult.WasSuccessful {
@@ -1042,17 +1034,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if GetKind(index) == TokenKind_If {
 					index++
 
-					nextConditionIsBooleanInvocation := false
-					if GetKind(index) == TokenKind_AtSymbol {
-						index++
-						nextConditionIsBooleanInvocation = true
-					}
-
 					anotherConditionParseResult := ParseExpression(index, true)
 					if anotherConditionParseResult.WasSuccessful {
 						index += anotherConditionParseResult.TokensConsumed
 						pruneStructIfInvoked(&anotherConditionParseResult, &index)
-						saveCondition(anotherConditionParseResult, nextConditionIsBooleanInvocation)
+						saveCondition(anotherConditionParseResult)
 						if GetKind(index) != TokenKind_LeftCurlyBrace {
 							return ParseResult{
 								WasSuccessful: false,
@@ -1094,7 +1080,6 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			Node: AstNode{
 				Kind: AstKind_IfStatement,
 				Data: AstData_IfStatement{
-					BooleanInvocationData: booleanInvocationData[:numConditions],
 					Conditions:            conditions[:numConditions],
 					Bodies:                bodies[:numBodies],
 				},

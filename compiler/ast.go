@@ -135,7 +135,6 @@ type AstData_WhileLoop struct {
 func (astData AstData_WhileLoop) astData() {}
 
 type AstData_IfStatement struct {
-	BooleanInvocationData []bool
 	Conditions            []AstNode
 	Bodies                [][]AstNode
 }

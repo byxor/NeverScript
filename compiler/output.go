@@ -64,7 +64,7 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 
 	var writeBytecodeForNode func(node AstNode)
 	var writeBytecodeForIf func(node AstNode)
-	var writeBytecodeForIfElse func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool, isBooleanInvocation bool)
+	var writeBytecodeForIfElse func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool)
 	var writeBytecodeForBinaryExpression func(node AstNode, operator byte)
 	var writeBytecodeForBinaryExpressionWithParentheses func(node AstNode, operator byte)
 	var writeBytecodeForChecksum func(node AstNode)
@@ -443,7 +443,6 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 					transformIfElseIf(AstNode{
 						Kind: AstKind_IfStatement,
 						Data: AstData_IfStatement{
-							BooleanInvocationData: ifElseIfData.BooleanInvocationData[1:],
 							Conditions: ifElseIfData.Conditions[1:],
 							Bodies:     ifElseIfData.Bodies[1:],
 						},
@@ -459,9 +458,6 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 		return AstNode{
 			Kind: AstKind_IfStatement,
 			Data: AstData_IfStatement{
-				BooleanInvocationData: []bool{
-					ifElseIfData.BooleanInvocationData[0],
-				},
 				Conditions: []AstNode{
 					ifElseIfData.Conditions[0],
 				},
@@ -479,18 +475,11 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 			elseNodes = transformedIfData.Bodies[1]
 		}
 
-		// hack
-		isBooleanInvocation := false
-		if len(transformedIfData.BooleanInvocationData) > 0 {
-			isBooleanInvocation = transformedIfData.BooleanInvocationData[0]
-		}
-
 		writeBytecodeForIfElse(
 			transformedIfData.Conditions[0],
 			transformedIfData.Bodies[0],
 			elseNodes,
 			hasElse,
-			isBooleanInvocation,
 		)
 	}
 
@@ -569,43 +558,9 @@ func GenerateBytecode(compiler *BytecodeCompiler, targetGame string) {
 		write(bytesValueC[:]...)
 	}
 
-	writeBytecodeForIfElse = func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool, isBooleanInvocation bool) {
+	writeBytecodeForIfElse = func(conditionNode AstNode, bodyNodes []AstNode, elseNodes []AstNode, hasElse bool) {
 		{
 			updatedConditionNode := conditionNode
-			if isBooleanInvocation {
-				writeBytecodeForNode(conditionNode)
-				updatedConditionNode = AstNode{
-					Kind: AstKind_EqualsExpression,
-					Data: AstData_BinaryExpression{
-						LeftNode: AstNode{
-							Kind: AstKind_LocalReference,
-							Data: AstData_LocalReference{
-								Node: AstNode{
-									Kind: AstKind_Checksum,
-									Data: AstData_Checksum{
-										IsRawChecksum: false,
-										ChecksumToken: Token{
-											Kind: TokenKind_Identifier,
-											Data: "__boolean_result__",
-										},
-									},
-								},
-							},
-						},
-						RightNode: AstNode{
-							Kind: AstKind_Integer,
-							Data: AstData_Integer{
-								IntegerToken: Token{
-									Kind: TokenKind_Integer,
-									Data: "1",
-								},
-							},
-						},
-
-					},
-				}
-				write(1)
-			}
 			conditionStart := len(compiler.Bytes)
 
 			if targetGame == "thug2" {
