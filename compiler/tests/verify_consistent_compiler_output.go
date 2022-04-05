@@ -28,7 +28,6 @@ func main() {
 func runTests() error {
     tempDir, err := ioutil.TempDir(os.TempDir(), "neverscript-temporary-testing-tempDir")
     if err != nil { return err }
-
     defer os.RemoveAll(tempDir)
 
     err = runTest("thug2", "./neverscript.ns", tempDir+"/thug2.qb", "./thug2.roq")

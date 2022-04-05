@@ -156,10 +156,6 @@ script TestIfStatements {
         PlayCollisionSound
     }
 
-    // TODO(brandon): Add more variations of invocations with final struct params here
-    // e.g. ! Object:MemberFunction {distance=15000000}
-    // e.g. & struct.script {distance=15000000}
-
     description = "Comparisons:"
     if (c1 = c2) {}
     if (c1 < c2) {}
@@ -167,6 +163,10 @@ script TestIfStatements {
     if (c1 != c2) {}
     if (c1 <= c2) {}
     if (c1 >= c2) {}
+
+    // TODO(brandon): Add more variations of invocations with final struct params here
+    // e.g. ! Object:MemberFunction {distance=15000000}
+    // e.g. & struct.script {distance=15000000}
 }
 
 script TestEmptyReturn {

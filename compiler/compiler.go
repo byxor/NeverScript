@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, bytecodeCompiler *BytecodeCompiler) {
+func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, bytecodeCompiler *BytecodeCompiler) Error {
 	{ // read source code into memory & store it in lexer
 		bytes, err := ioutil.ReadFile(nsFilePath)
 		if err != nil {
@@ -20,7 +20,8 @@ func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, byteco
 		lexer.SourceCodeSize = len(lexer.SourceCode)
 	}
 
-	LexSourceCode(lexer)
+	err := LexSourceCode(lexer)
+	if err != nil { return err }
 
 	parser.Tokens = lexer.Tokens
 	BuildAbstractSyntaxTree(parser)
@@ -32,4 +33,6 @@ func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, byteco
 	GenerateBytecode(bytecodeCompiler)
 
 	ioutil.WriteFile(qbFilePath, bytecodeCompiler.Bytes, 0644)
+
+	return nil
 }

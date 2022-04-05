@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode"
@@ -11,6 +12,7 @@ type Lexer struct {
 	SourceCodeSize int
 	Index          int
 	LineNumber     int
+	ColumnNumber   int
 
 	Tokens    []Token
 	NumTokens int
@@ -20,8 +22,7 @@ type Lexer struct {
 	StartOfString     int
 }
 
-func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tokens)
-
+func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array of Tokens)
 	CanFindKeywordAtIndex := func(keyword string, index int, rejectKeywordIfIdentifierPrefix bool) bool {
 		if rejectKeywordIfIdentifierPrefix {
 			nextPos := index+len(keyword)
@@ -40,9 +41,6 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 	}
 
 	CanFindKeyword := func(keyword string, rejectKeywordIfIdentifierPrefix bool) bool {
-
-
-
 		return CanFindKeywordAtIndex(keyword, lexer.Index, rejectKeywordIfIdentifierPrefix)
 	}
 
@@ -149,7 +147,7 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 		return lexer.SourceCode[start:end], true
 	}
 
-	CanFindString := func() (string, bool) {
+	CanFindString := func() (string, bool, int, error) {
 		start := lexer.Index
 		end := start
 
@@ -171,15 +169,20 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 					stage = 1
 				} else {
 					lexer.LineNumber = oldLineNumber
-					return "", false
+					return "", false, oldLineNumber, nil
 				}
 			case 1:
 				if end >= len(lexer.SourceCode) {
-					return lexer.SourceCode[start:], true
+					var err error
+					if stage != 2 {
+						err = errors.New("EOF while scanning string literal")
+					}
+					return lexer.SourceCode[start:], true, oldLineNumber, err
 				} else if lexer.SourceCode[end] == '\\' {
 					end++
 				} else if lexer.SourceCode[end] == '"' {
-					return lexer.SourceCode[start : end+1], true
+					stage++
+					return lexer.SourceCode[start : end+1], true, oldLineNumber, nil
 				}
 			}
 			end++
@@ -299,7 +302,8 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 		} else if data, found := CanFindInteger(); found {
 			SaveToken(lexer, TokenKind_Integer, data)
 			lexer.Index += len(data)
-		} else if data, found := CanFindString(); found {
+		} else if data, found, initialLineNumber, err := CanFindString(); found {
+			if err != nil { return CompilationError{err.Error(), initialLineNumber, lexer.ColumnNumber} }
 			SaveToken(lexer, TokenKind_String, data)
 			lexer.Index += len(data)
 		} else if data, found := CanFindSingleLineComment(); found {
@@ -428,10 +432,11 @@ func LexSourceCode(lexer *Lexer) { // do lexical analysis (build an array of Tok
 						fmt.Printf("%+v\n", token)
 					}
 					fmt.Println()
-					return
+					return nil
 				}
 			}
 		}
 	}
 	lexer.Tokens = lexer.Tokens[:lexer.NumTokens]
+	return nil
 }
