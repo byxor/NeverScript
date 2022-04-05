@@ -593,7 +593,7 @@ func GenerateBytecode(compiler *BytecodeCompiler) {
 				write(0x00) // 2 temporary bytes for branch size
 				write(0x00)
 			} else {
-				write(0x25) // use If1 instead of If2
+				write(0x26) // use Else1 instead of Else2
 			}
 			for _, bodyNode := range elseNodes {
 				writeBytecodeForNode(bodyNode)
