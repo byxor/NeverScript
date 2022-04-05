@@ -32,8 +32,8 @@ All of these games use variations of Neversoft's scripting engine. **Personally 
 
 *  **Download:** [latest release](https://github.com/byxor/NeverScript/releases)
 *  **Syntax guide:**
-    *  Best way to learn is by reading [the tests](../compiler/tests/verify_consistent_compiler_output.go) (line 100 onwards).
-    *  Or by reading this [potentially-old document](../docs/neverscript-syntax.ns).
+    *  Best way to learn is by reading [neverscript.ns](../compiler/tests/neverscript.ns) which gets compiled by the tests.
+    *  Or by reading this [outdated document](../docs/neverscript-syntax.ns).
 
 ### Other useful resources:
 

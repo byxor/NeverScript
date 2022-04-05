@@ -1,0 +1,255 @@
+my_int = 10
+my_int = -10
+my_float = 0.1
+my_float = -0.1
+my_string = "hey"
+my_pair = (1.0, 2.0)
+my_vector = (100.0, 200.0, 300.0)
+my_array = [1, 2, 3]
+my_struct = { x=1, y=2, z=3 }
+my_checksum = #deadf00d
+my_checksum = identifiers_are_checksums_too
+my_checksum = `checksums between backticks can have spaces`
+
+// my comment
+x = 10 // comment after assignment
+
+my_struct = {
+    1 // one
+    2 // two
+    3 /* three */
+}
+
+/* my comment */
+x = 10 /* comment
+after assignment */
+
+/*big multiline comment
+script 7 2 1 1 2 3 4
+"will not compile
+zzzz = - ~ ¬!!()&&&^^{}{ { { (<{ / / / *
+*/
+
+/* multiline
+/* with */
+/* /* nested */ */
+/* comments */ */
+
+script TestBasicExpressions {
+    x = 1
+    x = (1)
+
+    description = "Positive ints:"
+    x = (1 + 2)
+    x = (1 - 2)
+    x = (1 * 3)
+    x = (1 / 2)
+
+    description = "Negative ints:"
+    x = (-1 + -2)
+    x = (-1 - -2)
+    x = (-1 * -3)
+    x = (-1 / -2)
+
+    description = "Positive floats:"
+    x = (1.0 + 2.0)
+    x = (1.0 - 2.0)
+    x = (1.0 * 3.0)
+    x = (1.0 / 2.0)
+
+    description = "Negative floats:"
+    x = (-1.0 + -2.0)
+    x = (-1.0 - -2.0)
+    x = (-1.0 * -3.0)
+    x = (-1.0 / -2.0)
+}
+
+script TestStringEscaping {
+    description = "String containing a single backslash:"
+    s = "\\"
+
+    description = "String containing two backslashes:"
+    s = "\\\\"
+
+    description = "String containing a quote:"
+    s = "\""
+}
+
+script TestShorthandMath {
+    description = "Global variables:"
+    Change x += 5
+    Change x -= 6
+    Change x *= 7
+    Change x *= 8
+
+    description = "Local variables:"
+    <x> += 5
+    <x> -= 6
+    <x> *= 7
+    <x> /= 8
+}
+
+script TestInvocations {
+    description = "Invocation with checksum parameters:"
+    NameOfScript param1 param2 param3
+
+    description = "Invocation with assigned parameters:"
+    NameOfScript param1=1 param2=2.0 param3="3" param4=(4.0, 0.4) param5=[5 5.0 "5" five "five"] param6={six=6}
+
+    description = "Invocation across multiple lines:"
+    NameOfScript param1 = 1 \
+                 param2 = 2.0 \
+                 param3 = "3"
+
+    description = "Invocation across multiple lines (1st param on next line):"
+    NameOfScript \
+        param1 = 1 \
+        param2 = 2.0 \
+        param3 = "3"
+}
+
+script TestIfStatements {
+    description = "Basic if:"
+    if something {}
+
+    description = "Basic if/else:"
+    if something {} else {}
+
+    description = "Basic if/elseif/else:"
+    if c1 {} else if c2 {} else {}
+
+    description = "Multi-line if/elseif/else:"
+    if c1 {
+        b1
+    } else if c2 {
+        b2
+    } else {
+        b3
+    }
+
+    description = "Condition with logical not:"
+    if ! condition {}
+
+    description = "Condition with logical and:"
+    if c1 and c2 {}
+
+    description = "Condition with invocation:"
+    if GotParam Foo {}
+
+    description = "Condition with invocation with struct parameter:"
+    if IsOld {name="byxor", age=23} {
+        MakeYounger
+    }
+
+    description = "Condition with logical not with invocation with struct parameter:"
+    if ! IsFinished {progress=10, finish=100} {
+        MakeProgress
+    }
+
+    description = "Condition with member function invocation:"
+    if Object:GetCollision {
+        PlayCollisionSound
+    }
+
+    description = "Condition with member function invocation with struct parameter:"
+    if Object:GetCollision { length=20 } {
+        PlayCollisionSound
+    }
+
+    // TODO(brandon): Add more variations of invocations with final struct params here
+    // e.g. ! Object:MemberFunction {distance=15000000}
+    // e.g. & struct.script {distance=15000000}
+
+    description = "Comparisons:"
+    if (c1 = c2) {}
+    if (c1 < c2) {}
+    if (c1 > c2) {}
+    if (c1 != c2) {}
+    if (c1 <= c2) {}
+    if (c1 >= c2) {}
+}
+
+script TestEmptyReturn {
+    return
+}
+
+script TestReturningMultipleParametersOnSingleLine {
+    return x=1 y=2 z=3 w={what="the", heckIsHeDoingHere}
+}
+
+script TestReturningMultipleParametersOnMultipleLines {
+    return \
+        x = 11 \
+        y = 22 \
+        z = 33
+}
+
+script TestWhile {
+    while {
+        Tick
+        Tock
+    }
+}
+
+script TestNestedWhile {
+    while {
+        while {
+            // should have different variable names when bypassing infinite loop checks.
+        }
+    }
+}
+
+script TestRandom {
+    random {
+        10 {
+            print "this is gonna happen 10/15 times on average"
+            print "yo yo"
+        }
+        5 {
+            print "this is gonna happen 5/15 times on average"
+            print "skrrrrrt"
+        }
+    }
+
+    x = random {
+        9 { "Hey" }
+        4 { "Hello" }
+        10 { "Yo" }
+        2 { "What's up?" }
+    }
+}
+
+script TestIdentifiersWithKeywords {
+    description = "Keyword prefixes:"
+    script_1 = ""
+    or_1 = ""
+    if_1 = ""
+    and_1 = ""
+    else_1 = ""
+    while_1 = ""
+    break_1 = ""
+    random_1 = ""
+    return_1 = ""
+
+    description = "Actual keywords (with backtick syntax):"
+    `script` = ""
+    `or` = ""
+    `if` = ""
+    `and` = ""
+    `else` = ""
+    `while` = ""
+    `break` = ""
+    `random` = ""
+    `return` = ""
+}
+
+/*
+TODO(brandon): Add tests for this, it won't compile
+script TestFloatsToVector {
+    return vector = (
+        ((1.0 * <x>) * (1.0, 0.0, 0.0)) +
+        ((1.0 * <y>) * (0.0, 1.0, 0.0)) +
+        ((1.0 * <z>) * (0.0, 0.0, 1.0))
+    )
+}
+*/
