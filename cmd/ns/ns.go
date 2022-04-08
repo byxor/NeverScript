@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/byxor/NeverScript/compiler"
 	"github.com/byxor/NeverScript/decompiler"
 	"github.com/byxor/NeverScript/pre_generator"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,7 +34,7 @@ COMPILATION:
     -targetGame        (optional string)  Specify which game to target (defaults to "thug2").
     -removeChecksums   (optional flag)    Removes checksum information from end of output.
     -showHexDump       (optional flag)    Display the compiled bytecode in hex format.
-    -decompileWithRoq  (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
+    -showDecompiledRoq (optional flag)    Display output from roq decompiler (roq.exe must be in your PATH).
 
 PRE GENERATION:
     -p                 (required string)  Specify a pre spec file (.ps).
@@ -44,55 +44,50 @@ DECOMPILATION (very incomplete):
     -d                 (required string)  Specify a file to decompile (.qb).
     -o                 (optional string)  Specify the output file name (.ns).
     -showCode          (optional flag)    Display the decompiled code as text.
+
 `
 
-	version = "0.7"
+	version = "0.8"
 )
 
 type CommandLineArguments struct {
-	FileToCompile    *string
-	FileToDecompile  *string
-	PreSpecFile      *string
-	OutputFileName   *string
-	TargetGame       *string
-	ShowHexDump      *bool
-	ShowCode         *bool
-	RemoveChecksums  *bool
-	DecompileWithRoq *bool
+	FileToCompile     *string
+	FileToDecompile   *string
+	PreSpecFile       *string
+	OutputFileName    *string
+	TargetGame        *string
+	ShowHexDump       *bool
+	ShowCode          *bool
+	RemoveChecksums   *bool
+	ShowDecompiledRoq *bool
 }
 
 func main() {
 	arguments := ParseCommandLineArguments()
-	// Hardcoded arguments for testing:
-	/* if len(os.Args) == 1 {
-		*arguments.FileToCompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.ns" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
-		*arguments.ShowCode = true
-		RunNeverscript(arguments)
-		*arguments.FileToCompile = ""
-		*arguments.FileToDecompile = "C:\\Users\\Brandon\\Desktop\\mod\\foo.qb" // build/PRE3,thugpro_qb.prx/qb/_mods/byxor_debug.qb"
-		*arguments.ShowCode = true
-		*arguments.OutputFileName = "nul"
-	} */
-	RunNeverscript(arguments)
+	if err := RunNeverscript(arguments); err != nil {
+		fmt.Println()
+	    fmt.Println(err.Error())
+		os.Exit(1)
+	}
 }
 
 func ParseCommandLineArguments() CommandLineArguments {
 	args := CommandLineArguments{
-		FileToCompile:    flag.String("c", "", ""),
-		FileToDecompile:  flag.String("d", "", ""),
-		PreSpecFile:      flag.String("p", "", ""),
-		OutputFileName:   flag.String("o", "", ""),
-		TargetGame:       flag.String("targetGame", "thug2", ""),
-		ShowHexDump:      flag.Bool("showHexDump", false, ""),
-		ShowCode:         flag.Bool("showCode", false, ""),
-		RemoveChecksums:  flag.Bool("removeChecksums", false, ""),
-		DecompileWithRoq: flag.Bool("decompileWithRoq", false, ""),
+		FileToCompile:     flag.String("c", "", ""),
+		FileToDecompile:   flag.String("d", "", ""),
+		PreSpecFile:       flag.String("p", "", ""),
+		OutputFileName:    flag.String("o", "", ""),
+		TargetGame:        flag.String("targetGame", "thug2", ""),
+		ShowHexDump:       flag.Bool("showHexDump", false, ""),
+		ShowCode:          flag.Bool("showCode", false, ""),
+		ShowDecompiledRoq: flag.Bool("showDecompiledRoq", false, ""),
+		RemoveChecksums:   flag.Bool("removeChecksums", false, ""),
 	}
 	flag.Parse()
 	return args
 }
 
-func RunNeverscript(arguments CommandLineArguments) {
+func RunNeverscript(arguments CommandLineArguments) error {
 	argumentsWereSupplied := false
 
 	if *arguments.FileToCompile != "" {
@@ -103,7 +98,6 @@ func RunNeverscript(arguments CommandLineArguments) {
 			outputFilename = WithQbExtension(*arguments.FileToCompile)
 		}
 
-		fmt.Printf("\nCompiling '%s' (may freeze)...\n", *arguments.FileToCompile)
 		var lexer compiler.Lexer
 		var parser compiler.Parser
 		var bytecodeCompiler compiler.BytecodeCompiler
@@ -114,10 +108,13 @@ func RunNeverscript(arguments CommandLineArguments) {
 			bytecodeCompiler.TargetGame != "thps4" &&
 			bytecodeCompiler.TargetGame != "thug1" &&
 			bytecodeCompiler.TargetGame != "thug2" {
-			log.Fatal("Target game must be one of: ['thps3', 'thps4', 'thug1', 'thug2']")
+			return errors.New("ERROR - Target game must be thps3/thps4/thug1/thug2")
 		}
 
-		compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+		compilationError := compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+		if compilationError != nil {
+			return errors.New(fmt.Sprintf("ERROR %s(line %d) - %s", filepath.Base(*arguments.FileToCompile), compilationError.GetLineNumber(), compilationError.GetMessage()))
+		}
 		fmt.Printf("  Created '%s'.\n", outputFilename)
 
 		if *arguments.ShowHexDump {
@@ -126,7 +123,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 			fmt.Println()
 		}
 
-		if *arguments.DecompileWithRoq {
+		if *arguments.ShowDecompiledRoq {
 			fmt.Println("Roq decompiler output (may freeze):")
 			roqCmd := exec.Command("roq.exe", "-d", outputFilename)
 			decompiledCode, _ := roqCmd.Output()
@@ -137,9 +134,7 @@ func RunNeverscript(arguments CommandLineArguments) {
 
 		fmt.Printf("\nDecompiling '%s' (may freeze)...\n", *arguments.FileToDecompile)
 		byteCode, err := ioutil.ReadFile(*arguments.FileToDecompile)
-		if err != nil {
-			log.Fatal(err)
-		}
+		if err != nil { return err }
 
 		var decompilerArguments decompiler.Arguments
 		decompilerArguments.ByteCode = byteCode
@@ -186,6 +181,8 @@ func RunNeverscript(arguments CommandLineArguments) {
 		banner := strings.Repeat("-", 36)
 		fmt.Println(banner + " done " + banner)
 	}
+
+	return nil
 }
 
 func WithQbExtension(fileName string) string {

@@ -1,15 +1,18 @@
 package compiler
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
 type ParseResult struct {
-	WasSuccessful  bool
+	GotResult      bool
+	Error          error
 	Reason         string
 	Node           AstNode
 	TokensConsumed int
+	LineNumber     int
 }
 
 type Parser struct {
@@ -52,7 +55,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		// Ensure root starts with new-line
 		bodyNodes.MaybeSave(ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_NewLine,
 				Data: AstData_Empty{},
@@ -65,7 +68,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		var bodyNodeParseResult ParseResult
 		for {
 			bodyNodeParseResult = ParseRootBodyNode(index)
-			if bodyNodeParseResult.WasSuccessful {
+
+			if bodyNodeParseResult.GotResult {
+			    if bodyNodeParseResult.Error != nil {
+			    	return bodyNodeParseResult
+				}
 				bodyNodes.MaybeSave(bodyNodeParseResult)
 				index += bodyNodeParseResult.TokensConsumed
 			} else {
@@ -83,13 +90,13 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 			messageBuilder.WriteString(fmt.Sprintf("\nPotential cause: %s\n", bodyNodeParseResult.Reason))
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        messageBuilder.String(),
+				GotResult: false,
+				Reason:    messageBuilder.String(),
 			}
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Root,
 				Data: AstData_Root{
@@ -101,29 +108,29 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseRootBodyNode = func(index int) ParseResult {
-		if parseResult := ParseNewLine(index); parseResult.WasSuccessful {
+		if parseResult := ParseNewLine(index); parseResult.GotResult {
 			return parseResult
 		}
 
-		if parseResult := ParseComment(index); parseResult.WasSuccessful {
+		if parseResult := ParseComment(index); parseResult.GotResult {
 			return parseResult
 		}
 
-		if parseResult := ParseScript(index); parseResult.WasSuccessful {
+		if parseResult := ParseScript(index); parseResult.GotResult {
 			return parseResult
 		}
 
-		if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
+		if parseResult := ParseAssignment(index, true); parseResult.GotResult {
 			return parseResult
 		}
 
-		if parseResult := ParseExpression(index, true); parseResult.WasSuccessful {
+		if parseResult := ParseExpression(index, true); parseResult.GotResult {
 			return parseResult
 		}
 
 		return ParseResult{
-			WasSuccessful: false,
-			Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a root body node"),
+			GotResult: false,
+			Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a root body node"),
 		}
 	}
 
@@ -131,8 +138,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		parseExpressionInner := func(index int, allowInvocations bool) ParseResult {
 			if GetKind(index) == TokenKind_If {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        "Failed to parse expression, found 'if'",
+					GotResult: false,
+					Reason:    "Failed to parse expression, found 'if'",
 				}
 			}
 			if GetKind(index) == TokenKind_LeftAngleBracket &&
@@ -141,7 +148,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				GetKind(index+3) == TokenKind_Dot &&
 				GetKind(index+4) == TokenKind_RightAngleBracket {
 				return ParseResult{
-					WasSuccessful: true,
+					GotResult: true,
 					Node: AstNode{
 						Kind: AstKind_AllArguments,
 						Data: AstData_Empty{},
@@ -154,21 +161,21 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				// parseResult := ParseChecksumOrInvocation(futureIndex, allowInvocations)
 				// BUG: ^ invocation comes after the local reference, not inside
 				parseResult := ParseChecksum(futureIndex)
-				if !parseResult.WasSuccessful {
+				if !parseResult.GotResult {
 					return ParseResult{
-						WasSuccessful: false,
-						Reason:        WrapStr("Failed to parse expression for local reference", parseResult.Reason),
+						GotResult: false,
+						Reason:    WrapStr("Failed to parse expression for local reference", parseResult.Reason),
 					}
 				}
 				futureIndex++
 				if GetKind(futureIndex) != TokenKind_RightAngleBracket {
 					return ParseResult{
-						WasSuccessful: false,
-						Reason:        WrapStr("Failed to parse local reference, no '>'", parseResult.Reason),
+						GotResult: false,
+						Reason:    WrapStr("Failed to parse local reference, no '>'", parseResult.Reason),
 					}
 				}
 				return ParseResult{
-					WasSuccessful: true,
+					GotResult: true,
 					Node: AstNode{
 						Kind: AstKind_LocalReference,
 						Data: AstData_LocalReference{
@@ -182,7 +189,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				nextToken := GetToken(index + 1)
 				if nextToken.Kind == TokenKind_Integer {
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_Integer,
 							Data: AstData_Integer{
@@ -197,7 +204,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					}
 				} else if nextToken.Kind == TokenKind_Float {
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_Float,
 							Data: AstData_Float{
@@ -213,7 +220,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				}
 			}
 
-			if parseResult := ParseRandom(index); parseResult.WasSuccessful {
+			if parseResult := ParseRandom(index); parseResult.GotResult {
 				return parseResult
 			}
 			if GetKind(index) == TokenKind_Identifier || GetKind(index) == TokenKind_RawChecksum {
@@ -241,14 +248,14 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				return ParseStruct(index)
 			}
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
+				GotResult: false,
+				Reason:    TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
 			}
 		}
 
 		inPlaceMathOperationParseResult := func(index int, leftParseResult ParseResult, rightParseResult ParseResult, expressionKind AstKind) ParseResult {
 			return ParseResult{
-				WasSuccessful: true,
+				GotResult: true,
 				Node: AstNode{
 					Kind: AstKind_Assignment,
 					Data: AstData_Assignment{
@@ -267,15 +274,18 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		expressionParseResult := parseExpressionInner(index, allowInvocations)
-		if expressionParseResult.WasSuccessful {
+		if expressionParseResult.GotResult {
+			if expressionParseResult.Error != nil {
+				return expressionParseResult
+			}
 			index += expressionParseResult.TokensConsumed
 			if GetKind(index) == TokenKind_Dot {
 				index++
 				secondExpressionParseResult := ParseExpression(index, true)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_DotExpression,
 							Data: AstData_BinaryExpression{
@@ -289,10 +299,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_Colon {
 				index++
 				secondExpressionParseResult := ParseExpression(index, true)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_ColonExpression,
 							Data: AstData_BinaryExpression{
@@ -306,10 +316,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_And {
 				index++
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_LogicalAnd,
 							Data: AstData_BinaryExpression{
@@ -323,10 +333,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_Or {
 				index++
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return ParseResult{
-						WasSuccessful: true,
+						GotResult: true,
 						Node: AstNode{
 							Kind: AstKind_LogicalOr,
 							Data: AstData_BinaryExpression{
@@ -340,39 +350,39 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_Plus && GetKind(index+1) == TokenKind_Equals {
 				index += 2
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_AdditionExpression)
 				}
 			} else if GetKind(index) == TokenKind_Minus && GetKind(index+1) == TokenKind_Equals {
 				index += 2
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_SubtractionExpression)
 				}
 			} else if GetKind(index) == TokenKind_Asterisk && GetKind(index+1) == TokenKind_Equals {
 				index += 2
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_MultiplicationExpression)
 				}
 			} else if GetKind(index) == TokenKind_ForwardSlash && GetKind(index+1) == TokenKind_Equals {
 				index += 2
 				secondExpressionParseResult := ParseExpression(index, false)
-				if secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_DivisionExpression)
 				}
 			} else if GetKind(index) == TokenKind_LeftSquareBracket {
 				index += 1
-				if secondExpressionParseResult := ParseExpression(index, allowInvocations); secondExpressionParseResult.WasSuccessful {
+				if secondExpressionParseResult := ParseExpression(index, allowInvocations); secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					if GetKind(index) == TokenKind_RightSquareBracket {
 						index += 1
 						return ParseResult{
-							WasSuccessful:  true,
+							GotResult: true,
 							Node:           AstNode{
 								Kind: AstKind_ArrayAccess,
 								Data: AstData_ArrayAccess{
@@ -395,11 +405,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		index++
 
 		firstParseResult := ParseExpression(index, true)
-		if firstParseResult.WasSuccessful {
+		if firstParseResult.GotResult {
 			index += firstParseResult.TokensConsumed
 			if GetKind(index) == TokenKind_RightParenthesis {
 				return ParseResult{
-					WasSuccessful: true,
+					GotResult: true,
 					Node: AstNode{
 						Kind: AstKind_UnaryExpression,
 						Data: AstData_UnaryExpression{
@@ -414,11 +424,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				index++
 				if GetKind(index) == TokenKind_Float {
 					secondParseResult := ParseExpression(index, true)
-					if secondParseResult.WasSuccessful {
+					if secondParseResult.GotResult {
 						index += secondParseResult.TokensConsumed
 						if GetKind(index) == TokenKind_RightParenthesis {
 							return ParseResult{
-								WasSuccessful: true,
+								GotResult: true,
 								Node: AstNode{
 									Kind: AstKind_Pair,
 									Data: AstData_Pair{
@@ -433,11 +443,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 							index++
 							if GetKind(index) == TokenKind_Float {
 								thirdParseResult := ParseExpression(index, true)
-								if thirdParseResult.WasSuccessful {
+								if thirdParseResult.GotResult {
 									index += thirdParseResult.TokensConsumed
 									if GetKind(index) == TokenKind_RightParenthesis {
 										return ParseResult{
-											WasSuccessful: true,
+											GotResult: true,
 											Node: AstNode{
 												Kind: AstKind_Vector,
 												Data: AstData_Vector{
@@ -459,11 +469,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			handleBinaryOperator := func(astKind AstKind, size int) ParseResult {
 				index += size
 				secondInnerExpressionParseResult := ParseExpression(index, true)
-				if secondInnerExpressionParseResult.WasSuccessful {
+				if secondInnerExpressionParseResult.GotResult {
 					index += secondInnerExpressionParseResult.TokensConsumed
 					if GetKind(index) == TokenKind_RightParenthesis {
 						return ParseResult{
-							WasSuccessful: true,
+							GotResult: true,
 							Node: AstNode{
 								Kind: astKind,
 								Data: AstData_BinaryExpression{
@@ -476,8 +486,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					}
 				}
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        "Couldn't parse binary operator expression",
+					GotResult: false,
+					Reason:    "Couldn't parse binary operator expression",
 				}
 			}
 			if GetKind(index) == TokenKind_Plus {
@@ -513,8 +523,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			WasSuccessful: false,
-			Reason:        TokensNotRecognisedError(parser.Tokens[oldIndex:], "an expression beginning with a left parenthesis"),
+			GotResult: false,
+			Reason:    TokensNotRecognisedError(parser.Tokens[oldIndex:], "an expression beginning with a left parenthesis"),
 		}
 	}
 
@@ -530,19 +540,21 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					break
 				}
 			}
-			if expressionParseResult := ParseExpression(index+extraTokens+1, allowInvocations); expressionParseResult.WasSuccessful {
+			if expressionParseResult := ParseExpression(index+extraTokens+1, allowInvocations); expressionParseResult.GotResult {
 				checksumOrInvocation = ParseInvocation(index)
 			}
 		}
 
-		if checksumOrInvocation.WasSuccessful == false {
+		if checksumOrInvocation.GotResult == false {
 			checksumOrInvocation = ParseChecksum(index)
+		} else if checksumOrInvocation.Error != nil {
+			return checksumOrInvocation
 		}
 
-		if checksumOrInvocation.WasSuccessful == false {
+		if checksumOrInvocation.GotResult == false {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        TokensNotRecognisedError(parser.Tokens[index:], "an invocation or checksum node"),
+				GotResult: false,
+				Reason:    TokensNotRecognisedError(parser.Tokens[index:], "an invocation or checksum node"),
 			}
 		}
 
@@ -553,7 +565,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		if GetKind(index) == TokenKind_LeftAngleBracket &&
 			GetKind(index+2) == TokenKind_RightAngleBracket {
 			return ParseResult{
-				WasSuccessful: true,
+				GotResult: true,
 				Node: AstNode{
 					Kind: AstKind_LocalReference,
 					Data: AstData_LocalReference{
@@ -570,7 +582,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Checksum,
 				Data: AstData_Checksum{
@@ -584,7 +596,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 	ParseFloat = func(index int) ParseResult {
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Float,
 				Data: AstData_Float{
@@ -597,7 +609,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 	ParseInteger = func(index int) ParseResult {
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Integer,
 				Data: AstData_Integer{
@@ -610,7 +622,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 	ParseString = func(index int) ParseResult {
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_String,
 				Data: AstData_String{
@@ -638,22 +650,22 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				index++
 				elementNodes.TokensConsumed++
 			}
-			if newLineParseResult := ParseNewLine(index); newLineParseResult.WasSuccessful {
+			if newLineParseResult := ParseNewLine(index); newLineParseResult.GotResult {
 				elementNodes.MaybeSave(newLineParseResult)
 				index += newLineParseResult.TokensConsumed
 			}
-			if commaParseResult := ParseComma(index); commaParseResult.WasSuccessful {
+			if commaParseResult := ParseComma(index); commaParseResult.GotResult {
 				elementNodes.MaybeSave(commaParseResult)
 				index += commaParseResult.TokensConsumed
 			}
-			if expressionParseResult := ParseExpression(index, true); expressionParseResult.WasSuccessful {
+			if expressionParseResult := ParseExpression(index, true); expressionParseResult.GotResult {
 				elementNodes.MaybeSave(expressionParseResult)
 				index += expressionParseResult.TokensConsumed
 			}
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Array,
 				Data: AstData_Array{
@@ -669,8 +681,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Couldn't parse struct, no '{' found",
+				GotResult: false,
+				Reason:    "Couldn't parse struct, no '{' found",
 			}
 		}
 
@@ -680,44 +692,47 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			if GetKind(index) == TokenKind_BackwardSlash && GetKind(index+1) == TokenKind_NewLine {
 				elementNodes.TokensConsumed += 2
 				index += 2
-			} else if parseResult := ParseNewLine(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseNewLine(index); parseResult.GotResult {
 				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if GetKind(index) == TokenKind_If {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        "Failed to parse struct elements, found 'if'",
+					GotResult: false,
+					Reason:    "Failed to parse struct elements, found 'if'",
 				}
 			} else if GetKind(index) == TokenKind_While {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        "Failed to parse struct elements, found 'while'",
+					GotResult: false,
+					Reason:    "Failed to parse struct elements, found 'while'",
 				}
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {
 				break
-			} else if parseResult := ParseComma(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseComma(index); parseResult.GotResult {
 				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseComment(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseComment(index); parseResult.GotResult {
 				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
+			} else if parseResult := ParseAssignment(index, true); parseResult.GotResult {
+				if parseResult.Error != nil {
+					return parseResult
+				}
 				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseExpression(index, true); parseResult.WasSuccessful {
+			} else if parseResult := ParseExpression(index, true); parseResult.GotResult {
 				elementNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else if index == indexAfterLastIteration {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a struct element"),
+					GotResult: false,
+					Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a struct element"),
 				}
 			}
 			indexAfterLastIteration = index
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Struct,
 				Data: AstData_Struct{
@@ -731,33 +746,37 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	ParseAssignment = func(index int, allowInvocations bool) ParseResult {
 		start := index
 		nameParseResult := ParseChecksum(index)
-		if !nameParseResult.WasSuccessful {
+		if !nameParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in assignment wasn't a checksum",
+				GotResult: false,
+				Reason:    "First token in assignment wasn't a checksum",
 			}
 		}
 		index += nameParseResult.TokensConsumed
 
 		if GetKind(index) != TokenKind_Equals {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Second token in assignment wasn't an 'equals'",
+				GotResult: false,
+				Reason:    "Second token in assignment wasn't an 'equals'",
 			}
 		}
 		index++
 
 		valueParseResult := ParseExpression(index, allowInvocations)
-		if !valueParseResult.WasSuccessful {
+		if !valueParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        WrapStr("Couldn't parse expression for value of assignment", valueParseResult.Reason),
+				GotResult: true,
+				Error: errors.New("Incomplete assignment"),
+				LineNumber: GetToken(index - 1).LineNumber,
+				Reason:    WrapStr("Couldn't parse expression for value of assignment", valueParseResult.Reason),
 			}
+		} else if valueParseResult.Error != nil {
+			return valueParseResult
 		}
 		index += valueParseResult.TokensConsumed
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Assignment,
 				Data: AstData_Assignment{
@@ -870,8 +889,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	ParseScript = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_Script {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in script wasn't 'script'",
+				GotResult: false,
+				Reason:    "First token in script wasn't 'script'",
 			}
 		}
 		index++
@@ -880,8 +899,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if GetKind(index) != TokenKind_Identifier && GetKind(index) != TokenKind_RawChecksum {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Second token in script wasn't an identifier or a checksum",
+				GotResult: false,
+				Reason:    "Second token in script wasn't an identifier or a checksum",
 			}
 		}
 		nameToken := GetToken(index)
@@ -890,7 +909,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		for {
 			if GetKind(index) == TokenKind_NewLine {
 				index++
-			} else if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
+			} else if parseResult := ParseAssignment(index, true); parseResult.GotResult {
 				index += parseResult.TokensConsumed
 				pruneStructIfInvoked(&parseResult, &index)
 				defaultParameters.MaybeSave(parseResult)
@@ -900,15 +919,17 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
-		if !bodyParseResult.WasSuccessful {
+		if !bodyParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        WrapStr("Couldn't parse script body", bodyParseResult.Reason),
+				GotResult: false,
+				Reason:    WrapStr("Couldn't parse script body", bodyParseResult.Reason),
 			}
+		} else if bodyParseResult.Error != nil {
+			return bodyParseResult
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Script,
 				Data: AstData_Script{
@@ -929,16 +950,16 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	ParseWhileLoop = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_While {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in while loop wasn't 'while'",
+				GotResult: false,
+				Reason:    "First token in while loop wasn't 'while'",
 			}
 		}
 		index++
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
-		if bodyParseResult.WasSuccessful {
+		if bodyParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: true,
+				GotResult: true,
 				Node: AstNode{
 					Kind: AstKind_WhileLoop,
 					Data: AstData_WhileLoop{
@@ -950,28 +971,28 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			WasSuccessful: false,
-			Reason:        WrapStr("Couldn't parse while loop body", bodyParseResult.Reason),
+			GotResult: false,
+			Reason:    WrapStr("Couldn't parse while loop body", bodyParseResult.Reason),
 		}
 	}
 
 	ParseLogicalNot = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_Bang {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Logical not doesn't start with '!'",
+				GotResult: false,
+				Reason:    "Logical not doesn't start with '!'",
 			}
 		}
 		index++
 		expressionParseResult := ParseExpression(index, true)
-		if !expressionParseResult.WasSuccessful {
+		if !expressionParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Failed to parse expression after logical-not",
+				GotResult: false,
+				Reason:    "Failed to parse expression after logical-not",
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_LogicalNot,
 				Data: AstData_UnaryExpression{
@@ -986,8 +1007,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		oldIndex := index
 		if GetKind(index) != TokenKind_If {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in if-statement wasn't 'if'",
+				GotResult: false,
+				Reason:    "First token in if-statement wasn't 'if'",
 			}
 		}
 
@@ -1008,10 +1029,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		conditionParseResult := ParseExpression(index, true)
-		if !conditionParseResult.WasSuccessful {
+		if !conditionParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        WrapStr("Couldn't parse condition in if-statement", conditionParseResult.Reason),
+				GotResult: false,
+				Reason:    WrapStr("Couldn't parse condition in if-statement", conditionParseResult.Reason),
 			}
 		}
 		index += conditionParseResult.TokensConsumed
@@ -1019,10 +1040,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		saveCondition(conditionParseResult)
 
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
-		if !bodyParseResult.WasSuccessful {
+		if !bodyParseResult.GotResult {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        WrapStr("Couldn't parse body of if-statement", bodyParseResult.Reason),
+				GotResult: false,
+				Reason:    WrapStr("Couldn't parse body of if-statement", bodyParseResult.Reason),
 			}
 		}
 		index += bodyParseResult.TokensConsumed
@@ -1035,39 +1056,39 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 					index++
 
 					anotherConditionParseResult := ParseExpression(index, true)
-					if anotherConditionParseResult.WasSuccessful {
+					if anotherConditionParseResult.GotResult {
 						index += anotherConditionParseResult.TokensConsumed
 						pruneStructIfInvoked(&anotherConditionParseResult, &index)
 						saveCondition(anotherConditionParseResult)
 						if GetKind(index) != TokenKind_LeftCurlyBrace {
 							return ParseResult{
-								WasSuccessful: false,
-								Reason:        WrapStr("Couldn't find '{' after else-if condition", anotherConditionParseResult.Reason),
+								GotResult: false,
+								Reason:    WrapStr("Couldn't find '{' after else-if condition", anotherConditionParseResult.Reason),
 							}
 						}
 					} else {
 						return ParseResult{
-							WasSuccessful: false,
-							Reason:        WrapStr("Failed to parse condition for else-if", anotherConditionParseResult.Reason),
+							GotResult: false,
+							Reason:    WrapStr("Failed to parse condition for else-if", anotherConditionParseResult.Reason),
 						}
 					}
 				}
 
 				if GetKind(index) == TokenKind_LeftCurlyBrace {
 					anotherBodyParseResult, bodyNodes := ParseBodyOfCode(index)
-					if bodyParseResult.WasSuccessful {
+					if bodyParseResult.GotResult {
 						index += anotherBodyParseResult.TokensConsumed
 						saveBody(anotherBodyParseResult, bodyNodes)
 					} else {
 						return ParseResult{
-							WasSuccessful: false,
-							Reason:        WrapStr("Failed to parse an if-statement body", anotherBodyParseResult.Reason),
+							GotResult: false,
+							Reason:    WrapStr("Failed to parse an if-statement body", anotherBodyParseResult.Reason),
 						}
 					}
 				} else {
 					return ParseResult{
-						WasSuccessful: false,
-						Reason:        fmt.Sprintf("Unexpected token after 'else' keyword, '%s'. Expected '{' or 'if'.", GetToken(index).Data),
+						GotResult: false,
+						Reason:    fmt.Sprintf("Unexpected token after 'else' keyword, '%s'. Expected '{' or 'if'.", GetToken(index).Data),
 					}
 				}
 			} else {
@@ -1076,7 +1097,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_IfStatement,
 				Data: AstData_IfStatement{
@@ -1093,8 +1114,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in body of code wasn't '{'",
+				GotResult: false,
+				Reason:    "First token in body of code wasn't '{'",
 			}, []AstNode{}
 		}
 		index++
@@ -1106,28 +1127,34 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {
 				index++
 				break
-			} else if parseResult := ParseNewLine(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseNewLine(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseBreak(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseBreak(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseReturn(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseReturn(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseIfStatement(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseIfStatement(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseWhileLoop(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseWhileLoop(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseComment(index); parseResult.WasSuccessful {
+			} else if parseResult := ParseComment(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseAssignment(index, true); parseResult.WasSuccessful {
+			} else if parseResult := ParseAssignment(index, true); parseResult.GotResult {
+				if parseResult.Error != nil {
+					return parseResult, []AstNode{}
+				}
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
-			} else if parseResult := ParseExpression(index, true); parseResult.WasSuccessful {
+			} else if parseResult := ParseExpression(index, true); parseResult.GotResult {
+				if parseResult.Error != nil {
+					return parseResult, []AstNode{}
+				}
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed
 			} else {
@@ -1137,13 +1164,13 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if (index - startIndex) < 2 {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Didn't parse enough tokens to be a body of code",
+				GotResult: false,
+				Reason:    "Didn't parse enough tokens to be a body of code",
 			}, []AstNode{}
 		}
 
 		return ParseResult{
-			WasSuccessful:  true,
+			GotResult:      true,
 			TokensConsumed: 2 + bodyNodes.TokensConsumed,
 		}, bodyNodes.Nodes
 	}
@@ -1153,16 +1180,16 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if GetKind(index) != TokenKind_Random {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in 'random' wasn't 'random'",
+				GotResult: false,
+				Reason:    "First token in 'random' wasn't 'random'",
 			}
 		}
 		index++
 
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "Second token in 'random' wasn't '{'",
+				GotResult: false,
+				Reason:    "Second token in 'random' wasn't '{'",
 			}
 		}
 		index++
@@ -1193,19 +1220,19 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 
 			integerParseResult := ParseInteger(index)
-			if !integerParseResult.WasSuccessful {
+			if !integerParseResult.GotResult {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        WrapStr("Failed to parse weight for branch", integerParseResult.Reason),
+					GotResult: false,
+					Reason:    WrapStr("Failed to parse weight for branch", integerParseResult.Reason),
 				}
 			}
 			index += integerParseResult.TokensConsumed
 
 			bodyParseResult, bodyNodes := ParseBodyOfCode(index)
-			if !bodyParseResult.WasSuccessful {
+			if !bodyParseResult.GotResult {
 				return ParseResult{
-					WasSuccessful: false,
-					Reason:        WrapStr("Failed to parse body for branch", integerParseResult.Reason),
+					GotResult: false,
+					Reason:    WrapStr("Failed to parse body for branch", integerParseResult.Reason),
 				}
 			}
 			index += bodyParseResult.TokensConsumed
@@ -1214,7 +1241,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Random,
 				Data: AstData_Random{
@@ -1232,8 +1259,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			GetKind(index) != TokenKind_RawChecksum &&
 			GetKind(index) != TokenKind_Return /* TODO(brandon): remove this hack. (ParseReturn() just calls ParseInvocation() because the syntax so similar) */ {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        "First token in invocation wasn't an identifier or checksum",
+				GotResult: false,
+				Reason:    "First token in invocation wasn't an identifier or checksum",
 			}
 		}
 		scriptIdentifierToken := GetToken(index)
@@ -1252,7 +1279,10 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				index += 2
 			}
 			parameterParseResult := ParseInvocationParameter(index)
-			if parameterParseResult.WasSuccessful {
+			if parameterParseResult.GotResult {
+				if parameterParseResult.Error != nil {
+					return parameterParseResult
+				}
 				parameterNodes.MaybeSave(parameterParseResult)
 				tokensConsumedByEachParameterNode = append(tokensConsumedByEachParameterNode, parameterParseResult.TokensConsumed)
 				index += parameterParseResult.TokensConsumed
@@ -1262,7 +1292,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Invocation,
 				Data: AstData_Invocation{
@@ -1282,27 +1312,27 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseInvocationParameter = func(index int) ParseResult {
-		if assignmentParseResult := ParseAssignment(index, false); assignmentParseResult.WasSuccessful {
+		if assignmentParseResult := ParseAssignment(index, false); assignmentParseResult.GotResult {
 			return assignmentParseResult
 		}
-		if expressionParseResult := ParseExpression(index, false); expressionParseResult.WasSuccessful {
+		if expressionParseResult := ParseExpression(index, false); expressionParseResult.GotResult {
 			return expressionParseResult
 		}
 		return ParseResult{
-			WasSuccessful: false,
-			Reason:        TokensNotRecognisedError(parser.Tokens[index:], "a parameter"),
+			GotResult: false,
+			Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a parameter"),
 		}
 	}
 
 	ParseComment = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_SingleLineComment && GetKind(index) != TokenKind_MultiLineComment {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        fmt.Sprintf("Not a comment (%+v)", GetToken(index)),
+				GotResult: false,
+				Reason:    fmt.Sprintf("Not a comment (%+v)", GetToken(index)),
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Comment,
 				Data: AstData_Comment{
@@ -1316,12 +1346,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	ParseNewLine = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_NewLine {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        fmt.Sprintf("Not a new-line token (%+v)", GetToken(index)),
+				GotResult: false,
+				Reason:    fmt.Sprintf("Not a new-line token (%+v)", GetToken(index)),
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_NewLine,
 				Data: AstData_Empty{},
@@ -1333,12 +1363,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	ParseBreak = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_Break {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        fmt.Sprintf("Not a break token (%+v)", GetToken(index)),
+				GotResult: false,
+				Reason:    fmt.Sprintf("Not a break token (%+v)", GetToken(index)),
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Break,
 				Data: AstData_Empty{},
@@ -1349,9 +1379,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 	ParseReturn = func(index int) ParseResult {
 		if GetKind(index) == TokenKind_Return {
-			if invocationParseResult := ParseChecksumOrInvocation(index, true); invocationParseResult.WasSuccessful {
+			if invocationParseResult := ParseChecksumOrInvocation(index, true); invocationParseResult.GotResult {
 				return ParseResult{
-					WasSuccessful: true,
+					GotResult: true,
 					Node: AstNode{
 						Kind: AstKind_Return,
 						Data: AstData_UnaryExpression{
@@ -1363,20 +1393,20 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 		}
 		return ParseResult{
-			WasSuccessful: false,
-			Reason:        "Not a return statement",
+			GotResult: false,
+			Reason:    "Not a return statement",
 		}
 	}
 
 	ParseComma = func(index int) ParseResult {
 		if GetKind(index) != TokenKind_Comma {
 			return ParseResult{
-				WasSuccessful: false,
-				Reason:        fmt.Sprintf("Not a comma token (%+v)", GetToken(index)),
+				GotResult: false,
+				Reason:    fmt.Sprintf("Not a comma token (%+v)", GetToken(index)),
 			}
 		}
 		return ParseResult{
-			WasSuccessful: true,
+			GotResult: true,
 			Node: AstNode{
 				Kind: AstKind_Comma,
 				Data: AstData_Empty{},

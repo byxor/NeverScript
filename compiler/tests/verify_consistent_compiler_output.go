@@ -16,7 +16,7 @@ import (
  * Rather than writing a gigantic suite of tests like I did the past ~4 times I've started this project,
  * I've written a short program that warns me when the compiler is producing different output than before.
  *
- * Snapshot testing is easier than maintaining a bunch of tests that check sequences of bytes.
+ * Snapshot testing is easier than maintaining a bunch of tests that checkMessageAndLineNumber sequences of bytes.
  */
 
 func main() {

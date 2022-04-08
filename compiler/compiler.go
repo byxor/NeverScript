@@ -25,8 +25,13 @@ func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, byteco
 
 	parser.Tokens = lexer.Tokens
 	BuildAbstractSyntaxTree(parser)
-	if !parser.Result.WasSuccessful {
+	if !parser.Result.GotResult {
 		log.Fatal(parser.Result.Reason)
+	} else if parser.Result.Error != nil {
+		return CompilationError{
+			message:      parser.Result.Error.Error(),
+			lineNumber:   parser.Result.LineNumber,
+		}
 	}
 
 	bytecodeCompiler.RootAstNode = parser.Result.Node
