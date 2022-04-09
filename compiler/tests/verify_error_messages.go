@@ -33,6 +33,11 @@ func main() {
 		}
 	}
 
+	// check(UnknownEscapeSequenceInString)
+	check(IncompleteBacktickedIdentifier)
+	check(IncompleteStruct)
+	check(IncompleteArray)
+	check(IncompleteScript)
 	check(ExtraParenthesis)
 	check(IncompleteVector)
 	check(IncompletePair)
@@ -43,6 +48,132 @@ func main() {
 	check(IncompleteShorthandAddition)
 	check(IncompleteAssignment)
 	check(EOFWhileScanningStringLiteral)
+}
+
+func IncompleteBacktickedIdentifier() error {
+	expectedMessage = "EOF while scanning identifier (`)"
+
+	code = "`x"
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo {
+	cas_item = `+"`"+`kneepad shorts
+}`
+	expectedLineNumber = 2
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	return nil
+}
+
+func IncompleteStruct() error {
+	expectedMessage = "Incomplete struct"
+
+	code = `x = {`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `x = {
+	y = {
+		z = {
+	}
+}`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `x = 1
+y = { "struct", "requires", "closing", "}"
+`
+	expectedLineNumber = 2
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	return nil
+}
+
+func IncompleteArray() error {
+	expectedMessage = "Incomplete array"
+
+	code = `x = [`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `x = [1, 2, 3, 4`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `x = 5
+y = [
+	1`
+	expectedLineNumber = 2
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `x = [1, 2, 3, 4]
+y = [
+	1 2 3,4 \`
+	expectedLineNumber = 2
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	return nil
+}
+
+func IncompleteScript() error {
+	expectedMessage = "Incomplete script definition"
+
+	code = `script`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo {}
+script Bar {}
+script Baz { x = 10 }
+script`
+	expectedLineNumber = 4
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo text=""`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo text="" {`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo {
+	Bar
+`
+	expectedLineNumber = 1
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	code = `script Foo {}
+script Bar x=1 y=(2.0, 3.0) z="wow" {
+	Stuff \
+		goes=here \
+		so={it does}
+`
+	expectedLineNumber = 2
+	err = compileAndCheckError(checkMessageAndLineNumber)
+	if err != nil { return err }
+
+	return nil
 }
 
 func ExtraParenthesis() error {

@@ -246,7 +246,7 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 		}
 	}
 
-	CanFindIdentifier := func() (string, bool) {
+	CanFindIdentifier := func() (string, bool, error) {
 		start := lexer.Index
 		end := start
 
@@ -254,7 +254,7 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 			end++
 			for {
 				if end >= len(lexer.SourceCode) {
-					break
+					return "", true, errors.New("EOF while scanning identifier (`)")
 				}
 				if lexer.SourceCode[end] == '`' {
 					end++
@@ -263,7 +263,7 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 				end++
 			}
 
-			return lexer.SourceCode[start:end], end != start + 1
+			return lexer.SourceCode[start:end], end != start + 1, nil
 		} else {
 			for {
 				if end >= len(lexer.SourceCode) {
@@ -277,7 +277,7 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 				end++
 			}
 
-			return lexer.SourceCode[start:end], start != end
+			return lexer.SourceCode[start:end], start != end, nil
 		}
 	}
 
@@ -414,7 +414,13 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 				} else if CanFindKeyword("return", true) {
 					SaveToken(lexer, TokenKind_Return, "return")
 					lexer.Index += 6
-				} else if identifier, found := CanFindIdentifier(); found {
+				} else if identifier, found, err := CanFindIdentifier(); found {
+					if err != nil {
+						return CompilationError{
+							message:      err.Error(),
+							lineNumber:   lexer.LineNumber,
+						}
+					}
 					if identifier[0] == '`' && identifier[len(identifier)-1] == '`' {
 						identifier = identifier[1:len(identifier)-1]
 						lexer.Index += 2

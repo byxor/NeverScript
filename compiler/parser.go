@@ -138,7 +138,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		return ParseResult{
 			GotResult: false,
-			Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a root body node"),
+			//Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a root body node"),
 		}
 	}
 
@@ -257,7 +257,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			}
 			return ParseResult{
 				GotResult: false,
-				Reason:    TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
+				//Reason:    TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
 				LineNumber: GetToken(index - 1).LineNumber,
 			}
 		}
@@ -689,6 +689,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseArray = func(index int) ParseResult {
+		startIndex := index
 		index++
 
 		// gather array elements
@@ -697,25 +698,26 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			if GetKind(index) == TokenKind_BackwardSlash && GetKind(index+1) == TokenKind_NewLine {
 				index += 2
 				elementNodes.TokensConsumed += 2
-			}
-			if GetKind(index) == TokenKind_RightSquareBracket {
+			} else if GetKind(index) == TokenKind_RightSquareBracket {
 				break
-			}
-			if GetKind(index) == TokenKind_SingleLineComment || GetKind(index) == TokenKind_MultiLineComment {
+			} else if GetKind(index) == TokenKind_SingleLineComment || GetKind(index) == TokenKind_MultiLineComment {
 				index++
 				elementNodes.TokensConsumed++
-			}
-			if newLineParseResult := ParseNewLine(index); newLineParseResult.GotResult {
+			} else if newLineParseResult := ParseNewLine(index); newLineParseResult.GotResult {
 				elementNodes.MaybeSave(newLineParseResult)
 				index += newLineParseResult.TokensConsumed
-			}
-			if commaParseResult := ParseComma(index); commaParseResult.GotResult {
+			} else if commaParseResult := ParseComma(index); commaParseResult.GotResult {
 				elementNodes.MaybeSave(commaParseResult)
 				index += commaParseResult.TokensConsumed
-			}
-			if expressionParseResult := ParseExpression(index, true); expressionParseResult.GotResult {
+			} else if expressionParseResult := ParseExpression(index, true); expressionParseResult.GotResult {
 				elementNodes.MaybeSave(expressionParseResult)
 				index += expressionParseResult.TokensConsumed
+			} else {
+				return ParseResult{
+					GotResult:  true,
+					Error:      errors.New("Incomplete array"),
+					LineNumber: GetToken(startIndex).LineNumber,
+				}
 			}
 		}
 
@@ -740,6 +742,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				Reason:    "Couldn't parse struct, no '{' found",
 			}
 		}
+
+		startIndex := index
 
 		index++
 		indexAfterLastIteration := index
@@ -779,7 +783,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				index += parseResult.TokensConsumed
 			} else if index == indexAfterLastIteration {
 				return ParseResult{
-					GotResult: false,
+					GotResult: true,
+					Error: errors.New("Incomplete struct"),
+					LineNumber: GetToken(startIndex).LineNumber,
 					Reason:    TokensNotRecognisedError(parser.Tokens[index:], "a struct element"),
 				}
 			}
@@ -954,7 +960,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 		if GetKind(index) != TokenKind_Identifier && GetKind(index) != TokenKind_RawChecksum {
 			return ParseResult{
-				GotResult: false,
+				GotResult: true,
+				Error: errors.New("Incomplete script definition"),
+				LineNumber: GetToken(index-1).LineNumber,
 				Reason:    "Second token in script wasn't an identifier or a checksum",
 			}
 		}
@@ -976,7 +984,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		bodyParseResult, bodyNodes := ParseBodyOfCode(index)
 		if !bodyParseResult.GotResult {
 			return ParseResult{
-				GotResult: false,
+				GotResult: true,
+				Error: errors.New("Incomplete script definition"),
+				LineNumber: GetToken(index - 1).LineNumber,
 				Reason:    WrapStr("Couldn't parse script body", bodyParseResult.Reason),
 			}
 		} else if bodyParseResult.Error != nil {
@@ -1170,6 +1180,8 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		if GetKind(index) != TokenKind_LeftCurlyBrace {
 			return ParseResult{
 				GotResult: false,
+				Error: errors.New("Incomplete script definition"),
+				LineNumber: GetToken(startIndex).LineNumber,
 				Reason:    "First token in body of code wasn't '{'",
 			}, []AstNode{}
 		}
@@ -1178,6 +1190,11 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		var bodyNodes AstNodeBuffer
 		for {
 			if GetKind(index) == TokenKind_OutOfRange {
+				return ParseResult{
+					GotResult: true,
+					Error: errors.New("Incomplete script definition"),
+					LineNumber: GetToken(startIndex).LineNumber,
+				}, []AstNode{}
 				break
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {
 				index++
