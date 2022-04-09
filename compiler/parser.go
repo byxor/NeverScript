@@ -108,6 +108,14 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 	}
 
 	ParseRootBodyNode = func(index int) ParseResult {
+		if GetKind(index) == TokenKind_RightParenthesis {
+			return ParseResult{
+				GotResult: true,
+				Error: errors.New("Unnecessary parenthesis )"),
+				LineNumber: GetToken(index).LineNumber,
+			}
+		}
+
 		if parseResult := ParseNewLine(index); parseResult.GotResult {
 			return parseResult
 		}
@@ -250,6 +258,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			return ParseResult{
 				GotResult: false,
 				Reason:    TokensNotRecognisedError(parser.Tokens[index:], "an expression"),
+				LineNumber: GetToken(index - 1).LineNumber,
 			}
 		}
 
@@ -353,6 +362,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_AdditionExpression)
+				} else {
+					return ParseResult{
+						GotResult:      true,
+						Error:          errors.New("Incomplete +="),
+						LineNumber:     secondExpressionParseResult.LineNumber,
+					}
 				}
 			} else if GetKind(index) == TokenKind_Minus && GetKind(index+1) == TokenKind_Equals {
 				index += 2
@@ -360,6 +375,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_SubtractionExpression)
+				} else {
+					return ParseResult{
+						GotResult:      true,
+						Error:          errors.New("Incomplete -="),
+						LineNumber:     secondExpressionParseResult.LineNumber,
+					}
 				}
 			} else if GetKind(index) == TokenKind_Asterisk && GetKind(index+1) == TokenKind_Equals {
 				index += 2
@@ -367,6 +388,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_MultiplicationExpression)
+				} else {
+					return ParseResult{
+						GotResult:      true,
+						Error:          errors.New("Incomplete *="),
+						LineNumber:     secondExpressionParseResult.LineNumber,
+					}
 				}
 			} else if GetKind(index) == TokenKind_ForwardSlash && GetKind(index+1) == TokenKind_Equals {
 				index += 2
@@ -374,6 +401,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 				if secondExpressionParseResult.GotResult {
 					index += secondExpressionParseResult.TokensConsumed
 					return inPlaceMathOperationParseResult(index, expressionParseResult, secondExpressionParseResult, AstKind_DivisionExpression)
+				} else {
+					return ParseResult{
+						GotResult:      true,
+						Error:          errors.New("Incomplete /="),
+						LineNumber:     secondExpressionParseResult.LineNumber,
+					}
 				}
 			} else if GetKind(index) == TokenKind_LeftSquareBracket {
 				index += 1
@@ -459,10 +492,30 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 											TokensConsumed: 4 + firstParseResult.TokensConsumed + secondParseResult.TokensConsumed + thirdParseResult.TokensConsumed,
 										}
 									}
+									return ParseResult{
+										GotResult: true,
+										Error: errors.New("Incomplete vector expression"),
+										LineNumber: GetToken(oldIndex).LineNumber,
+									}
 								}
 							}
+							return ParseResult{
+								GotResult: true,
+								Error: errors.New("Incomplete vector expression"),
+								LineNumber: GetToken(oldIndex).LineNumber,
+							}
+						}
+						return ParseResult{
+							GotResult: true,
+							Error: errors.New("Incomplete pair expression"),
+							LineNumber: GetToken(oldIndex).LineNumber,
 						}
 					}
+				}
+				return ParseResult{
+					GotResult: true,
+					Error: errors.New("Incomplete pair expression"),
+					LineNumber: GetToken(oldIndex).LineNumber,
 				}
 			}
 
@@ -523,7 +576,9 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 		}
 
 		return ParseResult{
-			GotResult: false,
+			GotResult: true,
+			Error: errors.New("Incomplete parenthesis ("),
+			LineNumber: GetToken(oldIndex).LineNumber,
 			Reason:    TokensNotRecognisedError(parser.Tokens[oldIndex:], "an expression beginning with a left parenthesis"),
 		}
 	}
@@ -1127,6 +1182,12 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 			} else if GetKind(index) == TokenKind_RightCurlyBrace {
 				index++
 				break
+			} else if GetKind(index) == TokenKind_RightParenthesis {
+				return ParseResult{
+					GotResult: true,
+					Error: errors.New("Unnecessary parenthesis )"),
+					LineNumber: GetToken(index).LineNumber,
+				}, []AstNode{}
 			} else if parseResult := ParseNewLine(index); parseResult.GotResult {
 				bodyNodes.MaybeSave(parseResult)
 				index += parseResult.TokensConsumed

@@ -177,9 +177,6 @@ func RunNeverscript(arguments CommandLineArguments) error {
 		fmt.Printf("Release %s\n\n", version)
 		fmt.Printf("Usage of %s:\n", os.Args[0])
 		fmt.Printf(usage)
-	} else {
-		banner := strings.Repeat("-", 36)
-		fmt.Println(banner + " done " + banner)
 	}
 
 	return nil
