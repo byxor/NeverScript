@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
@@ -111,23 +112,46 @@ func RunNeverscript(arguments CommandLineArguments) error {
 			return errors.New("ERROR - Target game must be thps3/thps4/thug1/thug2")
 		}
 
-		compilationError := compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+		compilationChannel := make(chan compiler.Error, 1)
+		go func() {
+			compilationError := compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+			compilationChannel <- compilationError
+		}()
+		var compilationError compiler.Error
+		select {
+		case result := <-compilationChannel:
+		    compilationError = result
+		case <-time.After(3 * time.Second):
+			return errors.New("ERROR - Compiler took too long. It probably went into an infinite loop because of a bug or an unimplemented feature")
+			fmt.Println("\nWARNING - Roq decompiler froze. Some QB cannot be decompiled, e.g. adjacent line ending bytes (0x01 0x01)")
+		}
 		if compilationError != nil {
 			return errors.New(fmt.Sprintf("ERROR %s(line %d) - %s", filepath.Base(*arguments.FileToCompile), compilationError.GetLineNumber(), compilationError.GetMessage()))
 		}
-		fmt.Printf("  Created '%s'.\n", outputFilename)
+		fmt.Printf("\n  Created '%s'.\n", outputFilename)
 
 		if *arguments.ShowHexDump {
-			fmt.Printf("\n%s\n", hex.Dump(bytecodeCompiler.Bytes))
-		} else {
-			fmt.Println()
+			fmt.Printf("\n%s", hex.Dump(bytecodeCompiler.Bytes))
 		}
 
 		if *arguments.ShowDecompiledRoq {
-			fmt.Println("Roq decompiler output (may freeze):")
-			roqCmd := exec.Command("roq.exe", "-d", outputFilename)
-			decompiledCode, _ := roqCmd.Output()
-			fmt.Println(string(decompiledCode))
+			fmt.Println("\nRoq decompiler output:")
+
+			roqChannel := make(chan string, 1)
+
+			go func() {
+				roqCmd := exec.Command("roq.exe", "-d", outputFilename)
+				decompiledCode, _ := roqCmd.Output()
+				roqChannel <- "\n" + strings.TrimSpace(string(decompiledCode))
+			}()
+
+			select {
+			case decompiledRoq := <-roqChannel:
+				fmt.Println(decompiledRoq)
+			case <-time.After(3 * time.Second):
+				fmt.Println("\nWARNING - Roq decompiler froze. Some QB cannot be decompiled, e.g. adjacent line ending bytes (0x01 0x01)")
+			}
+
 		}
 	} else if *arguments.FileToDecompile != "" {
 		argumentsWereSupplied = true

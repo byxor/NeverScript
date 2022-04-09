@@ -38,6 +38,7 @@ func main() {
 	check(IncompleteStruct)
 	check(IncompleteArray)
 	check(IncompleteScript)
+	// check(ExtraCurlyBrace)
 	check(ExtraParenthesis)
 	check(IncompleteVector)
 	check(IncompletePair)
