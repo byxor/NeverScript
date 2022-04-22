@@ -455,7 +455,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 
 			if GetKind(index) == TokenKind_Comma {
 				index++
-				if GetKind(index) == TokenKind_Float {
+				if GetKind(index) == TokenKind_Float || GetKind(index) == TokenKind_Minus && GetKind(index + 1) == TokenKind_Float {
 					secondParseResult := ParseExpression(index, true)
 					if secondParseResult.GotResult {
 						index += secondParseResult.TokensConsumed
@@ -474,7 +474,7 @@ func BuildAbstractSyntaxTree(parser *Parser) {
 						}
 						if GetKind(index) == TokenKind_Comma {
 							index++
-							if GetKind(index) == TokenKind_Float {
+							if GetKind(index) == TokenKind_Float || GetKind(index) == TokenKind_Minus && GetKind(index + 1) == TokenKind_Float {
 								thirdParseResult := ParseExpression(index, true)
 								if thirdParseResult.GotResult {
 									index += thirdParseResult.TokensConsumed

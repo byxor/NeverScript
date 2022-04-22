@@ -126,7 +126,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 			fmt.Println("\nWARNING - Roq decompiler froze. Some QB cannot be decompiled, e.g. adjacent line ending bytes (0x01 0x01)")
 		}
 		if compilationError != nil {
-			return errors.New(fmt.Sprintf("ERROR %s(line %d) - %s", filepath.Base(*arguments.FileToCompile), compilationError.GetLineNumber(), compilationError.GetMessage()))
+			return compilationError.ToError()
 		}
 		fmt.Printf("\n  Created '%s'.\n", outputFilename)
 

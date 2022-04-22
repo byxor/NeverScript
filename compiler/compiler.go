@@ -3,6 +3,7 @@ package compiler
 import (
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 )
 
@@ -29,6 +30,7 @@ func Compile(nsFilePath, qbFilePath string, lexer *Lexer, parser *Parser, byteco
 		log.Fatal(parser.Result.Reason)
 	} else if parser.Result.Error != nil {
 		return CompilationError{
+			baseFilePath: filepath.Base(nsFilePath),
 			message:      parser.Result.Error.Error(),
 			lineNumber:   parser.Result.LineNumber,
 		}

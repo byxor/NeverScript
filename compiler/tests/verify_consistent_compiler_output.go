@@ -9,6 +9,7 @@ import (
     "log"
     "os"
     "os/exec"
+    "path/filepath"
     "strings"
 )
 
@@ -40,13 +41,13 @@ func runTests() error {
 }
 
 func runTest(targetGame, nsPath, qbPath, roqPath string) error {
-    compileNeverscript := func() error {
+    compileNeverscript := func() compiler.Error {
         var lexer compiler.Lexer
         var parser compiler.Parser
         var bytecodeCompiler compiler.BytecodeCompiler
+        lexer.BaseFilePath = filepath.Base(nsPath)
         bytecodeCompiler.TargetGame = targetGame
-        compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
-        return nil
+        return compiler.Compile(nsPath, qbPath, &lexer, &parser, &bytecodeCompiler)
     }
 
     cleanWhitespace := func(text string) string {
@@ -93,14 +94,14 @@ func runTest(targetGame, nsPath, qbPath, roqPath string) error {
             report := banner + "\n"
             report += "WARNING: COMPILER OUTPUT CHANGED (" + targetGame + ")\n"
             report += banner + "\n"
-            report += "Expected: (" + targetGame + ")\n"
-            report += banner + "\n"
-            report += expected + "\n"
-            report += banner + "\n"
-            report += "But got: (" + targetGame + ")\n"
-            report += banner + "\n"
-            report += __actual + "\n"
-            report += banner + "\n"
+            //report += "Expected: (" + targetGame + ")\n"
+            //report += banner + "\n"
+            //report += expected + "\n"
+            //report += banner + "\n"
+            //report += "But got: (" + targetGame + ")\n"
+            //report += banner + "\n"
+            //report += __actual + "\n"
+            //report += banner + "\n"
             report += "Diff (" + targetGame + "):\n"
             report += banner + "\n"
             report += diffString
@@ -109,8 +110,8 @@ func runTest(targetGame, nsPath, qbPath, roqPath string) error {
     }
 
     fmt.Println("Compiling ns... (" + targetGame + ")")
-    err := compileNeverscript()
-    if err != nil { return err }
+    compilationError := compileNeverscript()
+    if compilationError != nil { return compilationError.ToError() }
 
     fmt.Println("Decompiling roq...")
     actualRoq, err := decompileQbToRoq()

@@ -20,6 +20,8 @@ type Lexer struct {
 	StartOfIdentifier int
 	StartOfInteger    int
 	StartOfString     int
+
+	BaseFilePath string
 }
 
 func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array of Tokens)
@@ -303,7 +305,7 @@ func LexSourceCode(lexer *Lexer) Error { // do lexical analysis (build an array 
 			SaveToken(lexer, TokenKind_Integer, data)
 			lexer.Index += len(data)
 		} else if data, found, initialLineNumber, err := CanFindString(); found {
-			if err != nil { return CompilationError{err.Error(), initialLineNumber, lexer.ColumnNumber} }
+			if err != nil { return CompilationError{err.Error(), initialLineNumber, lexer.ColumnNumber, lexer.BaseFilePath} }
 			SaveToken(lexer, TokenKind_String, data)
 			lexer.Index += len(data)
 		} else if data, found := CanFindSingleLineComment(); found {
