@@ -48,7 +48,7 @@ DECOMPILATION (very incomplete):
 
 `
 
-	version = "0.8"
+	version = "0.9"
 )
 
 type CommandLineArguments struct {
@@ -91,12 +91,17 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) error {
 	argumentsWereSupplied := false
 
+	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\Levels.qb`
+	//showCode := true
+	//arguments.FileToDecompile = &fileToDecompile
+	//arguments.ShowCode = &showCode
+
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
 
-		outputFilename := *arguments.OutputFileName
-		if outputFilename == "" {
-			outputFilename = WithQbExtension(*arguments.FileToCompile)
+		outputFileName := *arguments.OutputFileName
+		if outputFileName == "" {
+			outputFileName = WithQbExtension(*arguments.FileToCompile)
 		}
 
 		var lexer compiler.Lexer
@@ -114,7 +119,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 
 		compilationChannel := make(chan compiler.Error, 1)
 		go func() {
-			compilationError := compiler.Compile(*arguments.FileToCompile, outputFilename, &lexer, &parser, &bytecodeCompiler)
+			compilationError := compiler.Compile(*arguments.FileToCompile, outputFileName, &lexer, &parser, &bytecodeCompiler)
 			compilationChannel <- compilationError
 		}()
 		var compilationError compiler.Error
@@ -128,7 +133,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 		if compilationError != nil {
 			return compilationError.ToError()
 		}
-		fmt.Printf("\n  Created '%s'.\n", outputFilename)
+		fmt.Printf("\n  Created '%s'.\n", outputFileName)
 
 		if *arguments.ShowHexDump {
 			fmt.Printf("\n%s", hex.Dump(bytecodeCompiler.Bytes))
@@ -140,7 +145,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 			roqChannel := make(chan string, 1)
 
 			go func() {
-				roqCmd := exec.Command("roq.exe", "-d", outputFilename)
+				roqCmd := exec.Command("roq.exe", "-d", outputFileName)
 				decompiledCode, _ := roqCmd.Output()
 				roqChannel <- "\n" + strings.TrimSpace(string(decompiledCode))
 			}()
@@ -151,31 +156,30 @@ func RunNeverscript(arguments CommandLineArguments) error {
 			case <-time.After(3 * time.Second):
 				fmt.Println("\nWARNING - Roq decompiler froze. Some QB cannot be decompiled, e.g. adjacent line ending bytes (0x01 0x01)")
 			}
-
 		}
 	} else if *arguments.FileToDecompile != "" {
 		argumentsWereSupplied = true
 
-		fmt.Printf("\nDecompiling '%s' (may freeze)...\n", *arguments.FileToDecompile)
-		byteCode, err := ioutil.ReadFile(*arguments.FileToDecompile)
-		if err != nil { return err }
-
-		var decompilerArguments decompiler.Arguments
-		decompilerArguments.ByteCode = byteCode
-		decompiler.Decompile(&decompilerArguments)
-
-		outputFilename := *arguments.OutputFileName
-		if outputFilename == "" {
-			outputFilename = WithNsExtension(*arguments.FileToDecompile)
+		qb, err := ioutil.ReadFile(*arguments.FileToDecompile)
+		if err != nil {
+			return err
 		}
 
-		ioutil.WriteFile(outputFilename, []byte(decompilerArguments.SourceCode), 0644)
-		fmt.Printf("    Created '%s'.\n", outputFilename)
+		decompiledCode, err := decompiler.Decompile(qb)
+		if err != nil {
+			return err
+		}
+
+		outputFileName := *arguments.OutputFileName
+		if outputFileName == "" {
+			outputFileName = WithNsExtension(*arguments.FileToDecompile)
+		}
+		ioutil.WriteFile(outputFileName, []byte(decompiledCode), 0644)
+
+		fmt.Printf("\n  Created '%s'.\n", outputFileName)
 
 		if *arguments.ShowCode {
-			fmt.Printf("\n```%s\n```\n", decompilerArguments.SourceCode)
-		} else {
-			fmt.Println()
+			fmt.Printf("\n%s", decompiledCode)
 		}
 	} else if *arguments.PreSpecFile != "" {
 		argumentsWereSupplied = true
@@ -188,7 +192,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 		fmt.Printf("\nGenerating pre file from spec '%s'...\n", *arguments.PreSpecFile)
 		preSpec := pre_generator.ParsePreSpec(*arguments.PreSpecFile)
 		pre := pre_generator.MakePre(preSpec)
-		ioutil.WriteFile(*arguments.PreSpecFile, pre, 0466)
+		ioutil.WriteFile(*arguments.PreSpecFile, pre, 0644)
 		fmt.Printf("  Created '%s'.\n\n", outputFilename)
 
 		if *arguments.ShowHexDump {

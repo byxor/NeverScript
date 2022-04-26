@@ -6,5 +6,9 @@ coverage.txt
 *.qb
 .idea/
 
+# Extra tools
+cmd/qbcleanup/
+cmd/qblookup/
+
 # Crazy goland bug... can't delete this file:
 /e move or remove them before you merge.
