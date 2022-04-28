@@ -59,14 +59,19 @@ const (
 	Byte_And = 0x33
 	Byte_Xor = 0x34
 	Byte_Not = 0x39
+	Byte_Switch = 0x3C
+	Byte_EndSwitch = 0x3D
+	Byte_Case = 0x3E
+	Byte_Default = 0x3F
 	Byte_RandomNoRepeat = 0x40
 	Byte_Colon = 0x42
 )
 
 func Decompile(qb []byte) (string, error) {
 
-	var DecompileExpression func(int, int) (string, int, error)
-	var DecompileBodyOfCode func(int, int) (string, int, error)
+	var DecompileExpression func(int, int, bool, bool) (string, int, error)
+	var DecompileBodyOfCode func(int, int, bool) (string, int, error)
+	var DecompileArgument func(int, int, bool) (string, int, error)
 	var checksumTable map[uint32]string
 
 	GetByte := func(index int) (byte, error) {
@@ -199,7 +204,11 @@ func Decompile(qb []byte) (string, error) {
 		var code string
 		checksum := binary.LittleEndian.Uint32(checksumBytes)
 		if checksumName, found := checksumTable[checksum]; found {
-			code = checksumName
+			if strings.Contains(checksumName, " ") {
+				code = "`" + checksumName + "`"
+			} else {
+				code = checksumName
+			}
 		} else {
 			code = fmt.Sprintf("#%02x%02x%02x%02x", checksumBytes[0], checksumBytes[1], checksumBytes[2], checksumBytes[3])
 		}
@@ -223,10 +232,60 @@ func Decompile(qb []byte) (string, error) {
 		}
 		index += 4
 
-		return fmt.Sprintf("(%s, %s) ", FormatFloat(xBytes), FormatFloat(yBytes)), index - initialIndex, nil
+		return fmt.Sprintf("(%s, %s)", FormatFloat(xBytes), FormatFloat(yBytes)), index - initialIndex, nil
 	}
 
-	DecompileBodyOfCode = func(index, indentationLevel int) (string, int, error) {
+	DecompileAssignment := func(index, indentationLevel int, shouldPadEquals bool) (string, int, error) {
+		initialIndex := index
+
+		b, err := GetByte(index)
+		if err != nil {
+			return "", 0, err
+		}
+
+		isLocal := b == Byte_Local
+		if isLocal {
+			index++
+		}
+
+		checksumCode, bytesRead, err := DecompileChecksum(index)
+		if err != nil {
+			return "", 0, err
+		}
+		index += bytesRead
+
+		if isLocal {
+			checksumCode = "<" + checksumCode + ">"
+		}
+
+		nextByte, err := GetByte(index)
+		if err != nil {
+			return "", 0, err
+		}
+
+		if nextByte != Byte_Equals {
+			return "", 0, DecompilerError("No '=' in assignment", nextByte, index)
+		}
+		index++
+
+		secondExpressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
+		if err != nil {
+			return "", 0, err
+		}
+		index += bytesRead
+
+		var format string
+		if shouldPadEquals {
+			format = "%s = %s"
+		} else {
+			format = "%s=%s"
+		}
+
+		assignmentCode := fmt.Sprintf(format, checksumCode, secondExpressionCode)
+		return assignmentCode, index - initialIndex, nil
+	}
+
+	DecompileBodyOfCode = func(index, indentationLevel int, shouldPadEquals bool) (string, int, error) {
 		var currentLineCode strings.Builder
 		var bodyOfCode strings.Builder
 		flushCurrentLine := func() {
@@ -236,10 +295,16 @@ func Decompile(qb []byte) (string, error) {
 
 		initialIndex := index
 
+		firstIteration := true
 		for {
 			b, err := GetByte(index)
 			if err != nil {
 				return "", 0, err
+			}
+
+			appendSpace := !firstIteration && b != Byte_Comma && currentLineCode.Len() > 0
+			if appendSpace {
+				currentLineCode.WriteString(" ")
 			}
 
 			if b == Byte_NewLine {
@@ -254,93 +319,30 @@ func Decompile(qb []byte) (string, error) {
 				index += bytesRead
 				currentLineCode.WriteString(newLineCode)
 				flushCurrentLine()
-			} else if b == Byte_Return {
-				index++
-				currentLineCode.WriteString("return ")
 			} else if b == Byte_Comma {
 				index++
-				currentLineCode.WriteString(", ")
+				currentLineCode.WriteString(",")
 			} else if b == Byte_Local || b == Byte_Checksum {
-				isLocal := b == Byte_Local
-				if isLocal {
-					index++
-				}
-
-				expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
+				expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
+				//argumentCode, bytesRead, err := DecompileArgument(index, indentationLevel, shouldPadEquals)
 				if err != nil {
 					return "", 0, err
 				}
 				index += bytesRead
-
-				if isLocal {
-					// wrap checksum from expression in <>
-					// warning: expand this to handle `checksums like this`
-					endOfChecksumPart := 0
-					for {
-						if endOfChecksumPart >= len(expressionCode) {
-							break
-						}
-						c := expressionCode[endOfChecksumPart]
-						r := rune(c)
-						if c == '#' || unicode.IsLetter(r) || unicode.IsNumber(r) {
-							endOfChecksumPart++
-						} else {
-							break
-						}
-					}
-					expressionCode = "<" + expressionCode[:endOfChecksumPart] + ">" + expressionCode[endOfChecksumPart:]
-				}
-
-				nextByte, err := GetByte(index)
-				if err != nil {
-					currentLineCode.WriteString(expressionCode)
-				} else if nextByte != Byte_Equals {
-					currentLineCode.WriteString(expressionCode)
-				} else {
-					index++
-
-					var extraNewLineCode strings.Builder
-					for {
-						nextByte, err := GetByte(index)
-						if err != nil {
-							return "", 0, err
-						}
-						if nextByte == Byte_NewLineWithNumber {
-							newLineCode, bytesRead, err := DecompileNewLineWithNumber(index)
-							if err != nil {
-								return "", 0, err
-							}
-							index += bytesRead
-							extraNewLineCode.WriteString(newLineCode)
-						} else if nextByte == Byte_NewLine {
-							index++
-							extraNewLineCode.WriteString("\n")
-						} else {
-							break
-						}
-					}
-
-					secondExpressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
-					if err != nil {
-						return "", 0, err
-					}
-					index += bytesRead
-
-					currentLineCode.WriteString(fmt.Sprintf("%s = %s", expressionCode, secondExpressionCode))
-				}
+				currentLineCode.WriteString(expressionCode)
 			} else if b == Byte_Break {
 				index++
 				currentLineCode.WriteString("break")
 			} else if b == Byte_If {
 				index++
 
-				conditionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
+				conditionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 				if err != nil {
 					return "", 0, err
 				}
 				index += bytesRead
 
-				ifBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1)
+				ifBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, true)
 				if err != nil {
 					return "", 0, err
 				}
@@ -354,14 +356,14 @@ func Decompile(qb []byte) (string, error) {
 				if nextByte == Byte_Else {
 					index++
 
-					elseBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1)
+					elseBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, true)
 					if err != nil {
 						return "", 0, err
 					}
 
 					index += bytesRead
 
-					currentLineCode.WriteString(fmt.Sprintf("if %s {%s", conditionCode, ifBodyCode))
+					currentLineCode.WriteString(fmt.Sprintf("if {%s} {%s", conditionCode, ifBodyCode))
 					if strings.Contains(currentLineCode.String(), "\n") {
 						flushCurrentLine()
 					}
@@ -373,7 +375,7 @@ func Decompile(qb []byte) (string, error) {
 
 					currentLineCode.WriteString("}")
 				} else {
-					currentLineCode.WriteString(fmt.Sprintf("if %s {%s", conditionCode, ifBodyCode))
+					currentLineCode.WriteString(fmt.Sprintf("if {%s} {%s", conditionCode, ifBodyCode))
 					if strings.Contains(currentLineCode.String(), "\n") {
 						flushCurrentLine()
 					}
@@ -392,13 +394,13 @@ func Decompile(qb []byte) (string, error) {
 			} else if b == Byte_While {
 				index++
 
-				whileBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel + 1)
+				whileBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel + 1, shouldPadEquals)
 				if err != nil {
 					return "", 0, err
 				}
 				index += bytesRead
 
-				currentLineCode.WriteString(fmt.Sprintf("while {%s", whileBodyCode))
+				currentLineCode.WriteString(fmt.Sprintf("loop {%s", whileBodyCode))
 				if strings.Contains(currentLineCode.String(), "\n") {
 					flushCurrentLine()
 				}
@@ -413,7 +415,7 @@ func Decompile(qb []byte) (string, error) {
 					return "", 0, DecompilerError("No endwhile byte", nextByte, index)
 				}
 				index++
-			} else if expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel); err == nil {
+			} else if expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals); err == nil {
 				currentLineCode.WriteString(expressionCode)
 				index += bytesRead
 			} else if b == Byte_EndScript || b == Byte_EndStruct || b == Byte_EndArray || b == Byte_EndIf || b == Byte_Else || b == Byte_EndWhile || b == Byte_LongJump {
@@ -421,6 +423,8 @@ func Decompile(qb []byte) (string, error) {
 			} else {
 				return "", 0, DecompilerError("Byte not recognised in body of code", b, index)
 			}
+
+			firstIteration = false
 		}
 
 		flushCurrentLine()
@@ -437,7 +441,7 @@ func Decompile(qb []byte) (string, error) {
 		}
 		index += bytesRead
 
-		scriptBodyCode, bytesRead, err := DecompileBodyOfCode(index, 1)
+		scriptBodyCode, bytesRead, err := DecompileBodyOfCode(index, 1, true)
 		if err != nil {
 			return "", 0, err
 		}
@@ -452,63 +456,26 @@ func Decompile(qb []byte) (string, error) {
 		return fmt.Sprintf("script %s {%s}", scriptNameCode, scriptBodyCode), index - initialIndex, nil
 	}
 
-	DecompileArgument := func(index, indentationLevel int) (string, int, error) {
+	DecompileArgument = func(index, indentationLevel int, shouldPadEquals bool) (string, int, error) {
 		initialIndex := index
 
-		firstExpressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
-		if err != nil {
-			return "", 0, err
-		}
-		index += bytesRead
-
-		nextByte, err := GetByte(index)
-		if err != nil {
-			return firstExpressionCode, index - initialIndex, nil
-		}
-
-		if nextByte != Byte_Equals {
-			return firstExpressionCode, index - initialIndex, nil
-		}
-		index++
-
-		var extraNewLineCode strings.Builder
-		for {
-			nextByte, err := GetByte(index)
+		assignmentCode, bytesRead, err := DecompileAssignment(index, indentationLevel, shouldPadEquals)
+		if err == nil {
+			// argument is an assignment e.g. x=3
+			index += bytesRead
+			return assignmentCode, index - initialIndex, nil
+		} else {
+			// argument is just an expression e.g. x
+			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
-			if nextByte == Byte_NewLineWithNumber {
-				newLineCode, bytesRead, err := DecompileNewLineWithNumber(index)
-				if err != nil {
-					return "", 0, err
-				}
-				index += bytesRead
-				extraNewLineCode.WriteString(newLineCode)
-			} else if nextByte == Byte_NewLine {
-				index++
-				extraNewLineCode.WriteString("\n")
-			} else {
-				break
-			}
+			index += bytesRead
+			return expressionCode, index - initialIndex, nil
 		}
-
-		secondExpressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
-		if err != nil {
-			return "", 0, err
-		}
-		index += bytesRead
-
-		var equalsCode string
-		if indentationLevel == 0 {
-			equalsCode = " = "
-		} else {
-			equalsCode = "="
-		}
-
-		return fmt.Sprintf("%s%s%s%s", firstExpressionCode, equalsCode, extraNewLineCode.String(), secondExpressionCode), index - initialIndex, nil
 	}
 
-	DecompileAtom := func(index, indentationLevel int) (string, int, error) {
+	DecompileAtom := func(index, indentationLevel int, allowInvocationArguments, shouldPadEquals bool) (string, int, error) {
 		initialIndex := index
 
 		b, err := GetByte(index)
@@ -533,13 +500,15 @@ func Decompile(qb []byte) (string, error) {
 			}
 
 			var argumentCodeArray []string
-			for {
-				argumentCode, bytesRead, err := DecompileArgument(index, indentationLevel)
-				if err != nil {
-					break
+			if allowInvocationArguments {
+				for {
+					argumentCode, bytesRead, err := DecompileArgument(index, indentationLevel, false)
+					if err != nil {
+						break
+					}
+					argumentCodeArray = append(argumentCodeArray, argumentCode)
+					index += bytesRead
 				}
-				argumentCodeArray = append(argumentCodeArray, argumentCode)
-				index += bytesRead
 			}
 
 			if len(argumentCodeArray) == 0 {
@@ -573,7 +542,7 @@ func Decompile(qb []byte) (string, error) {
 			return fmt.Sprintf("%d", integer), index - initialIndex, nil
 		} else if b == Byte_Not {
 			index++
-			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
+			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, true)
 			if err != nil {
 				return "", 0, err
 			}
@@ -582,7 +551,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if b == Byte_Parenthesis {
 			index++
 
-			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel)
+			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, true)
 			if err != nil {
 				return "", 0, err
 			}
@@ -602,7 +571,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if b == Byte_Struct {
 			index++
 
-			structBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1)
+			structBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, false)
 			if err != nil {
 				return "", 0, err
 			}
@@ -629,7 +598,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if b == Byte_Array {
 			index++
 
-			arrayBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1)
+			arrayBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, false)
 			if err != nil {
 				return "", 0, err
 			}
@@ -692,7 +661,7 @@ func Decompile(qb []byte) (string, error) {
 			}
 			index += 4
 
-			return fmt.Sprintf("(%s, %s, %s) ", FormatFloat(xBytes), FormatFloat(yBytes), FormatFloat(zBytes)), index - initialIndex, nil
+			return fmt.Sprintf("(%s, %s, %s)", FormatFloat(xBytes), FormatFloat(yBytes), FormatFloat(zBytes)), index - initialIndex, nil
 		} else if b == Byte_AllArguments {
 			index++
 			return "<...>", index - initialIndex, nil
@@ -722,7 +691,7 @@ func Decompile(qb []byte) (string, error) {
 			lastBranchSize := 0
 			for i := 0; i < numberOfBranches; i++ {
 				branchIndex := index + branchOffsets[i] - (4 * numberOfBranches) + (4 * (i + 1))
-				branchCode, bytesRead, err := DecompileBodyOfCode(branchIndex, indentationLevel)
+				branchCode, bytesRead, err := DecompileBodyOfCode(branchIndex, indentationLevel, shouldPadEquals)
 				if err != nil {
 					return "", 0, err
 				}
@@ -755,10 +724,10 @@ func Decompile(qb []byte) (string, error) {
 		return "", 0, DecompilerError("Not an atom", b, index)
 	}
 
-	DecompileExpression = func(index, indentationLevel int) (string, int, error) {
+	DecompileExpression = func(index, indentationLevel int, allowInvocationArguments, shouldPadEquals bool) (string, int, error) {
 		initialIndex := index
 
-		atomCode, bytesRead, err := DecompileAtom(index, indentationLevel)
+		atomCode, bytesRead, err := DecompileAtom(index, indentationLevel, allowInvocationArguments, shouldPadEquals)
 		if err != nil {
 			return "", 0, err
 		}
@@ -772,7 +741,7 @@ func Decompile(qb []byte) (string, error) {
 		if nextByte == Byte_Plus {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -782,7 +751,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Minus {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -792,7 +761,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Multiply {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -802,7 +771,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Divide {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -812,7 +781,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_And {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -822,7 +791,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Or {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -832,7 +801,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Xor {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -842,38 +811,24 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Equals || nextByte == Byte_EqualTo {
 			index++
 
-			var extraNewLineCode strings.Builder
-			for {
-				nextByte, err := GetByte(index)
-				if err != nil {
-					return "", 0, err
-				}
-				if nextByte == Byte_NewLineWithNumber {
-					newLineCode, bytesRead, err := DecompileNewLineWithNumber(index)
-					if err != nil {
-						return "", 0, err
-					}
-					index += bytesRead
-					extraNewLineCode.WriteString(newLineCode)
-				} else if nextByte == Byte_NewLine {
-					index++
-					extraNewLineCode.WriteString("\n")
-				} else {
-					break
-				}
-			}
-
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
 			index += bytesRead
 
-			return fmt.Sprintf("%s = %s", atomCode, nextExpression), index - initialIndex, nil
+			var format string
+			if shouldPadEquals {
+				format = "%s = %s"
+			} else {
+				format = "%s=%s"
+			}
+
+			return fmt.Sprintf(format, atomCode, nextExpression), index - initialIndex, nil
 		} else if nextByte == Byte_Dot {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals) // maybe false?
 			if err != nil {
 				return "", 0, err
 			}
@@ -883,7 +838,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_Colon {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -893,7 +848,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_GreaterThan {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -903,7 +858,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_GreaterThanEqual {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -913,7 +868,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_LessThan {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -923,7 +878,7 @@ func Decompile(qb []byte) (string, error) {
 		} else if nextByte == Byte_LessThanEqual {
 			index++
 
-			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel)
+			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 			if err != nil {
 				return "", 0, err
 			}
@@ -966,7 +921,7 @@ func Decompile(qb []byte) (string, error) {
 			index += bytesRead
 			output.WriteString(newLineCode)
 		} else if b == Byte_Checksum {
-			argumentCode, bytesRead, err := DecompileArgument(index, 0)
+			argumentCode, bytesRead, err := DecompileArgument(index, 0, true)
 			if err != nil {
 				return "", err
 			}

@@ -5,6 +5,8 @@ coverage.txt
 *.qbi
 *.qb
 .idea/
+temp.ns
+temp_d.ns
 
 # Extra tools
 cmd/qbcleanup/

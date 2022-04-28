@@ -91,10 +91,13 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) error {
 	argumentsWereSupplied := false
 
-	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\Levels.qb`
+	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\levels\Sch\Sch_Scripts.qb`
+	////fileToDecompile := `./temp.qb`
 	//showCode := true
+	//outputFileName := `./temp_d.ns`
 	//arguments.FileToDecompile = &fileToDecompile
 	//arguments.ShowCode = &showCode
+	//arguments.OutputFileName = &outputFileName
 
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
@@ -169,6 +172,7 @@ func RunNeverscript(arguments CommandLineArguments) error {
 		if err != nil {
 			return err
 		}
+		decompiledCode = fmt.Sprintf("// %s decompiled with ns %s\n%s", filepath.Base(*arguments.FileToDecompile), version, decompiledCode)
 
 		outputFileName := *arguments.OutputFileName
 		if outputFileName == "" {
