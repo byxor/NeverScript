@@ -185,6 +185,31 @@ func Decompile(qb []byte) (string, error) {
 		return "\n", 5, nil
 	}
 
+	DecompileConsecutiveNewLines := func(index int) (string, int, error) {
+		initialIndex := index
+		var newLinesAfterEqualsCode strings.Builder
+		for {
+			nextByte, err := GetByte(index)
+			if err != nil {
+				return "", 0, err
+			}
+			if nextByte == Byte_NewLine {
+				index++
+				newLinesAfterEqualsCode.WriteString("\n")
+			} else if nextByte == Byte_NewLineWithNumber {
+				newLineCode, bytesRead, err := DecompileNewLineWithNumber(index)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+				newLinesAfterEqualsCode.WriteString(newLineCode)
+			} else {
+				break
+			}
+		}
+		return newLinesAfterEqualsCode.String(), index - initialIndex, nil
+	}
+
 	DecompileString := func(index int) (string, int, error) {
 		initialIndex := index
 		index++
@@ -198,22 +223,39 @@ func Decompile(qb []byte) (string, error) {
 	}
 
 	DecompileChecksum := func(index int) (string, int, error) {
+		initialIndex := index
+
+		b, err := GetByte(index)
+		if err != nil {
+			return "", 0, err
+		}
+
+		isLocal := b == Byte_Local
+		if isLocal {
+			index++
+		}
+
 		index++
 		checksumBytes := qb[index : index+4]
+		index += 4
 
-		var code string
+		var checksumCode string
 		checksum := binary.LittleEndian.Uint32(checksumBytes)
 		if checksumName, found := checksumTable[checksum]; found {
 			if strings.Contains(checksumName, " ") {
-				code = "`" + checksumName + "`"
+				checksumCode = "`" + checksumName + "`"
 			} else {
-				code = checksumName
+				checksumCode = checksumName
 			}
 		} else {
-			code = fmt.Sprintf("#%02x%02x%02x%02x", checksumBytes[0], checksumBytes[1], checksumBytes[2], checksumBytes[3])
+			checksumCode = fmt.Sprintf("#%02x%02x%02x%02x", checksumBytes[0], checksumBytes[1], checksumBytes[2], checksumBytes[3])
 		}
 
-		return code, 5, nil
+		if isLocal {
+			checksumCode = "<" + checksumCode + ">"
+		}
+
+		return checksumCode, index - initialIndex, nil
 	}
 
 	DecompilePair := func(index, indentationLevel int) (string, int, error) {
@@ -238,25 +280,11 @@ func Decompile(qb []byte) (string, error) {
 	DecompileAssignment := func(index, indentationLevel int, shouldPadEquals bool) (string, int, error) {
 		initialIndex := index
 
-		b, err := GetByte(index)
-		if err != nil {
-			return "", 0, err
-		}
-
-		isLocal := b == Byte_Local
-		if isLocal {
-			index++
-		}
-
 		checksumCode, bytesRead, err := DecompileChecksum(index)
 		if err != nil {
 			return "", 0, err
 		}
 		index += bytesRead
-
-		if isLocal {
-			checksumCode = "<" + checksumCode + ">"
-		}
 
 		nextByte, err := GetByte(index)
 		if err != nil {
@@ -268,6 +296,12 @@ func Decompile(qb []byte) (string, error) {
 		}
 		index++
 
+		newLinesAfterEqualsCode, bytesRead, err := DecompileConsecutiveNewLines(index)
+		if err != nil {
+			return "", 0, err
+		}
+		index += bytesRead
+
 		secondExpressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 		if err != nil {
 			return "", 0, err
@@ -276,12 +310,12 @@ func Decompile(qb []byte) (string, error) {
 
 		var format string
 		if shouldPadEquals {
-			format = "%s = %s"
+			format = "%s = %s%s"
 		} else {
-			format = "%s=%s"
+			format = "%s=%s%s"
 		}
 
-		assignmentCode := fmt.Sprintf(format, checksumCode, secondExpressionCode)
+		assignmentCode := fmt.Sprintf(format, checksumCode, newLinesAfterEqualsCode, secondExpressionCode)
 		return assignmentCode, index - initialIndex, nil
 	}
 
@@ -322,7 +356,7 @@ func Decompile(qb []byte) (string, error) {
 			} else if b == Byte_Comma {
 				index++
 				currentLineCode.WriteString(",")
-			} else if b == Byte_Local || b == Byte_Checksum {
+			} else if b == Byte_Local || b == Byte_Checksum || b == Byte_Return {
 				expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals)
 				//argumentCode, bytesRead, err := DecompileArgument(index, indentationLevel, shouldPadEquals)
 				if err != nil {
@@ -483,20 +517,18 @@ func Decompile(qb []byte) (string, error) {
 			return "", 0, err
 		}
 
-		if b == Byte_Local || b == Byte_Checksum {
-			isLocal := b == Byte_Local
-			if isLocal {
+		if b == Byte_Local || b == Byte_Checksum || b == Byte_Return {
+			var checksumOrReturnCode string
+			if b == Byte_Return {
+				checksumOrReturnCode = "return"
 				index++
-			}
-
-			firstChecksumCode, bytesRead, err := DecompileChecksum(index)
-			if err != nil {
-				return "", 0, err
-			}
-			index += bytesRead
-
-			if isLocal {
-				firstChecksumCode = "<" + firstChecksumCode + ">"
+			} else {
+				checksumCode, bytesRead, err := DecompileChecksum(index)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+				checksumOrReturnCode = checksumCode
 			}
 
 			var argumentCodeArray []string
@@ -512,10 +544,10 @@ func Decompile(qb []byte) (string, error) {
 			}
 
 			if len(argumentCodeArray) == 0 {
-				return firstChecksumCode, index - initialIndex, nil
+				return checksumOrReturnCode, index - initialIndex, nil
 			} else {
 				argumentsCode := strings.Join(argumentCodeArray, " ")
-				return fmt.Sprintf("%s %s", firstChecksumCode, argumentsCode), index - initialIndex, nil
+				return fmt.Sprintf("%s %s", checksumOrReturnCode, argumentsCode), index - initialIndex, nil
 			}
 		} else if b == Byte_String {
 			stringCode, bytesRead, err := DecompileString(index)
@@ -539,7 +571,7 @@ func Decompile(qb []byte) (string, error) {
 			}
 			integer := binary.LittleEndian.Uint32(integerBytes)
 			index += 4
-			return fmt.Sprintf("%d", integer), index - initialIndex, nil
+			return fmt.Sprintf("%d", int32(integer)), index - initialIndex, nil
 		} else if b == Byte_Not {
 			index++
 			expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, true)
@@ -813,7 +845,9 @@ func Decompile(qb []byte) (string, error) {
 
 			nextExpression, bytesRead, err := DecompileExpression(index, indentationLevel, false, shouldPadEquals)
 			if err != nil {
-				return "", 0, err
+				// HACK? Some scripts have no value on right-hand side of '='. Not sure why.
+				nextExpression = ""
+				bytesRead = 0
 			}
 			index += bytesRead
 

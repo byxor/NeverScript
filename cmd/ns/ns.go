@@ -41,7 +41,7 @@ PRE GENERATION:
     -p                 (required string)  Specify a pre spec file (.ps).
     -showHexDump       (optional flag)    Display the pre bytes in hex format.
 
-DECOMPILATION (very incomplete):
+DECOMPILATION:
     -d                 (required string)  Specify a file to decompile (.qb).
     -o                 (optional string)  Specify the output file name (.ns).
     -showCode          (optional flag)    Display the decompiled code as text.
@@ -91,13 +91,14 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) error {
 	argumentsWereSupplied := false
 
-	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\levels\Sch\Sch_Scripts.qb`
+	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\casmenu.qb`
+	////fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\net.qb`
 	////fileToDecompile := `./temp.qb`
 	//showCode := true
-	//outputFileName := `./temp_d.ns`
+	////outputFileName := `./temp_d.ns`
 	//arguments.FileToDecompile = &fileToDecompile
 	//arguments.ShowCode = &showCode
-	//arguments.OutputFileName = &outputFileName
+	////arguments.OutputFileName = &outputFileName
 
 	if *arguments.FileToCompile != "" {
 		argumentsWereSupplied = true
