@@ -91,8 +91,8 @@ func ParseCommandLineArguments() CommandLineArguments {
 func RunNeverscript(arguments CommandLineArguments) error {
 	argumentsWereSupplied := false
 
-	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\casmenu.qb`
-	////fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\net.qb`
+	//fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\groundtricks.qb`
+	////fileToDecompile := `C:\Program Files (x86)\Aspyr\Tony Hawks Pro Skater 4\Game\data\scripts\temp.qb`
 	////fileToDecompile := `./temp.qb`
 	//showCode := true
 	////outputFileName := `./temp_d.ns`

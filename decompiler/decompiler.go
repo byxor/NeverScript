@@ -428,7 +428,7 @@ func Decompile(qb []byte) (string, error) {
 			} else if b == Byte_While {
 				index++
 
-				whileBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel + 1, shouldPadEquals)
+				whileBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, shouldPadEquals)
 				if err != nil {
 					return "", 0, err
 				}
@@ -449,10 +449,40 @@ func Decompile(qb []byte) (string, error) {
 					return "", 0, DecompilerError("No endwhile byte", nextByte, index)
 				}
 				index++
+			} else if b == Byte_Script {
+				index++
+
+				scriptNameCode, bytesRead, err := DecompileChecksum(index)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+
+				scriptBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, true)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+
+				nextByte, err := GetByte(index)
+				if err != nil {
+					return "", 0, err
+				}
+
+				if nextByte != Byte_EndScript {
+					return "", 0, DecompilerError("No endscript byte", nextByte, index)
+				}
+				index++
+
+				currentLineCode.WriteString(fmt.Sprintf("script %s {%s", scriptNameCode, scriptBodyCode))
+				if strings.Contains(currentLineCode.String(), "\n") {
+					flushCurrentLine()
+				}
+				currentLineCode.WriteString("}")
 			} else if expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals); err == nil {
 				currentLineCode.WriteString(expressionCode)
 				index += bytesRead
-			} else if b == Byte_EndScript || b == Byte_EndStruct || b == Byte_EndArray || b == Byte_EndIf || b == Byte_Else || b == Byte_EndWhile || b == Byte_LongJump {
+			} else if b == Byte_EndScript || b == Byte_EndStruct || b == Byte_EndArray || b == Byte_EndIf || b == Byte_Else || b == Byte_EndWhile || b == Byte_LongJump || b == Byte_EndOfFile || b == Byte_ChecksumEntry {
 				break
 			} else {
 				return "", 0, DecompilerError("Byte not recognised in body of code", b, index)
@@ -463,31 +493,6 @@ func Decompile(qb []byte) (string, error) {
 
 		flushCurrentLine()
 		return TrimWhitespace(bodyOfCode.String()), index - initialIndex, nil
-	}
-
-	DecompileScript := func(index int) (string, int, error) {
-		initialIndex := index
-		index++
-
-		scriptNameCode, bytesRead, err := DecompileChecksum(index)
-		if err != nil {
-			return "", 0, err
-		}
-		index += bytesRead
-
-		scriptBodyCode, bytesRead, err := DecompileBodyOfCode(index, 1, true)
-		if err != nil {
-			return "", 0, err
-		}
-		index += bytesRead
-
-		nextByte, err := GetByte(index)
-		if nextByte != Byte_EndScript {
-			return "", 0, DecompilerError("No endscript byte", nextByte, index)
-		}
-		index++
-
-		return fmt.Sprintf("script %s {%s}", scriptNameCode, scriptBodyCode), index - initialIndex, nil
 	}
 
 	DecompileArgument = func(index, indentationLevel int, shouldPadEquals bool) (string, int, error) {
@@ -931,6 +936,15 @@ func Decompile(qb []byte) (string, error) {
 
 	var output strings.Builder
 	index := 0
+
+	rootCode, bytesRead, err := DecompileBodyOfCode(0, 0, true)
+	if err != nil {
+		return "", err
+	}
+	index += bytesRead
+
+	output.WriteString(rootCode)
+
 	for {
 		if index >= len(qb) {
 			break
@@ -944,30 +958,6 @@ func Decompile(qb []byte) (string, error) {
 		if b == Byte_EndOfFile {
 			index++
 			break
-		} else if b == Byte_NewLine {
-			output.WriteString("\n")
-			index++
-		} else if b == Byte_NewLineWithNumber {
-			newLineCode, bytesRead, err := DecompileNewLineWithNumber(index)
-			if err != nil {
-				return "", err
-			}
-			index += bytesRead
-			output.WriteString(newLineCode)
-		} else if b == Byte_Checksum {
-			argumentCode, bytesRead, err := DecompileArgument(index, 0, true)
-			if err != nil {
-				return "", err
-			}
-			output.WriteString(argumentCode)
-			index += bytesRead
-		} else if b == Byte_Script {
-			scriptCode, bytesRead, err := DecompileScript(index)
-			if err != nil {
-				return "", err
-			}
-			index += bytesRead
-			output.WriteString(scriptCode)
 		} else if b == Byte_ChecksumEntry {
 			index++
 			index+=4
