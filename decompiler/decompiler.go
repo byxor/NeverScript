@@ -479,10 +479,40 @@ func Decompile(qb []byte) (string, error) {
 					flushCurrentLine()
 				}
 				currentLineCode.WriteString("}")
+			} else if b == Byte_Switch {
+				index++
+
+				switchVariableCode, bytesRead, err := DecompileChecksum(index)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+
+				switchBodyCode, bytesRead, err := DecompileBodyOfCode(index, indentationLevel+1, true)
+				if err != nil {
+					return "", 0, err
+				}
+				index += bytesRead
+
+				nextByte, err := GetByte(index)
+				if err != nil {
+					return "", 0, err
+				}
+
+				if nextByte != Byte_EndSwitch {
+					return "", 0, DecompilerError("No endswitch byte", nextByte, index)
+				}
+				index++
+
+				currentLineCode.WriteString(fmt.Sprintf("switch {%s} {%s", switchVariableCode, switchBodyCode))
+				if strings.Contains(currentLineCode.String(), "\n") {
+					flushCurrentLine()
+				}
+				currentLineCode.WriteString("}")
 			} else if expressionCode, bytesRead, err := DecompileExpression(index, indentationLevel, true, shouldPadEquals); err == nil {
 				currentLineCode.WriteString(expressionCode)
 				index += bytesRead
-			} else if b == Byte_EndScript || b == Byte_EndStruct || b == Byte_EndArray || b == Byte_EndIf || b == Byte_Else || b == Byte_EndWhile || b == Byte_LongJump || b == Byte_EndOfFile || b == Byte_ChecksumEntry {
+			} else if b == Byte_EndScript || b == Byte_EndStruct || b == Byte_EndArray || b == Byte_EndIf || b == Byte_Else || b == Byte_EndWhile || b == Byte_EndSwitch || b == Byte_LongJump || b == Byte_EndOfFile || b == Byte_ChecksumEntry {
 				break
 			} else {
 				return "", 0, DecompilerError("Byte not recognised in body of code", b, index)
@@ -756,6 +786,21 @@ func Decompile(qb []byte) (string, error) {
 			index += bytesRead
 
 			return fmt.Sprintf("randomrange%s", pairCode), index - initialIndex, nil
+		} else if b == Byte_Case {
+			index++
+
+			// TODO(brandon): not so sure about allowing invocation arguments here, might need to change
+			caseCode, bytesRead, err := DecompileExpression(index, indentationLevel+1, true, false)
+			if err != nil {
+				return "", 0, err
+			}
+			index += bytesRead
+
+			return fmt.Sprintf("case %s:", caseCode), index - initialIndex, nil
+		} else if b == Byte_Default {
+			index++
+
+			return "default:", index - initialIndex, nil
 		}
 
 		return "", 0, DecompilerError("Not an atom", b, index)
