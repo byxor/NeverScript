@@ -48,7 +48,7 @@ DECOMPILATION:
 
 `
 
-	version = "0.9"
+	version = "0.9-IN-PROGRESS"
 )
 
 type CommandLineArguments struct {

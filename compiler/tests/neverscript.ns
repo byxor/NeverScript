@@ -9,12 +9,12 @@ my_vector = (100.0, 200.0, 300.0)
 my_vector = (-1.0, -2.0, -3.0)
 my_array = [1, 2, 3]
 my_struct = { x=1, y=2, z=3 }
-my_checksum = #deadf00d
-my_checksum = identifiers_are_checksums_too
-my_checksum = `checksums between backticks can have spaces`
+my_qb_key = #deadf00d
+my_qb_key = identifiers_are_qb_keys_too
+my_qb_key = `identifiers between backticks can have spaces`
 
-// my comment
-x = 10 // comment after assignment
+// single-line comment
+x = 10 // single-line comment after assignment
 
 my_struct = {
     1 // one
@@ -22,17 +22,18 @@ my_struct = {
     3 /* three */
 }
 
-/* my comment */
-x = 10 /* comment
+/* multi-line comment */
+x = 10 /* multi-line comment
 after assignment */
 
-/*big multiline comment
+/*big multi-line comment
 script 7 2 1 1 2 3 4
 "will not compile
 zzzz = - ~ ¬!!()&&&^^{}{ { { (<{ / / / *
 */
 
-/* multiline
+/* multi-line
+/* comment
 /* with */
 /* /* nested */ */
 /* comments */ */
