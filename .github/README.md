@@ -11,7 +11,7 @@
 
 ![Screenshot of the compiler being used](neverscript2.png)
 
-NeverScript is a programming language that targets Neversoft's custom scripting engine (QB).
+NeverScript is a **work-in-progress** programming language that targets Neversoft's custom scripting engine (QB).
 
 **This project contains:**
 
@@ -100,6 +100,18 @@ code\qb\qdir.txt
 * Only pre version 3 is supported at the moment.
 * None of the items inside the pre file will be compressed.
 * You can use relative paths too.
+
+## Contributions
+
+**The majority of pull requests probably won't be merged** unless we've spoken about it beforehand.
+
+Having restricted ownership of this codebase gives me the freedom to make changes on a whim (which tends to happen regularly, albeit quite sparsely). Accepting contributions makes the code harder to change without coordinating with other developers.
+
+Feel free to fork the repo and make as many changes/improvements as you like. There's no license, you don't owe me a thing.
+
+If it's useful, I might end up asking to include it in this repo.
+
+Feel free to submit bug reports or feature requests as issues, I appreciate the help/ideas.
 
 ## Special Thanks
 
